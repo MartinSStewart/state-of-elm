@@ -1,1 +1,1 @@
-elm-survey
+An Elm community survey
