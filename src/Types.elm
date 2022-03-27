@@ -3,7 +3,7 @@ module Types exposing (..)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Questions exposing (Accept, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
+import Questions exposing (BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
 
@@ -11,6 +11,7 @@ import Url exposing (Url)
 type alias FrontendModel =
     { key : Key
     , form : Form
+    , acceptTosAnswer : Bool
     }
 
 
@@ -40,7 +41,6 @@ type alias Form =
     , elmInitialInterest : String
     , biggestPainPoint : String
     , whatDoYouLikeMost : String
-    , accept : Maybe Accept
     }
 
 
@@ -53,6 +53,8 @@ type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
     | FormChanged Form
+    | PressedAcceptTosAnswer Bool
+    | PressedSubmitSurvey
 
 
 type ToBackend

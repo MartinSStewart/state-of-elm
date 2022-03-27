@@ -4,7 +4,10 @@ import AssocSet as Set
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Element exposing (Element)
+import Element.Background
+import Element.Font
 import Lamdera
+import List.Nonempty exposing (Nonempty(..))
 import Questions
 import Types exposing (..)
 import Ui
@@ -53,10 +56,9 @@ init _ key =
             , elmInitialInterest = ""
             , biggestPainPoint = ""
             , whatDoYouLikeMost = ""
-            , accept = Nothing
             }
     in
-    ( { key = key, form = form }, Cmd.none )
+    ( { key = key, form = form, acceptTosAnswer = False }, Cmd.none )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -80,6 +82,12 @@ update msg model =
         FormChanged form ->
             ( { model | form = form }, Cmd.none )
 
+        PressedAcceptTosAnswer maybeAccept ->
+            ( { model | acceptTosAnswer = maybeAccept }, Cmd.none )
+
+        PressedSubmitSurvey ->
+            ( model, Cmd.none )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -95,11 +103,33 @@ view model =
         [ Element.layout
             []
             (Element.column
-                [ Element.spacing 48 ]
-                [ Element.paragraph
-                    []
-                    [ Element.text "After a 4 year hiatus, State of Elm is back! Feel free to fill in as many or as few questions as you are comfortable with and press submit when you are finished." ]
+                [ Element.spacing 24
+                , Element.width Element.fill
+                ]
+                [ Element.el
+                    [ Element.Background.color Ui.blue0
+                    , Element.width Element.fill
+                    ]
+                    (Element.column
+                        [ Element.Font.color Ui.white
+                        , Element.paddingXY 22 16
+                        , Element.centerX
+                        , Element.width (Element.maximum 800 Element.fill)
+                        , Element.spacing 24
+                        ]
+                        [ Element.paragraph
+                            [ Element.Font.size 22, Element.Font.bold ]
+                            [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
+                        , Element.paragraph
+                            []
+                            [ Element.text "This is a survey to better understand the Elm community." ]
+                        , Element.paragraph
+                            []
+                            [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with and press submit at the bottom when you are finished." ]
+                        ]
+                    )
                 , formView model.form
+                , Ui.acceptTosQuestion model.acceptTosAnswer PressedAcceptTosAnswer PressedSubmitSurvey
                 ]
             )
         ]
@@ -109,7 +139,11 @@ view model =
 formView : Form -> Element FrontendMsg
 formView form =
     Element.column
-        [ Element.spacing 24 ]
+        [ Element.spacing 32
+        , Element.padding 8
+        , Element.width (Element.maximum 800 Element.fill)
+        , Element.centerX
+        ]
         [ Ui.multiChoiceQuestion
             "Do you use Elm?"
             Nothing
@@ -273,11 +307,4 @@ formView form =
             Nothing
             form.whatDoYouLikeMost
             (\a -> FormChanged { form | whatDoYouLikeMost = a })
-        , Ui.singleChoiceQuestion
-            "One last thing before you go"
-            (Just "Thank you for filling out the survey! We're going to publish the results based on the information you're giving us here, so please make sure that there's nothing you wouldn't want made public in your responses. Hit \"I accept\" to acknowledge that it's all good!")
-            Questions.allAccept
-            Questions.acceptToString
-            form.accept
-            (\a -> FormChanged { form | accept = a })
         ]

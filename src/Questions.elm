@@ -1,6 +1,5 @@
 module Questions exposing
-    ( Accept(..)
-    , BuildTools(..)
+    ( BuildTools(..)
     , DoYouUseElm(..)
     , DoYouUseElmFormat(..)
     , Editor(..)
@@ -17,8 +16,6 @@ module Questions exposing
     , WhatElmVersion(..)
     , WhereDoYouUseElm(..)
     , YesNo(..)
-    , acceptToString
-    , allAccept
     , allApplicationDomains
     , allBuildTools
     , allDoYouUseElm
@@ -599,11 +596,6 @@ type TestsWrittenFor
     | MostPublicFunctions
 
 
-type Accept
-    = Accept
-    | IDontAccept
-
-
 allHowFarAlong : Nonempty HowFarAlong
 allHowFarAlong =
     Nonempty IHaveNotStarted
@@ -704,12 +696,6 @@ allTestsWrittenFor =
         , JsonDecodersAndEncoders
         , MostPublicFunctions
         ]
-
-
-allAccept : Nonempty Accept
-allAccept =
-    Nonempty Accept
-        [ IDontAccept ]
 
 
 howFarAlongToStringWork : HowFarAlong -> String
@@ -936,13 +922,3 @@ testsWrittenForToString a =
 
         MostPublicFunctions ->
             "Most public functions in your modules"
-
-
-acceptToString : Accept -> String
-acceptToString a =
-    case a of
-        Accept ->
-            "Accept"
-
-        IDontAccept ->
-            "I don't accept"
