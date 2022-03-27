@@ -249,7 +249,7 @@ multiChoiceQuestionWithOther title maybeSubtitle choices choiceToString selectio
     container
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
-            [ Element.spacing 8 ]
+            [ Element.width Element.fill, Element.spacing 8 ]
             [ Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple choice" ]
             , List.Nonempty.toList choices
                 |> List.map
@@ -265,15 +265,21 @@ multiChoiceQuestionWithOther title maybeSubtitle choices choiceToString selectio
                         a
                             ++ [ Element.row
                                     [ Element.spacing 8, Element.width Element.fill ]
-                                    [ checkButton "Other" selection.otherChecked
+                                    [ Element.el [ Element.alignTop ] (checkButton "Other" selection.otherChecked)
                                         |> Element.map (\() -> updateModel { selection | otherChecked = not selection.otherChecked })
                                     , if selection.otherChecked then
-                                        Element.Input.text
-                                            [ Element.width Element.fill, Element.Font.size 18, Element.padding 4 ]
+                                        Element.Input.multiline
+                                            [ Element.width Element.fill
+                                            , Element.Font.size 18
+                                            , Element.padding 4
+                                            , Element.htmlAttribute (Html.Attributes.attribute "data-gramm_editor" "false")
+                                            , Element.htmlAttribute (Html.Attributes.attribute "data-enable-grammarly" "false")
+                                            ]
                                             { onChange = \text -> updateModel { selection | otherText = text }
                                             , text = selection.otherText
                                             , placeholder = Nothing
                                             , label = Element.Input.labelHidden "Other"
+                                            , spellcheck = True
                                             }
 
                                       else
@@ -281,7 +287,7 @@ multiChoiceQuestionWithOther title maybeSubtitle choices choiceToString selectio
                                     ]
                                ]
                    )
-                |> Element.column [ Element.spacing 8 ]
+                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
             ]
         ]
 
