@@ -1,27 +1,58 @@
 module Questions exposing
-    ( DoYouUseElm(..)
+    ( Accept(..)
+    , BuildTools(..)
+    , DoYouUseElm(..)
+    , DoYouUseElmFormat(..)
+    , Editor(..)
     , ElmResources(..)
     , ExperienceLevel(..)
+    , HowFarAlong(..)
+    , HowIsProjectLicensed(..)
     , HowLong(..)
     , NewsAndDiscussions(..)
     , OtherLanguages(..)
+    , StylingTools(..)
+    , TestTools(..)
+    , TestsWrittenFor(..)
+    , WhatElmVersion(..)
     , WhereDoYouUseElm(..)
     , YesNo(..)
+    , acceptToString
+    , allAccept
     , allApplicationDomains
+    , allBuildTools
     , allDoYouUseElm
+    , allDoYouUseElmFormat
+    , allEditor
     , allElmResources
     , allExperienceLevels
+    , allHowFarAlong
+    , allHowIsProjectLicensed
     , allHowLong
     , allNewsAndDiscussions
     , allOtherLanguages
+    , allStylingTools
+    , allTestTools
+    , allTestsWrittenFor
+    , allWhatElmVersion
     , allYesNo
     , applicationDomainsToString
+    , buildToolsToString
+    , doYouUseElmFormatToString
     , doYouUseElmToString
+    , editorToString
     , elmResourcesToString
     , experienceLevelToString
+    , howFarAlongToStringHobby
+    , howFarAlongToStringWork
+    , howIsProjectLicensedToString
     , howLongToString
     , newsAndDiscussionsToString
     , otherLanguagesToString
+    , stylingToolsToString
+    , testToolsToString
+    , testsWrittenForToString
+    , whatElmVersionToString
     , yesNoToString
     )
 
@@ -482,3 +513,436 @@ howLongToString howLong =
 
         NineYears ->
             "9 years"
+
+
+type HowFarAlong
+    = IHaveNotStarted
+    | PlanningLearningExplorationPhase
+    | InDevelopment
+    | InStaging
+    | Shipped
+
+
+type HowIsProjectLicensed
+    = NotApplicable
+    | ClosedSource
+    | OpenSourceShareAlike
+    | OpenSourcePermissive
+
+
+type WhatElmVersion
+    = Version0_19
+    | Version0_18
+    | Version0_17
+    | Version0_16
+    | Version0_15
+    | Version0_14
+    | Version0_13
+    | Version0_12
+
+
+type DoYouUseElmFormat
+    = PreferElmFormat
+    | TriedButDontUseElmFormat
+    | HeardButDontUseElmFormat
+    | HaveNotHeardOfElmFormat
+
+
+type StylingTools
+    = SassOrScss
+    | ElmCss
+    | PlainCss
+    | ElmUi
+    | Tailwind
+
+
+type BuildTools
+    = Broccoli
+    | ShellScripts
+    | ElmLive
+    | CreateElmApp
+    | Webpack
+    | Brunch
+    | ElmMakeStandalone
+    | Gulp
+    | Make
+    | Grunt
+    | ElmReactor
+    | Lamdera
+    | Parcel
+
+
+type Editor
+    = SublimeText
+    | Vim
+    | Atom
+    | Emacs
+    | VSCode
+    | Intellij
+
+
+type TestTools
+    = IDontWriteTests
+    | BrowserAcceptanceTests
+    | ElmBenchmark
+    | ElmTest
+    | ElmProgramTest
+    | VisualRegressionTests
+
+
+type TestsWrittenFor
+    = ComplicatedFunctions
+    | FunctionsThatReturnCmds
+    | AllPublicFunctions
+    | HtmlFunctions
+    | JsonDecodersAndEncoders
+    | MostPublicFunctions
+
+
+type Accept
+    = Accept
+    | IDontAccept
+
+
+allHowFarAlong : Nonempty HowFarAlong
+allHowFarAlong =
+    Nonempty IHaveNotStarted
+        [ PlanningLearningExplorationPhase
+        , InDevelopment
+        , InStaging
+        , Shipped
+        ]
+
+
+allHowIsProjectLicensed : Nonempty HowIsProjectLicensed
+allHowIsProjectLicensed =
+    Nonempty NotApplicable
+        [ ClosedSource
+        , OpenSourceShareAlike
+        , OpenSourcePermissive
+        ]
+
+
+allWhatElmVersion : Nonempty WhatElmVersion
+allWhatElmVersion =
+    Nonempty Version0_19
+        [ Version0_18
+        , Version0_17
+        , Version0_16
+        , Version0_15
+        , Version0_14
+        , Version0_13
+        , Version0_12
+        ]
+
+
+allDoYouUseElmFormat : Nonempty DoYouUseElmFormat
+allDoYouUseElmFormat =
+    Nonempty PreferElmFormat
+        [ TriedButDontUseElmFormat
+        , HeardButDontUseElmFormat
+        , HaveNotHeardOfElmFormat
+        ]
+
+
+allStylingTools : Nonempty StylingTools
+allStylingTools =
+    Nonempty SassOrScss
+        [ ElmCss
+        , PlainCss
+        , ElmUi
+        , Tailwind
+        ]
+
+
+allBuildTools : Nonempty BuildTools
+allBuildTools =
+    Nonempty Broccoli
+        [ ShellScripts
+        , ElmLive
+        , CreateElmApp
+        , Webpack
+        , Brunch
+        , ElmMakeStandalone
+        , Gulp
+        , Make
+        , Grunt
+        , ElmReactor
+        , Lamdera
+        , Parcel
+        ]
+
+
+allEditor : Nonempty Editor
+allEditor =
+    Nonempty SublimeText
+        [ Vim
+        , Atom
+        , Emacs
+        , VSCode
+        , Intellij
+        ]
+
+
+allTestTools : Nonempty TestTools
+allTestTools =
+    Nonempty IDontWriteTests
+        [ BrowserAcceptanceTests
+        , ElmBenchmark
+        , ElmTest
+        , ElmProgramTest
+        , VisualRegressionTests
+        ]
+
+
+allTestsWrittenFor : Nonempty TestsWrittenFor
+allTestsWrittenFor =
+    Nonempty ComplicatedFunctions
+        [ FunctionsThatReturnCmds
+        , AllPublicFunctions
+        , HtmlFunctions
+        , JsonDecodersAndEncoders
+        , MostPublicFunctions
+        ]
+
+
+allAccept : Nonempty Accept
+allAccept =
+    Nonempty Accept
+        [ IDontAccept ]
+
+
+howFarAlongToStringWork : HowFarAlong -> String
+howFarAlongToStringWork howFarAlong =
+    case howFarAlong of
+        IHaveNotStarted ->
+            "I have not started an Elm project at work"
+
+        PlanningLearningExplorationPhase ->
+            "In the planning / learning / exploration phase"
+
+        InDevelopment ->
+            "In development"
+
+        InStaging ->
+            "In staging"
+
+        Shipped ->
+            "Shipped / released to users / in production"
+
+
+howFarAlongToStringHobby : HowFarAlong -> String
+howFarAlongToStringHobby howFarAlong =
+    case howFarAlong of
+        IHaveNotStarted ->
+            "I have not started a side project using Elm"
+
+        PlanningLearningExplorationPhase ->
+            "In the planning / learning / exploration phase"
+
+        InDevelopment ->
+            "In development"
+
+        InStaging ->
+            "In staging"
+
+        Shipped ->
+            "Shipped / released to users / in production"
+
+
+howIsProjectLicensedToString : HowIsProjectLicensed -> String
+howIsProjectLicensedToString a =
+    case a of
+        NotApplicable ->
+            "Not applicable"
+
+        ClosedSource ->
+            "Closed source"
+
+        OpenSourceShareAlike ->
+            "Open source (share-alike license like GPL)"
+
+        OpenSourcePermissive ->
+            "Open source (permissive license like BSD)"
+
+
+whatElmVersionToString : WhatElmVersion -> String
+whatElmVersionToString a =
+    case a of
+        Version0_19 ->
+            "0.19 and 0.19.1"
+
+        Version0_18 ->
+            "0.18"
+
+        Version0_17 ->
+            "0.17"
+
+        Version0_16 ->
+            "0.16"
+
+        Version0_15 ->
+            "0.15"
+
+        Version0_14 ->
+            "0.14"
+
+        Version0_13 ->
+            "0.13"
+
+        Version0_12 ->
+            "0.12"
+
+
+doYouUseElmFormatToString : DoYouUseElmFormat -> String
+doYouUseElmFormatToString a =
+    case a of
+        PreferElmFormat ->
+            "I prefer to use elm-format"
+
+        TriedButDontUseElmFormat ->
+            "I have tried elm-format, but prefer to not use it"
+
+        HeardButDontUseElmFormat ->
+            "I have heard of elm-format, but have no used it"
+
+        HaveNotHeardOfElmFormat ->
+            "I have not previously heard of elm-format"
+
+
+stylingToolsToString : StylingTools -> String
+stylingToolsToString a =
+    case a of
+        SassOrScss ->
+            "SASS/SCSS"
+
+        ElmCss ->
+            "elm-css"
+
+        PlainCss ->
+            "plain CSS"
+
+        ElmUi ->
+            "elm-ui"
+
+        Tailwind ->
+            "Tailwind"
+
+
+buildToolsToString : BuildTools -> String
+buildToolsToString a =
+    case a of
+        Broccoli ->
+            "Broccoli"
+
+        ShellScripts ->
+            "Shell scripts"
+
+        ElmLive ->
+            "elm-live"
+
+        CreateElmApp ->
+            "create-elm-app"
+
+        Webpack ->
+            "Webpack"
+
+        Brunch ->
+            "Brunch"
+
+        ElmMakeStandalone ->
+            "ElmMakeStandalone"
+
+        Gulp ->
+            "Gulp"
+
+        Make ->
+            "Make"
+
+        Grunt ->
+            "Grunt"
+
+        ElmReactor ->
+            "elm-reactor"
+
+        Lamdera ->
+            "Lamdera"
+
+        Parcel ->
+            "Parcel"
+
+
+editorToString : Editor -> String
+editorToString a =
+    case a of
+        SublimeText ->
+            "Sublime Text"
+
+        Vim ->
+            "Vim"
+
+        Atom ->
+            "Atom"
+
+        Emacs ->
+            "Emacs"
+
+        VSCode ->
+            "VSCode"
+
+        Intellij ->
+            "Intellij"
+
+
+testToolsToString : TestTools -> String
+testToolsToString a =
+    case a of
+        IDontWriteTests ->
+            "I don't write tests for my Elm projects"
+
+        BrowserAcceptanceTests ->
+            "Browser acceptance testing (e.g. Capybara)"
+
+        ElmBenchmark ->
+            "elm-benchmark"
+
+        ElmTest ->
+            "elm-test"
+
+        ElmProgramTest ->
+            "elm-program-test"
+
+        VisualRegressionTests ->
+            "Visual regression testing (e.g. Percy.io)"
+
+
+testsWrittenForToString : TestsWrittenFor -> String
+testsWrittenForToString a =
+    case a of
+        ComplicatedFunctions ->
+            "Your most complicated functions"
+
+        FunctionsThatReturnCmds ->
+            "Functions that return Cmd"
+
+        AllPublicFunctions ->
+            "All public functions in your modules"
+
+        HtmlFunctions ->
+            "Functions that return Html"
+
+        JsonDecodersAndEncoders ->
+            "JSON encoders/decoders"
+
+        MostPublicFunctions ->
+            "Most public functions in your modules"
+
+
+acceptToString : Accept -> String
+acceptToString a =
+    case a of
+        Accept ->
+            "Accept"
+
+        IDontAccept ->
+            "I don't accept"

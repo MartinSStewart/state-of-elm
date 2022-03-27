@@ -3,7 +3,7 @@ module Types exposing (..)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Questions exposing (DoYouUseElm, ElmResources, ExperienceLevel, HowLong, NewsAndDiscussions, OtherLanguages, WhereDoYouUseElm, YesNo)
+import Questions exposing (Accept, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
 
@@ -23,6 +23,24 @@ type alias Form =
     , userGroupNearYou : Maybe YesNo
     , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
     , howLong : Maybe HowLong
+    , howFarAlongWork : Maybe HowFarAlong
+    , howIsProjectLicensedWork : Maybe HowIsProjectLicensed
+    , workAdoptionChallenge : String
+    , howFarAlongHobby : Maybe HowFarAlong
+    , howIsProjectLicensedHobby : Maybe HowIsProjectLicensed
+    , hobbyAdoptionChallenge : String
+    , elmVersion : MultiChoiceWithOther WhatElmVersion
+    , doYouUseElmFormat : Maybe DoYouUseElmFormat
+    , stylingTools : MultiChoiceWithOther StylingTools
+    , buildTools : MultiChoiceWithOther BuildTools
+    , editors : MultiChoiceWithOther Editor
+    , jsInteropUseCases : String
+    , testTools : MultiChoiceWithOther TestTools
+    , testsWrittenFor : MultiChoiceWithOther TestsWrittenFor
+    , elmInitialInterest : String
+    , biggestPainPoint : String
+    , whatDoYouLikeMost : String
+    , accept : Maybe Accept
     }
 
 

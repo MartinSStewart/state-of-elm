@@ -1,4 +1,12 @@
-module Ui exposing (AnswerWithOther(..), MultiChoiceWithOther, multiChoiceQuestion, multiChoiceQuestionWithOther, multiChoiceWithOtherInit, singleChoiceQuestion)
+module Ui exposing
+    ( AnswerWithOther(..)
+    , MultiChoiceWithOther
+    , multiChoiceQuestion
+    , multiChoiceQuestionWithOther
+    , multiChoiceWithOtherInit
+    , singleChoiceQuestion
+    , textInput
+    )
 
 import AssocSet as Set exposing (Set)
 import Element exposing (Element)
@@ -10,13 +18,19 @@ import Html.Events
 import List.Nonempty exposing (Nonempty)
 
 
-
---type QuestionType
---    = Choice { choices : Nonempty String, hasOtherChoice : Bool, allowMultipleAnswers : Bool }
---    | NearestCity
---    | FreeText
---    | EmailAddress
---    | TermsOfService
+textInput : String -> Maybe String -> String -> (String -> model) -> Element model
+textInput title maybeSubtitle text updateModel =
+    Element.Input.multiline
+        [ Element.width Element.fill
+        , Element.htmlAttribute (Html.Attributes.attribute "data-gramm_editor" "false")
+        , Element.htmlAttribute (Html.Attributes.attribute "data-enable-grammarly" "false")
+        ]
+        { onChange = updateModel
+        , text = text
+        , placeholder = Nothing
+        , label = Element.Input.labelAbove [] (titleAndSubtitle title maybeSubtitle)
+        , spellcheck = True
+        }
 
 
 type AnswerWithOther a
@@ -30,7 +44,7 @@ singleChoiceQuestion :
     -> Nonempty a
     -> (a -> String)
     -> Maybe a
-    -> (a -> model)
+    -> (Maybe a -> model)
     -> Element model
 singleChoiceQuestion title maybeSubtitle choices choiceToString selection updateModel =
     Element.column
@@ -40,7 +54,14 @@ singleChoiceQuestion title maybeSubtitle choices choiceToString selection update
             |> List.map
                 (\choice ->
                     radioButton title (choiceToString choice) (Just choice == selection)
-                        |> Element.map (\() -> updateModel choice)
+                        |> Element.map
+                            (\() ->
+                                if Just choice == selection then
+                                    updateModel Nothing
+
+                                else
+                                    updateModel (Just choice)
+                            )
                 )
             |> Element.column [ Element.spacing 8 ]
         ]
