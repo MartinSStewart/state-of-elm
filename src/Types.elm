@@ -11,15 +11,20 @@ import Url exposing (Url)
 
 
 type FrontendModel
-    = FormLoading
-    | FormLoaded
-        { form : Form
-        , acceptedTos : Bool
-        , submitting : Bool
-        , pressedSubmitCount : Int
-        , debounceCounter : Int
-        }
+    = Loading
+    | FormLoaded FormLoaded_
     | FormCompleted
+    | AdminLogin { password : String, loginFailed : Bool }
+    | Admin AdminLoginData
+
+
+type alias FormLoaded_ =
+    { form : Form
+    , acceptedTos : Bool
+    , submitting : Bool
+    , pressedSubmitCount : Int
+    , debounceCounter : Int
+    }
 
 
 type alias Form =
@@ -55,6 +60,7 @@ type alias Form =
 
 type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Time.Posix }
+    , adminLogin : Maybe SessionId
     }
 
 
@@ -65,11 +71,14 @@ type FrontendMsg
     | PressedAcceptTosAnswer Bool
     | PressedSubmitSurvey
     | Debounce Int
+    | TypedPassword String
+    | PressedLogin
 
 
 type ToBackend
     = AutoSaveForm Form
     | SubmitForm Form
+    | AdminLoginRequest String
 
 
 type BackendMsg
@@ -85,4 +94,10 @@ type LoadFormStatus
 
 type ToFrontend
     = LoadForm LoadFormStatus
+    | LoadAdmin AdminLoginData
+    | AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
+
+
+type alias AdminLoginData =
+    { autoSavedSurveyCount : Int, submittedSurveyCount : Int }

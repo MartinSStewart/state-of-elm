@@ -6,6 +6,7 @@ import Browser.Navigation as Nav
 import Element exposing (Element)
 import Element.Background
 import Element.Font
+import Element.Input
 import Element.Region
 import Lamdera
 import Process
@@ -31,12 +32,60 @@ app =
 
 
 init : Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
-init _ _ =
-    ( FormLoading, Cmd.none )
+init url _ =
+    if Debug.log "a" url.path == "/admin" then
+        ( AdminLogin { password = "", loginFailed = False }, Cmd.none )
+
+    else
+        ( Loading, Cmd.none )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 update msg model =
+    let
+        updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Cmd FrontendMsg )) -> ( FrontendModel, Cmd FrontendMsg )
+        updateFormLoaded func =
+            case model of
+                FormLoaded formLoaded ->
+                    let
+                        ( newFormLoaded, cmd ) =
+                            func formLoaded
+                    in
+                    ( FormLoaded newFormLoaded, cmd )
+
+                Loading ->
+                    ( model, Cmd.none )
+
+                FormCompleted ->
+                    ( model, Cmd.none )
+
+                Admin _ ->
+                    ( model, Cmd.none )
+
+                AdminLogin _ ->
+                    ( model, Cmd.none )
+
+        updateAdminLogin func =
+            case model of
+                FormLoaded _ ->
+                    ( model, Cmd.none )
+
+                Loading ->
+                    ( model, Cmd.none )
+
+                FormCompleted ->
+                    ( model, Cmd.none )
+
+                Admin _ ->
+                    ( model, Cmd.none )
+
+                AdminLogin adminLogin ->
+                    let
+                        ( newAdminLogin, cmd ) =
+                            func adminLogin
+                    in
+                    ( AdminLogin newAdminLogin, cmd )
+    in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
@@ -54,129 +103,134 @@ update msg model =
             ( model, Cmd.none )
 
         FormChanged form ->
-            case model of
-                FormLoaded formLoaded ->
-                    ( FormLoaded { formLoaded | form = form, debounceCounter = formLoaded.debounceCounter + 1 }
+            updateFormLoaded
+                (\formLoaded ->
+                    ( { formLoaded | form = form, debounceCounter = formLoaded.debounceCounter + 1 }
                     , Process.sleep 1000 |> Task.perform (\() -> Debounce (formLoaded.debounceCounter + 1))
                     )
-
-                FormLoading ->
-                    ( model, Cmd.none )
-
-                FormCompleted ->
-                    ( model, Cmd.none )
+                )
 
         PressedAcceptTosAnswer acceptedTos ->
-            case model of
-                FormLoaded formLoaded ->
-                    ( FormLoaded { formLoaded | acceptedTos = acceptedTos }, Cmd.none )
-
-                FormLoading ->
-                    ( model, Cmd.none )
-
-                FormCompleted ->
-                    ( model, Cmd.none )
+            updateFormLoaded (\formLoaded -> ( { formLoaded | acceptedTos = acceptedTos }, Cmd.none ))
 
         PressedSubmitSurvey ->
-            case model of
-                FormLoaded formLoaded ->
+            updateFormLoaded
+                (\formLoaded ->
                     if formLoaded.submitting then
-                        ( model, Cmd.none )
+                        ( formLoaded, Cmd.none )
 
                     else if formLoaded.acceptedTos then
-                        ( FormLoaded { formLoaded | submitting = True }
+                        ( { formLoaded | submitting = True }
                         , Lamdera.sendToBackend (SubmitForm formLoaded.form)
                         )
 
                     else
-                        ( FormLoaded { formLoaded | pressedSubmitCount = formLoaded.pressedSubmitCount + 1 }
+                        ( { formLoaded | pressedSubmitCount = formLoaded.pressedSubmitCount + 1 }
                         , Cmd.none
                         )
-
-                FormLoading ->
-                    ( model, Cmd.none )
-
-                FormCompleted ->
-                    ( model, Cmd.none )
+                )
 
         Debounce counter ->
-            case model of
-                FormLoaded formLoaded ->
-                    ( model
+            updateFormLoaded
+                (\formLoaded ->
+                    ( formLoaded
                     , if counter == formLoaded.debounceCounter then
                         Lamdera.sendToBackend (AutoSaveForm formLoaded.form)
 
                       else
                         Cmd.none
                     )
+                )
 
-                FormLoading ->
-                    ( model, Cmd.none )
+        TypedPassword password ->
+            updateAdminLogin (\adminLogin -> ( { adminLogin | password = password }, Cmd.none ))
 
-                FormCompleted ->
-                    ( model, Cmd.none )
+        PressedLogin ->
+            updateAdminLogin
+                (\adminLogin -> ( adminLogin, Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
-updateFromBackend msg _ =
+updateFromBackend msg model =
     ( case msg of
         LoadForm formStatus ->
-            case formStatus of
-                NoFormFound ->
-                    let
-                        form : Form
-                        form =
-                            { doYouUseElm = Set.empty
-                            , age = Nothing
-                            , functionalProgrammingExperience = Nothing
-                            , otherLanguages = Ui.multiChoiceWithOtherInit
-                            , newsAndDiscussions = Ui.multiChoiceWithOtherInit
-                            , elmResources = Ui.multiChoiceWithOtherInit
-                            , userGroupNearYou = Nothing
-                            , nearestCity = ""
-                            , applicationDomains = Ui.multiChoiceWithOtherInit
-                            , howLong = Nothing
-                            , howFarAlongWork = Nothing
-                            , howIsProjectLicensedWork = Nothing
-                            , workAdoptionChallenge = ""
-                            , howFarAlongHobby = Nothing
-                            , howIsProjectLicensedHobby = Nothing
-                            , hobbyAdoptionChallenge = ""
-                            , elmVersion = Ui.multiChoiceWithOtherInit
-                            , doYouUseElmFormat = Nothing
-                            , stylingTools = Ui.multiChoiceWithOtherInit
-                            , buildTools = Ui.multiChoiceWithOtherInit
-                            , editors = Ui.multiChoiceWithOtherInit
-                            , jsInteropUseCases = ""
-                            , testTools = Ui.multiChoiceWithOtherInit
-                            , testsWrittenFor = Ui.multiChoiceWithOtherInit
-                            , elmInitialInterest = ""
-                            , biggestPainPoint = ""
-                            , whatDoYouLikeMost = ""
-                            }
-                    in
-                    FormLoaded
-                        { form = form
-                        , acceptedTos = False
-                        , submitting = False
-                        , pressedSubmitCount = 0
-                        , debounceCounter = 0
-                        }
+            case model of
+                Loading ->
+                    case formStatus of
+                        NoFormFound ->
+                            let
+                                form : Form
+                                form =
+                                    { doYouUseElm = Set.empty
+                                    , age = Nothing
+                                    , functionalProgrammingExperience = Nothing
+                                    , otherLanguages = Ui.multiChoiceWithOtherInit
+                                    , newsAndDiscussions = Ui.multiChoiceWithOtherInit
+                                    , elmResources = Ui.multiChoiceWithOtherInit
+                                    , userGroupNearYou = Nothing
+                                    , nearestCity = ""
+                                    , applicationDomains = Ui.multiChoiceWithOtherInit
+                                    , howLong = Nothing
+                                    , howFarAlongWork = Nothing
+                                    , howIsProjectLicensedWork = Nothing
+                                    , workAdoptionChallenge = ""
+                                    , howFarAlongHobby = Nothing
+                                    , howIsProjectLicensedHobby = Nothing
+                                    , hobbyAdoptionChallenge = ""
+                                    , elmVersion = Ui.multiChoiceWithOtherInit
+                                    , doYouUseElmFormat = Nothing
+                                    , stylingTools = Ui.multiChoiceWithOtherInit
+                                    , buildTools = Ui.multiChoiceWithOtherInit
+                                    , editors = Ui.multiChoiceWithOtherInit
+                                    , jsInteropUseCases = ""
+                                    , testTools = Ui.multiChoiceWithOtherInit
+                                    , testsWrittenFor = Ui.multiChoiceWithOtherInit
+                                    , elmInitialInterest = ""
+                                    , biggestPainPoint = ""
+                                    , whatDoYouLikeMost = ""
+                                    }
+                            in
+                            FormLoaded
+                                { form = form
+                                , acceptedTos = False
+                                , submitting = False
+                                , pressedSubmitCount = 0
+                                , debounceCounter = 0
+                                }
 
-                FormAutoSaved form ->
-                    FormLoaded
-                        { form = form
-                        , acceptedTos = False
-                        , submitting = False
-                        , pressedSubmitCount = 0
-                        , debounceCounter = 0
-                        }
+                        FormAutoSaved form ->
+                            FormLoaded
+                                { form = form
+                                , acceptedTos = False
+                                , submitting = False
+                                , pressedSubmitCount = 0
+                                , debounceCounter = 0
+                                }
 
-                FormSubmitted ->
-                    FormCompleted
+                        FormSubmitted ->
+                            FormCompleted
+
+                _ ->
+                    model
 
         SubmitConfirmed ->
             FormCompleted
+
+        LoadAdmin adminData ->
+            Admin adminData
+
+        AdminLoginResponse result ->
+            case model of
+                AdminLogin adminLogin ->
+                    case result of
+                        Ok adminLoginData ->
+                            Admin adminLoginData
+
+                        Err () ->
+                            AdminLogin { adminLogin | loginFailed = True }
+
+                _ ->
+                    model
     , Cmd.none
     )
 
@@ -211,7 +265,7 @@ view model =
                                     ]
                                     [ Element.text "State of Elm 2022" ]
                                 , Element.paragraph
-                                    [ Element.Font.size 22, Element.Font.bold ]
+                                    [ Ui.titleFontSize, Element.Font.bold ]
                                     [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
                                 , Element.paragraph
                                     []
@@ -229,7 +283,7 @@ view model =
                             formLoaded.pressedSubmitCount
                         ]
 
-                FormLoading ->
+                Loading ->
                     Element.none
 
                 FormCompleted ->
@@ -276,6 +330,41 @@ view model =
                                 [ Element.text "Thanks for participating in the State of Elm 2022 survey. The results will be presented in a few weeks on this website." ]
                             ]
                         )
+
+                AdminLogin { password, loginFailed } ->
+                    Element.column
+                        [ Element.centerX, Element.centerY, Element.spacing 16 ]
+                        [ Element.Input.currentPassword
+                            []
+                            { onChange = TypedPassword
+                            , text = password
+                            , placeholder = Nothing
+                            , show = False
+                            , label =
+                                Element.Input.labelAbove []
+                                    (if loginFailed then
+                                        Element.el
+                                            [ Element.Font.color <| Element.rgb 0.8 0 0 ]
+                                            (Element.text "Incorrect password")
+
+                                     else
+                                        Element.text "Enter password"
+                                    )
+                            }
+                        , Element.Input.button
+                            []
+                            { onPress = Just PressedLogin
+                            , label = Element.text "Login"
+                            }
+                        ]
+
+                Admin admin ->
+                    Element.column
+                        []
+                        [ Element.text "Admin view"
+                        , Element.text ("autoSavedSurveyCount: " ++ String.fromInt admin.autoSavedSurveyCount)
+                        , Element.text ("submittedSurveyCount: " ++ String.fromInt admin.submittedSurveyCount)
+                        ]
             )
         ]
     }

@@ -11,6 +11,7 @@ module Ui exposing
     , singleChoiceQuestion
     , slider
     , textInput
+    , titleFontSize
     , white
     )
 
@@ -224,6 +225,7 @@ animatedUi =
         }
 
 
+titleFontSize : Element.Attr decorative msg
 titleFontSize =
     Element.Font.size 22
 

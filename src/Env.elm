@@ -1,8 +1,13 @@
 module Env exposing (..)
 
--- The Env.elm file is for per-environment configuration.
--- See https://dashboard.lamdera.app/docs/environment for more info.
+import Sha256
 
 
-dummyConfigItem =
-    ""
+adminPassword : String
+adminPassword =
+    "123"
+
+
+adminPasswordHash : String
+adminPasswordHash =
+    Sha256.sha256 adminPassword

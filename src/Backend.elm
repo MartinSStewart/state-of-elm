@@ -1,7 +1,9 @@
 module Backend exposing (..)
 
 import AssocList as Dict
+import Env
 import Lamdera exposing (ClientId, SessionId)
+import Sha256
 import Task
 import Time
 import Types exposing (..)
@@ -18,9 +20,22 @@ app =
 
 init : ( BackendModel, Cmd BackendMsg )
 init =
-    ( { forms = Dict.empty }
+    ( { forms = Dict.empty, adminLogin = Nothing }
     , Cmd.none
     )
+
+
+getAdminData : BackendModel -> AdminLoginData
+getAdminData model =
+    { autoSavedSurveyCount =
+        Dict.values model.forms
+            |> List.map (.submitTime >> (==) Nothing)
+            |> List.length
+    , submittedSurveyCount =
+        Dict.values model.forms
+            |> List.map (.submitTime >> (/=) Nothing)
+            |> List.length
+    }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
@@ -28,19 +43,21 @@ update msg model =
     case msg of
         UserConnected sessionId clientId ->
             ( model
-            , (case Dict.get sessionId model.forms of
-                Just value ->
+            , (case ( model.adminLogin == Just sessionId, Dict.get sessionId model.forms ) of
+                ( True, _ ) ->
+                    LoadAdmin (getAdminData model)
+
+                ( False, Just value ) ->
                     case value.submitTime of
                         Just _ ->
-                            FormSubmitted
+                            LoadForm FormSubmitted
 
                         Nothing ->
-                            FormAutoSaved value.form
+                            FormAutoSaved value.form |> LoadForm
 
-                Nothing ->
-                    NoFormFound
+                ( False, Nothing ) ->
+                    LoadForm NoFormFound
               )
-                |> LoadForm
                 |> Lamdera.sendToFrontend clientId
             )
 
@@ -101,3 +118,12 @@ updateFromFrontendWithTime time sessionId clientId msg model =
               }
             , Lamdera.sendToFrontend clientId SubmitConfirmed
             )
+
+        AdminLoginRequest password ->
+            if Env.adminPasswordHash == Sha256.sha256 password then
+                ( { model | adminLogin = Just sessionId }
+                , getAdminData model |> Ok |> AdminLoginResponse |> Lamdera.sendToFrontend clientId
+                )
+
+            else
+                ( model, Err () |> AdminLoginResponse |> Lamdera.sendToFrontend clientId )

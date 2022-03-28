@@ -654,10 +654,6 @@ type WhatElmVersion
     | Version0_18
     | Version0_17
     | Version0_16
-    | Version0_15
-    | Version0_14
-    | Version0_13
-    | Version0_12
 
 
 type DoYouUseElmFormat
@@ -740,10 +736,6 @@ allWhatElmVersion =
         [ Version0_18
         , Version0_17
         , Version0_16
-        , Version0_15
-        , Version0_14
-        , Version0_13
-        , Version0_12
         ]
 
 
@@ -880,18 +872,6 @@ whatElmVersionToString a =
 
         Version0_16 ->
             "0.16"
-
-        Version0_15 ->
-            "0.15"
-
-        Version0_14 ->
-            "0.14"
-
-        Version0_13 ->
-            "0.13"
-
-        Version0_12 ->
-            "0.12"
 
 
 doYouUseElmFormatToString : DoYouUseElmFormat -> String
