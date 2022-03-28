@@ -19,10 +19,14 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
+import Element.Keyed
 import Html
 import Html.Attributes
 import Html.Events
 import List.Nonempty exposing (Nonempty)
+import Simple.Animation
+import Simple.Animation.Animated
+import Simple.Animation.Property
 
 
 textInput : String -> Maybe String -> String -> (String -> model) -> Element model
@@ -152,29 +156,54 @@ multiChoiceQuestion title maybeSubtitle choices choiceToString selection updateM
         ]
 
 
-acceptTosQuestion : Bool -> (Bool -> msg) -> msg -> Element msg
-acceptTosQuestion selection toggledIAccept pressedSubmit =
-    Element.column
+acceptTosQuestion : Bool -> (Bool -> msg) -> msg -> Int -> Element msg
+acceptTosQuestion acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
+    Element.Keyed.column
         [ Element.width Element.fill
         , Element.Background.color blue0
-        , Element.paddingXY 22 16
+        , Element.paddingXY 22 24
         , Element.Font.color white
         , Element.spacing 16
         ]
-        [ titleAndSubtitle
-            "Ready to submit the survey?"
-            (Just "We're going to publish the results based on the information you're giving us here, so please make sure that there's nothing you wouldn't want made public in your responses. Hit \"I accept\" to acknowledge that it's all good!")
-        , checkButton "I accept" selection |> Element.map (\() -> not selection |> toggledIAccept)
-        , Element.Input.button
-            [ Element.Background.color white
-            , Element.Font.color black
-            , Element.Font.bold
-            , Element.padding 16
-            ]
-            { onPress = Just pressedSubmit
-            , label = Element.text "Submit survey"
-            }
+        [ ( "title"
+          , titleAndSubtitle
+                "Ready to submit the survey?"
+                (Just "We're going to publish the results based on the information you're giving us here, so please make sure that there's nothing you wouldn't want made public in your responses. Hit \"I accept\" to acknowledge that it's all good!")
+          )
+        , ( String.fromInt pressSubmitCount
+          , animatedUi
+                Element.el
+                (Simple.Animation.steps
+                    { startAt = [ Simple.Animation.Property.x 0 ], options = [] }
+                    [ Simple.Animation.step 100 [ Simple.Animation.Property.x -8 ]
+                    , Simple.Animation.step 100 [ Simple.Animation.Property.x 16 ]
+                    , Simple.Animation.step 100 [ Simple.Animation.Property.x 0 ]
+                    ]
+                )
+                []
+                (checkButton "I accept" acceptedTos)
+                |> Element.map (\() -> not acceptedTos |> toggledIAccept)
+          )
+        , ( "submit"
+          , Element.Input.button
+                [ Element.Background.color white
+                , Element.Font.color black
+                , Element.Font.bold
+                , Element.padding 16
+                ]
+                { onPress = Just pressedSubmit
+                , label = Element.text "Submit survey"
+                }
+          )
         ]
+
+
+animatedUi =
+    Simple.Animation.Animated.ui
+        { behindContent = Element.behindContent
+        , htmlAttribute = Element.htmlAttribute
+        , html = Element.html
+        }
 
 
 titleFontSize =

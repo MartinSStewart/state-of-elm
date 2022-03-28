@@ -1,18 +1,18 @@
 module Types exposing (..)
 
+import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
-import Browser.Navigation exposing (Key)
+import Lamdera exposing (ClientId, SessionId)
 import Questions exposing (BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
 
 
-type alias FrontendModel =
-    { key : Key
-    , form : Form
-    , acceptTosAnswer : Bool
-    }
+type FrontendModel
+    = FormLoading
+    | FormLoaded { form : Form, acceptedTos : Bool, submitting : Bool, pressedSubmitCount : Int }
+    | FormCompleted
 
 
 type alias Form =
@@ -46,7 +46,7 @@ type alias Form =
 
 
 type alias BackendModel =
-    { message : String
+    { forms : Dict SessionId { form : Form, isSubmitted : Bool }
     }
 
 
@@ -59,12 +59,20 @@ type FrontendMsg
 
 
 type ToBackend
-    = NoOpToBackend
+    = AutoSaveForm Form
+    | SubmitForm Form
 
 
 type BackendMsg
-    = NoOpBackendMsg
+    = UserConnected SessionId ClientId
+
+
+type LoadFormStatus
+    = NoFormFound
+    | FormAutoSaved Form
+    | FormSubmitted
 
 
 type ToFrontend
-    = NoOpToFrontend
+    = LoadForm LoadFormStatus
+    | SubmitConfirmed

@@ -22,7 +22,6 @@ module Questions exposing
     , allDoYouUseElmFormat
     , allEditor
     , allElmResources
-    , allExperienceLevels
     , allHowFarAlong
     , allHowIsProjectLicensed
     , allHowLong
@@ -39,7 +38,6 @@ module Questions exposing
     , doYouUseElmToString
     , editorToString
     , elmResourcesToString
-    , experienceLevelToString
     , experienceToInt
     , howFarAlongToStringHobby
     , howFarAlongToStringWork
@@ -147,60 +145,6 @@ intToExperience a =
 
         _ ->
             Level0
-
-
-allExperienceLevels : Nonempty ExperienceLevel
-allExperienceLevels =
-    Nonempty
-        Level0
-        [ Level1
-        , Level2
-        , Level3
-        , Level4
-        , Level5
-        , Level6
-        , Level7
-        , Level8
-        , Level9
-        , Level10
-        ]
-
-
-experienceLevelToString : ExperienceLevel -> String
-experienceLevelToString experienceLevel =
-    case experienceLevel of
-        Level0 ->
-            "0"
-
-        Level1 ->
-            "1"
-
-        Level2 ->
-            "2"
-
-        Level3 ->
-            "3"
-
-        Level4 ->
-            "4"
-
-        Level5 ->
-            "5"
-
-        Level6 ->
-            "6"
-
-        Level7 ->
-            "7"
-
-        Level8 ->
-            "8"
-
-        Level9 ->
-            "9"
-
-        Level10 ->
-            "10"
 
 
 type DoYouUseElm
@@ -630,8 +574,7 @@ type HowFarAlong
 
 
 type HowIsProjectLicensed
-    = NotApplicable
-    | ClosedSource
+    = ClosedSource
     | OpenSourceShareAlike
     | OpenSourcePermissive
 
@@ -717,9 +660,8 @@ allHowFarAlong =
 
 allHowIsProjectLicensed : Nonempty HowIsProjectLicensed
 allHowIsProjectLicensed =
-    Nonempty NotApplicable
-        [ ClosedSource
-        , OpenSourceShareAlike
+    Nonempty ClosedSource
+        [ OpenSourceShareAlike
         , OpenSourcePermissive
         ]
 
@@ -848,9 +790,6 @@ howFarAlongToStringHobby howFarAlong =
 howIsProjectLicensedToString : HowIsProjectLicensed -> String
 howIsProjectLicensedToString a =
     case a of
-        NotApplicable ->
-            "Not applicable"
-
         ClosedSource ->
             "Closed source"
 
