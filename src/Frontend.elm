@@ -33,7 +33,7 @@ app =
 
 init : Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
 init url _ =
-    if Debug.log "a" url.path == "/admin" then
+    if url.path == "/admin" then
         ( AdminLogin { password = "", loginFailed = False }, Cmd.none )
 
     else
