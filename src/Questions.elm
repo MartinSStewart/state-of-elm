@@ -669,6 +669,7 @@ type StylingTools
     | PlainCss
     | ElmUi
     | Tailwind
+    | Bootstrap
 
 
 type BuildTools
@@ -755,6 +756,7 @@ allStylingTools =
         , PlainCss
         , ElmUi
         , Tailwind
+        , Bootstrap
         ]
 
 
@@ -907,6 +909,9 @@ stylingToolsToString a =
 
         Tailwind ->
             "Tailwind"
+
+        Bootstrap ->
+            "Bootstrap"
 
 
 buildToolsToString : BuildTools -> String
