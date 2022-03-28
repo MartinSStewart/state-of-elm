@@ -267,19 +267,20 @@ slider title maybeSubtitle minValue maxValue maybeSelection updateModel =
         , Element.column
             [ Element.width Element.fill, Element.spacing 8 ]
             [ Element.el
-                [ Element.Font.color blue0, Element.Font.size 16, Element.height (Element.px 20) ]
+                [ Element.Font.color blue0, Element.Font.size 16 ]
                 (case maybeSelection of
                     Just selection ->
                         Element.text ("You selected: " ++ String.fromInt selection)
 
                     Nothing ->
-                        Element.none
+                        Element.text "Drag the slider"
                 )
             , Element.row
                 [ Element.width Element.fill, Element.spacing 8 ]
                 [ Element.text (String.fromInt minValue)
                 , Element.Input.slider
                     [ Element.width Element.fill
+                    , Element.height (Element.px 24)
                     , Element.behindContent
                         (Element.el
                             [ Element.Background.color blue1
@@ -297,7 +298,15 @@ slider title maybeSubtitle minValue maxValue maybeSelection updateModel =
                     , min = toFloat minValue
                     , max = toFloat maxValue
                     , step = Just 1
-                    , thumb = Element.Input.defaultThumb
+                    , thumb =
+                        Element.Input.thumb
+                            [ Element.width (Element.px 24)
+                            , Element.height (Element.px 24)
+                            , Element.Border.rounded 99
+                            , Element.Border.width 1
+                            , Element.Border.color (Element.rgb 0.5 0.5 0.5)
+                            , Element.Background.color (Element.rgb 1 1 1)
+                            ]
                     }
                 , Element.text (String.fromInt maxValue)
                 ]
