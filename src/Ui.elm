@@ -4,6 +4,7 @@ module Ui exposing
     , acceptTosQuestion
     , blue0
     , blue1
+    , disclaimer
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
@@ -195,7 +196,15 @@ acceptTosQuestion acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
                 , label = Element.text "Submit survey"
                 }
           )
+        , ( "disclaimer", disclaimer )
         ]
+
+
+disclaimer : Element msg
+disclaimer =
+    Element.paragraph
+        [ Element.Font.color white, Element.Font.size 14 ]
+        [ Element.text "This is a community run survey not affiliated with Evan Czaplicki or Elm" ]
 
 
 animatedUi =

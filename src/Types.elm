@@ -11,7 +11,13 @@ import Url exposing (Url)
 
 type FrontendModel
     = FormLoading
-    | FormLoaded { form : Form, acceptedTos : Bool, submitting : Bool, pressedSubmitCount : Int }
+    | FormLoaded
+        { form : Form
+        , acceptedTos : Bool
+        , submitting : Bool
+        , pressedSubmitCount : Int
+        , debounceCounter : Int
+        }
     | FormCompleted
 
 
@@ -56,6 +62,7 @@ type FrontendMsg
     | FormChanged Form
     | PressedAcceptTosAnswer Bool
     | PressedSubmitSurvey
+    | Debounce Int
 
 
 type ToBackend

@@ -200,10 +200,14 @@ type OtherLanguages
     | CPlusPlus
     | OCaml
     | Python
-    | R
     | Swift
     | PHP
     | Java
+    | Ruby
+    | Elixir
+    | Clojure
+    | Rust
+    | FSharp
 
 
 allOtherLanguages : Nonempty OtherLanguages
@@ -218,10 +222,14 @@ allOtherLanguages =
         , CPlusPlus
         , OCaml
         , Python
-        , R
         , Swift
         , PHP
         , Java
+        , Ruby
+        , Elixir
+        , Clojure
+        , Rust
+        , FSharp
         ]
 
 
@@ -255,9 +263,6 @@ otherLanguagesToString otherLanguages =
         Python ->
             "Python"
 
-        R ->
-            "R"
-
         Swift ->
             "Swift"
 
@@ -266,6 +271,21 @@ otherLanguagesToString otherLanguages =
 
         Java ->
             "Java"
+
+        Ruby ->
+            "Ruby"
+
+        Elixir ->
+            "Elixir"
+
+        Clojure ->
+            "Clojure"
+
+        Rust ->
+            "Rust"
+
+        FSharp ->
+            "F#"
 
 
 type NewsAndDiscussions
@@ -312,7 +332,7 @@ newsAndDiscussionsToString newsAndDiscussions =
             "Elm Subreddit"
 
         Twitter ->
-            "Twitter"
+            "Twitter discussions"
 
         ElmRadio ->
             "Elm Radio"
@@ -330,10 +350,10 @@ newsAndDiscussionsToString newsAndDiscussions =
             "Meetups"
 
         ElmWeekly ->
-            "Elm Weekly"
+            "Elm Weekly newsletter"
 
         ElmNews ->
-            "Elm News"
+            "elm-news.com"
 
 
 type ElmResources
@@ -606,8 +626,7 @@ type StylingTools
 
 
 type BuildTools
-    = Broccoli
-    | ShellScripts
+    = ShellScripts
     | ElmLive
     | CreateElmApp
     | Webpack
@@ -615,7 +634,6 @@ type BuildTools
     | ElmMakeStandalone
     | Gulp
     | Make
-    | Grunt
     | ElmReactor
     | Lamdera
     | Parcel
@@ -700,16 +718,14 @@ allStylingTools =
 
 allBuildTools : Nonempty BuildTools
 allBuildTools =
-    Nonempty Broccoli
-        [ ShellScripts
-        , ElmLive
+    Nonempty ShellScripts
+        [ ElmLive
         , CreateElmApp
         , Webpack
         , Brunch
         , ElmMakeStandalone
         , Gulp
         , Make
-        , Grunt
         , ElmReactor
         , Lamdera
         , Parcel
@@ -838,7 +854,7 @@ doYouUseElmFormatToString a =
             "I have tried elm-format, but prefer to not use it"
 
         HeardButDontUseElmFormat ->
-            "I have heard of elm-format, but have no used it"
+            "I have heard of elm-format, but have not used it"
 
         HaveNotHeardOfElmFormat ->
             "I have not previously heard of elm-format"
@@ -866,9 +882,6 @@ stylingToolsToString a =
 buildToolsToString : BuildTools -> String
 buildToolsToString a =
     case a of
-        Broccoli ->
-            "Broccoli"
-
         ShellScripts ->
             "Shell scripts"
 
@@ -892,9 +905,6 @@ buildToolsToString a =
 
         Make ->
             "Make"
-
-        Grunt ->
-            "Grunt"
 
         ElmReactor ->
             "elm-reactor"
