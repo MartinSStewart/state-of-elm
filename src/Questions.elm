@@ -1,5 +1,6 @@
 module Questions exposing
-    ( BuildTools(..)
+    ( Age(..)
+    , BuildTools(..)
     , DoYouUseElm(..)
     , DoYouUseElmFormat(..)
     , Editor(..)
@@ -16,6 +17,8 @@ module Questions exposing
     , WhatElmVersion(..)
     , WhereDoYouUseElm(..)
     , YesNo(..)
+    , ageToString
+    , allAge
     , allApplicationDomains
     , allBuildTools
     , allDoYouUseElm
@@ -54,6 +57,53 @@ module Questions exposing
     )
 
 import List.Nonempty exposing (Nonempty(..))
+
+
+type Age
+    = Under10
+    | Age10To20
+    | Age20To30
+    | Age30To40
+    | Age40To50
+    | Age50To60
+    | Over60
+
+
+allAge : Nonempty Age
+allAge =
+    Nonempty Under10
+        [ Age10To20
+        , Age20To30
+        , Age30To40
+        , Age40To50
+        , Age50To60
+        , Over60
+        ]
+
+
+ageToString : Age -> String
+ageToString age =
+    case age of
+        Under10 ->
+            "Younger than 10"
+
+        Age10To20 ->
+            "Between 10 and 20"
+
+        Age20To30 ->
+            "Between 20 and 30"
+
+        Age30To40 ->
+            "Between 30 and 40"
+
+        Age40To50 ->
+            "Between 40 and 50"
+
+        Age50To60 ->
+            "Between 50 and 60"
+
+        Over60 ->
+            "Older than 60"
 
 
 type ExperienceLevel

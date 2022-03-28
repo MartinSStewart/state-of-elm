@@ -2,6 +2,8 @@ module Backend exposing (..)
 
 import AssocList as Dict
 import Lamdera exposing (ClientId, SessionId)
+import Task
+import Time
 import Types exposing (..)
 
 
@@ -28,11 +30,12 @@ update msg model =
             ( model
             , (case Dict.get sessionId model.forms of
                 Just value ->
-                    if value.isSubmitted then
-                        FormSubmitted
+                    case value.submitTime of
+                        Just _ ->
+                            FormSubmitted
 
-                    else
-                        FormAutoSaved value.form
+                        Nothing ->
+                            FormAutoSaved value.form
 
                 Nothing ->
                     NoFormFound
@@ -41,9 +44,17 @@ update msg model =
                 |> Lamdera.sendToFrontend clientId
             )
 
+        GotTimeWithUpdate sessionId clientId toBackend time ->
+            updateFromFrontendWithTime time sessionId clientId toBackend model
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
+    ( model, Time.now |> Task.perform (GotTimeWithUpdate sessionId clientId msg) )
+
+
+updateFromFrontendWithTime : Time.Posix -> SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+updateFromFrontendWithTime time sessionId clientId msg model =
     case msg of
         AutoSaveForm form ->
             ( { model
@@ -53,14 +64,15 @@ updateFromFrontend sessionId clientId msg model =
                         (\maybeValue ->
                             case maybeValue of
                                 Just value ->
-                                    if value.isSubmitted then
-                                        maybeValue
+                                    case value.submitTime of
+                                        Just _ ->
+                                            maybeValue
 
-                                    else
-                                        Just { value | form = form }
+                                        Nothing ->
+                                            Just { value | form = form }
 
                                 Nothing ->
-                                    Just { form = form, isSubmitted = False }
+                                    Just { form = form, submitTime = Nothing }
                         )
                         model.forms
               }
@@ -75,14 +87,15 @@ updateFromFrontend sessionId clientId msg model =
                         (\maybeValue ->
                             case maybeValue of
                                 Just value ->
-                                    if value.isSubmitted then
-                                        maybeValue
+                                    case value.submitTime of
+                                        Just _ ->
+                                            maybeValue
 
-                                    else
-                                        Just { value | form = form, isSubmitted = True }
+                                        Nothing ->
+                                            Just { value | form = form, submitTime = Just time }
 
                                 Nothing ->
-                                    Just { form = form, isSubmitted = True }
+                                    Just { form = form, submitTime = Just time }
                         )
                         model.forms
               }

@@ -4,7 +4,8 @@ import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
-import Questions exposing (BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
+import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
+import Time
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
 
@@ -23,6 +24,7 @@ type FrontendModel
 
 type alias Form =
     { doYouUseElm : Set DoYouUseElm
+    , age : Maybe Age
     , functionalProgrammingExperience : Maybe ExperienceLevel
     , otherLanguages : MultiChoiceWithOther OtherLanguages
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
@@ -52,7 +54,7 @@ type alias Form =
 
 
 type alias BackendModel =
-    { forms : Dict SessionId { form : Form, isSubmitted : Bool }
+    { forms : Dict SessionId { form : Form, submitTime : Maybe Time.Posix }
     }
 
 
@@ -72,6 +74,7 @@ type ToBackend
 
 type BackendMsg
     = UserConnected SessionId ClientId
+    | GotTimeWithUpdate SessionId ClientId ToBackend Time.Posix
 
 
 type LoadFormStatus

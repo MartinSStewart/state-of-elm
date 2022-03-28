@@ -21,6 +21,7 @@ import Element.Border
 import Element.Font
 import Element.Input
 import Element.Keyed
+import Element.Region
 import Html
 import Html.Attributes
 import Html.Events
@@ -159,45 +160,53 @@ multiChoiceQuestion title maybeSubtitle choices choiceToString selection updateM
 
 acceptTosQuestion : Bool -> (Bool -> msg) -> msg -> Int -> Element msg
 acceptTosQuestion acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
-    Element.Keyed.column
-        [ Element.width Element.fill
-        , Element.Background.color blue0
-        , Element.paddingXY 22 24
-        , Element.Font.color white
-        , Element.spacing 16
-        ]
-        [ ( "title"
-          , titleAndSubtitle
-                "Ready to submit the survey?"
-                (Just "We're going to publish the results based on the information you're giving us here, so please make sure that there's nothing you wouldn't want made public in your responses. Hit \"I accept\" to acknowledge that it's all good!")
-          )
-        , ( String.fromInt pressSubmitCount
-          , animatedUi
-                Element.el
-                (Simple.Animation.steps
-                    { startAt = [ Simple.Animation.Property.x 0 ], options = [] }
-                    [ Simple.Animation.step 100 [ Simple.Animation.Property.x -8 ]
-                    , Simple.Animation.step 100 [ Simple.Animation.Property.x 16 ]
-                    , Simple.Animation.step 100 [ Simple.Animation.Property.x 0 ]
-                    ]
+    Element.el
+        [ Element.Background.color blue0, Element.width Element.fill ]
+        (Element.Keyed.column
+            [ Element.paddingXY 22 24
+            , Element.Font.color white
+            , Element.spacing 16
+            , Element.centerX
+            , Element.width (Element.maximum 800 Element.fill)
+            ]
+            [ ( "title"
+              , titleAndSubtitle
+                    "Ready to submit the survey?"
+                    (Just "We're going to publish the results based on the information you're giving us here, so please make sure that there's nothing you wouldn't want made public in your responses. Hit\u{00A0}\"I\u{00A0}accept\" to acknowledge that it's all good!")
+              )
+            , ( String.fromInt pressSubmitCount
+              , (if pressSubmitCount > 0 then
+                    animatedUi
+                        Element.el
+                        (Simple.Animation.steps
+                            { startAt = [ Simple.Animation.Property.x 0 ], options = [] }
+                            [ Simple.Animation.step 100 [ Simple.Animation.Property.x -8 ]
+                            , Simple.Animation.step 100 [ Simple.Animation.Property.x 16 ]
+                            , Simple.Animation.step 100 [ Simple.Animation.Property.x 0 ]
+                            ]
+                        )
+
+                 else
+                    Element.el
                 )
-                []
-                (checkButton "I accept" acceptedTos)
-                |> Element.map (\() -> not acceptedTos |> toggledIAccept)
-          )
-        , ( "submit"
-          , Element.Input.button
-                [ Element.Background.color white
-                , Element.Font.color black
-                , Element.Font.bold
-                , Element.padding 16
-                ]
-                { onPress = Just pressedSubmit
-                , label = Element.text "Submit survey"
-                }
-          )
-        , ( "disclaimer", disclaimer )
-        ]
+                    []
+                    (checkButton "I accept" acceptedTos)
+                    |> Element.map (\() -> not acceptedTos |> toggledIAccept)
+              )
+            , ( "submit"
+              , Element.Input.button
+                    [ Element.Background.color white
+                    , Element.Font.color black
+                    , Element.Font.bold
+                    , Element.padding 16
+                    ]
+                    { onPress = Just pressedSubmit
+                    , label = Element.text "Submit survey"
+                    }
+              )
+            , ( "disclaimer", disclaimer )
+            ]
+        )
 
 
 disclaimer : Element msg
@@ -242,10 +251,10 @@ titleAndSubtitle : String -> Maybe String -> Element msg
 titleAndSubtitle title maybeSubtitle =
     Element.column
         [ Element.spacing 8 ]
-        [ Element.paragraph [ titleFontSize, Element.Font.bold ] [ Element.text title ]
+        [ Element.paragraph [ titleFontSize, Element.Font.bold, Element.Region.heading 3 ] [ Element.text title ]
         , case maybeSubtitle of
             Just subtitle ->
-                Element.paragraph [ subtitleFontSize ] [ Element.text subtitle ]
+                Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text subtitle ]
 
             Nothing ->
                 Element.none
@@ -303,7 +312,7 @@ slider title maybeSubtitle minValue maxValue maybeSelection updateModel =
     container
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
-            [ Element.width Element.fill, Element.spacing 8 ]
+            [ Element.width Element.fill, Element.spacing 16 ]
             [ Element.el
                 [ Element.Font.color blue0, Element.Font.size 16 ]
                 (case maybeSelection of
