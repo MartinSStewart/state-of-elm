@@ -1,35 +1,35 @@
-module Evergreen.Migrate.V4 exposing (..)
+module Evergreen.Migrate.V4 exposing (..)
 
-import Evergreen.V2.Types as Old
-import Evergreen.V4.Types as New
+import Evergreen.V2.Types as Old
+import Evergreen.V4.Types as New
 import Lamdera.Migrations exposing (..)
 
 
-frontendModel : Old.FrontendModel -> ModelMigration New.FrontendModel New.FrontendMsg
-frontendModel old =
-    Unimplemented
+frontendModel : Old.FrontendModel -> ModelMigration New.FrontendModel New.FrontendMsg
+frontendModel old =
+    ModelUnchanged
 
 
-backendModel : Old.BackendModel -> ModelMigration New.BackendModel New.BackendMsg
-backendModel old =
-    Unimplemented
+backendModel : Old.BackendModel -> ModelMigration New.BackendModel New.BackendMsg
+backendModel old =
+    ModelUnchanged
 
 
-frontendMsg : Old.FrontendMsg -> MsgMigration New.FrontendMsg New.FrontendMsg
-frontendMsg old =
-    Unimplemented
+frontendMsg : Old.FrontendMsg -> MsgMigration New.FrontendMsg New.FrontendMsg
+frontendMsg old =
+    MsgOldValueIgnored
 
 
-toBackend : Old.ToBackend -> MsgMigration New.ToBackend New.BackendMsg
-toBackend old =
-    Unimplemented
+toBackend : Old.ToBackend -> MsgMigration New.ToBackend New.BackendMsg
+toBackend old =
+    MsgOldValueIgnored
 
 
-backendMsg : Old.BackendMsg -> MsgMigration New.BackendMsg New.BackendMsg
-backendMsg old =
-    Unimplemented
+backendMsg : Old.BackendMsg -> MsgMigration New.BackendMsg New.BackendMsg
+backendMsg old =
+    MsgOldValueIgnored
 
 
-toFrontend : Old.ToFrontend -> MsgMigration New.ToFrontend New.FrontendMsg
-toFrontend old =
-    Unimplemented
+toFrontend : Old.ToFrontend -> MsgMigration New.ToFrontend New.FrontendMsg
+toFrontend old =
+    MsgOldValueIgnored
