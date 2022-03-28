@@ -21,6 +21,7 @@ type alias Form =
     , otherLanguages : MultiChoiceWithOther OtherLanguages
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
     , elmResources : MultiChoiceWithOther ElmResources
+    , nearestCity : String
     , userGroupNearYou : Maybe YesNo
     , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
     , howLong : Maybe HowLong

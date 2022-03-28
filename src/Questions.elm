@@ -40,10 +40,12 @@ module Questions exposing
     , editorToString
     , elmResourcesToString
     , experienceLevelToString
+    , experienceToInt
     , howFarAlongToStringHobby
     , howFarAlongToStringWork
     , howIsProjectLicensedToString
     , howLongToString
+    , intToExperience
     , newsAndDiscussionsToString
     , otherLanguagesToString
     , stylingToolsToString
@@ -68,6 +70,83 @@ type ExperienceLevel
     | Level8
     | Level9
     | Level10
+
+
+experienceToInt : ExperienceLevel -> Int
+experienceToInt a =
+    case a of
+        Level0 ->
+            0
+
+        Level1 ->
+            1
+
+        Level2 ->
+            2
+
+        Level3 ->
+            3
+
+        Level4 ->
+            4
+
+        Level5 ->
+            5
+
+        Level6 ->
+            6
+
+        Level7 ->
+            7
+
+        Level8 ->
+            8
+
+        Level9 ->
+            9
+
+        Level10 ->
+            10
+
+
+intToExperience : Int -> ExperienceLevel
+intToExperience a =
+    case a of
+        0 ->
+            Level0
+
+        1 ->
+            Level1
+
+        2 ->
+            Level2
+
+        3 ->
+            Level3
+
+        4 ->
+            Level4
+
+        5 ->
+            Level5
+
+        6 ->
+            Level6
+
+        7 ->
+            Level7
+
+        8 ->
+            Level8
+
+        9 ->
+            Level9
+
+        10 ->
+            Level10
+
+        _ ->
+            Level0
 
 
 allExperienceLevels : Nonempty ExperienceLevel
@@ -410,8 +489,14 @@ type WhereDoYouUseElm
     = Education
     | Gaming
     | ECommerce
-    | Music
+    | Audio
     | Finance
+    | Health
+    | Productivity
+    | Communication
+    | DataVisualization
+    | Graphics
+    | Transportation
 
 
 allApplicationDomains : Nonempty WhereDoYouUseElm
@@ -420,8 +505,14 @@ allApplicationDomains =
         Education
         [ Gaming
         , ECommerce
-        , Music
+        , Audio
         , Finance
+        , Health
+        , Productivity
+        , Communication
+        , DataVisualization
+        , Graphics
+        , Transportation
         ]
 
 
@@ -437,11 +528,29 @@ applicationDomainsToString whereDoYouUseElm =
         ECommerce ->
             "E-commerce"
 
-        Music ->
+        Audio ->
             "Music"
 
         Finance ->
             "Finance"
+
+        Health ->
+            "Health"
+
+        Productivity ->
+            "Productivity"
+
+        Communication ->
+            "Communication"
+
+        DataVisualization ->
+            "Data visualization"
+
+        Graphics ->
+            "Graphics"
+
+        Transportation ->
+            "Transportation"
 
 
 type HowLong
@@ -756,7 +865,7 @@ whatElmVersionToString : WhatElmVersion -> String
 whatElmVersionToString a =
     case a of
         Version0_19 ->
-            "0.19 and 0.19.1"
+            "0.19 or 0.19.1"
 
         Version0_18 ->
             "0.18"

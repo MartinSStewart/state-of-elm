@@ -6,9 +6,9 @@ import Browser.Navigation as Nav
 import Element exposing (Element)
 import Element.Background
 import Element.Font
+import Element.Region
 import Lamdera
-import List.Nonempty exposing (Nonempty(..))
-import Questions
+import Questions exposing (ExperienceLevel(..))
 import Types exposing (..)
 import Ui
 import Url
@@ -37,6 +37,7 @@ init _ key =
             , newsAndDiscussions = Ui.multiChoiceWithOtherInit
             , elmResources = Ui.multiChoiceWithOtherInit
             , userGroupNearYou = Nothing
+            , nearestCity = ""
             , applicationDomains = Ui.multiChoiceWithOtherInit
             , howLong = Nothing
             , howFarAlongWork = Nothing
@@ -101,7 +102,7 @@ view model =
     { title = "State of Elm 2022"
     , body =
         [ Element.layout
-            []
+            [ Element.Region.mainContent ]
             (Element.column
                 [ Element.spacing 24
                 , Element.width Element.fill
@@ -125,7 +126,7 @@ view model =
                             [ Element.text "This is a survey to better understand the Elm community." ]
                         , Element.paragraph
                             []
-                            [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with and press submit at the bottom when you are finished." ]
+                            [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
                         ]
                     )
                 , formView model.form
@@ -151,13 +152,13 @@ formView form =
             Questions.doYouUseElmToString
             form.doYouUseElm
             (\a -> FormChanged { form | doYouUseElm = a })
-        , Ui.singleChoiceQuestion
+        , Ui.slider
             "What is your level of experience with functional programming?"
             (Just "Where 0 is beginner and 10 is expert.")
-            Questions.allExperienceLevels
-            Questions.experienceLevelToString
-            form.functionalProgrammingExperience
-            (\a -> FormChanged { form | functionalProgrammingExperience = a })
+            0
+            10
+            (Maybe.map Questions.experienceToInt form.functionalProgrammingExperience)
+            (\a -> FormChanged { form | functionalProgrammingExperience = Questions.intToExperience a |> Just })
         , Ui.multiChoiceQuestionWithOther
             "What programming languages, other than Elm, are you most familiar with?"
             (Just "Note that it's totally fine if that's \"none\"!")
@@ -186,9 +187,14 @@ formView form =
             Questions.yesNoToString
             form.userGroupNearYou
             (\a -> FormChanged { form | userGroupNearYou = a })
+        , Ui.textInput
+            "What's the nearest city to you?"
+            (Just "If you are already using Elm at work, please skip this question.")
+            form.nearestCity
+            (\a -> FormChanged { form | nearestCity = a })
         , Ui.multiChoiceQuestionWithOther
             "In which application domains, if any, have you used Elm?"
-            (Just "This means things like education, gaming, e-commerce, or music–not \"web development\". What are you using Elm for?")
+            (Just "We're asking both to get an idea of where Elm users are located and where might be good to encourage new user groups.")
             Questions.allApplicationDomains
             Questions.applicationDomainsToString
             form.applicationDomains
