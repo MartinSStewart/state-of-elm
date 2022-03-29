@@ -2,12 +2,12 @@ module Questions exposing
     ( Age(..)
     , BuildTools(..)
     , DoYouUseElm(..)
+    , DoYouUseElmAtWork(..)
     , DoYouUseElmFormat(..)
     , Editor(..)
     , ElmResources(..)
     , ExperienceLevel(..)
-    , HowFarAlong(..)
-    , HowIsProjectLicensed(..)
+    , HowLargeIsTheCompany(..)
     , HowLong(..)
     , NewsAndDiscussions(..)
     , OtherLanguages(..)
@@ -15,17 +15,19 @@ module Questions exposing
     , TestTools(..)
     , TestsWrittenFor(..)
     , WhatElmVersion(..)
+    , WhatLanguageDoYouUseForTheBackend(..)
     , WhereDoYouUseElm(..)
     , ageToString
     , allAge
     , allApplicationDomains
     , allBuildTools
     , allDoYouUseElm
+    , allDoYouUseElmAtWork
     , allDoYouUseElmFormat
+    , allDoYouUseElmReview
     , allEditor
     , allElmResources
-    , allHowFarAlong
-    , allHowIsProjectLicensed
+    , allHowLargeIsTheCompany
     , allHowLong
     , allNewsAndDiscussions
     , allOtherLanguages
@@ -33,16 +35,18 @@ module Questions exposing
     , allTestTools
     , allTestsWrittenFor
     , allWhatElmVersion
+    , allWhatLanguageDoYouUseForTheBackend
+    , allWhichElmReviewRulesDoYouUse
     , applicationDomainsToString
     , buildToolsToString
+    , doYouUseElmAtWorkToString
     , doYouUseElmFormatToString
+    , doYouUseElmReview
     , doYouUseElmToString
     , editorToString
     , elmResourcesToString
     , experienceToInt
-    , howFarAlongToStringHobby
-    , howFarAlongToStringWork
-    , howIsProjectLicensedToString
+    , howLargeIsTheCompanyToString
     , howLongToString
     , intToExperience
     , newsAndDiscussionsToString
@@ -51,6 +55,8 @@ module Questions exposing
     , testToolsToString
     , testsWrittenForToString
     , whatElmVersionToString
+    , whatLanguageDoYouUseForTheBackendToString
+    , whichElmReviewRulesDoYouUse
     )
 
 import List.Nonempty exposing (Nonempty(..))
@@ -58,22 +64,22 @@ import List.Nonempty exposing (Nonempty(..))
 
 type Age
     = Under10
-    | Age10To20
-    | Age20To30
-    | Age30To40
-    | Age40To50
-    | Age50To60
+    | Age10To19
+    | Age20To29
+    | Age30To39
+    | Age40To49
+    | Age50To59
     | Over60
 
 
 allAge : Nonempty Age
 allAge =
     Nonempty Under10
-        [ Age10To20
-        , Age20To30
-        , Age30To40
-        , Age40To50
-        , Age50To60
+        [ Age10To19
+        , Age20To29
+        , Age30To39
+        , Age40To49
+        , Age50To59
         , Over60
         ]
 
@@ -84,20 +90,20 @@ ageToString age =
         Under10 ->
             "Younger than 10"
 
-        Age10To20 ->
-            "Between 10 and 20"
+        Age10To19 ->
+            "Between 10 and 19"
 
-        Age20To30 ->
-            "Between 20 and 30"
+        Age20To29 ->
+            "Between 20 and 29"
 
-        Age30To40 ->
-            "Between 30 and 40"
+        Age30To39 ->
+            "Between 30 and 39"
 
-        Age40To50 ->
-            "Between 40 and 50"
+        Age40To49 ->
+            "Between 40 and 49"
 
-        Age50To60 ->
-            "Between 50 and 60"
+        Age50To59 ->
+            "Between 50 and 59"
 
         Over60 ->
             "60 years or older"
@@ -419,6 +425,150 @@ type ElmResources
     | ElmForBeginners
     | ElmSlack_
     | FrontendMasters
+    | ElmOnline
+
+
+type WhereDoYouUseElm
+    = Education
+    | Gaming
+    | ECommerce
+    | Audio
+    | Finance
+    | Health
+    | Productivity
+    | Communication
+    | DataVisualization
+    | Transportation
+
+
+type HowLong
+    = Under3Months
+    | Between3MonthsAndAYear
+    | OneYear
+    | TwoYears
+    | ThreeYears
+    | FourYears
+    | FiveYears
+    | SixYears
+    | SevenYears
+    | EightYears
+    | NineYears
+
+
+type DoYouUseElmReview
+    = NeverHeardOfElmReview
+    | HeardOfItButNeverTriedElmReview
+    | IveTriedElmReview
+    | IUseElmReviewRegularly
+
+
+type WhichElmReviewRulesDoYouUse
+    = ElmReviewUnused
+    | ElmReviewSimplify
+    | ElmReviewLicense
+    | ElmReviewDebug
+    | ElmReviewCommon
+    | ElmReviewCognitiveComplexity
+
+
+type DoYouUseElmAtWork
+    = NotInterestedInElmAtWork
+    | WouldLikeToUseElmAtWork
+    | HaveTriedElmInAWorkProject
+    | MyTeamMostlyWritesNewCodeInElm
+    | NotEmployed
+
+
+type HowLargeIsTheCompany
+    = Size1To10Employees
+    | Size11To50Employees
+    | Size50To100Employees
+    | Size100OrMore
+    | NotEmployed_
+
+
+type WhatLanguageDoYouUseForTheBackend
+    = JavaScript_
+    | TypeScript_
+    | Go_
+    | Haskell_
+    | CSharp_
+    | OCaml_
+    | Python_
+    | PHP_
+    | Java_
+    | Ruby_
+    | Elixir_
+    | Clojure_
+    | Rust_
+    | FSharp_
+    | AlsoElm
+    | NotApplicable
+
+
+type WhatElmVersion
+    = Version0_19
+    | Version0_18
+    | Version0_17
+    | Version0_16
+
+
+type DoYouUseElmFormat
+    = PreferElmFormat
+    | TriedButDontUseElmFormat
+    | HeardButDontUseElmFormat
+    | HaveNotHeardOfElmFormat
+
+
+type StylingTools
+    = SassOrScss
+    | ElmCss
+    | PlainCss
+    | ElmUi
+    | Tailwind
+    | ElmTailwindModules
+    | Bootstrap
+
+
+type BuildTools
+    = ShellScripts
+    | ElmLive
+    | CreateElmApp
+    | Webpack
+    | Brunch
+    | ElmMakeStandalone
+    | Gulp
+    | Make
+    | ElmReactor
+    | Lamdera
+    | Parcel
+
+
+type Editor
+    = SublimeText
+    | Vim
+    | Atom
+    | Emacs
+    | VSCode
+    | Intellij
+
+
+type TestTools
+    = IDontWriteTests
+    | BrowserAcceptanceTests
+    | ElmBenchmark
+    | ElmTest
+    | ElmProgramTest
+    | VisualRegressionTests
+
+
+type TestsWrittenFor
+    = ComplicatedFunctions
+    | FunctionsThatReturnCmds
+    | AllPublicFunctions
+    | HtmlFunctions
+    | JsonDecodersAndEncoders
+    | MostPublicFunctions
 
 
 allElmResources : Nonempty ElmResources
@@ -437,6 +587,7 @@ allElmResources =
         , ElmForBeginners
         , ElmSlack_
         , FrontendMasters
+        , ElmOnline
         ]
         |> List.Nonempty.sortBy elmResourcesToString
 
@@ -483,18 +634,8 @@ elmResourcesToString elmResources =
         FrontendMasters ->
             "Frontend Masters"
 
-
-type WhereDoYouUseElm
-    = Education
-    | Gaming
-    | ECommerce
-    | Audio
-    | Finance
-    | Health
-    | Productivity
-    | Communication
-    | DataVisualization
-    | Transportation
+        ElmOnline ->
+            "Elm Online"
 
 
 allApplicationDomains : Nonempty WhereDoYouUseElm
@@ -546,20 +687,6 @@ applicationDomainsToString whereDoYouUseElm =
 
         Transportation ->
             "Transportation"
-
-
-type HowLong
-    = Under3Months
-    | Between3MonthsAndAYear
-    | OneYear
-    | TwoYears
-    | ThreeYears
-    | FourYears
-    | FiveYears
-    | SixYears
-    | SevenYears
-    | EightYears
-    | NineYears
 
 
 allHowLong : Nonempty HowLong
@@ -616,102 +743,6 @@ howLongToString howLong =
             "9 years"
 
 
-type HowFarAlong
-    = IHaveNotStarted
-    | PlanningLearningExplorationPhase
-    | InDevelopment
-    | InStaging
-    | Shipped
-
-
-type HowIsProjectLicensed
-    = ClosedSource
-    | OpenSourceShareAlike
-    | OpenSourcePermissive
-
-
-type WhatElmVersion
-    = Version0_19
-    | Version0_18
-    | Version0_17
-    | Version0_16
-
-
-type DoYouUseElmFormat
-    = PreferElmFormat
-    | TriedButDontUseElmFormat
-    | HeardButDontUseElmFormat
-    | HaveNotHeardOfElmFormat
-
-
-type StylingTools
-    = SassOrScss
-    | ElmCss
-    | PlainCss
-    | ElmUi
-    | Tailwind
-    | Bootstrap
-
-
-type BuildTools
-    = ShellScripts
-    | ElmLive
-    | CreateElmApp
-    | Webpack
-    | Brunch
-    | ElmMakeStandalone
-    | Gulp
-    | Make
-    | ElmReactor
-    | Lamdera
-    | Parcel
-
-
-type Editor
-    = SublimeText
-    | Vim
-    | Atom
-    | Emacs
-    | VSCode
-    | Intellij
-
-
-type TestTools
-    = IDontWriteTests
-    | BrowserAcceptanceTests
-    | ElmBenchmark
-    | ElmTest
-    | ElmProgramTest
-    | VisualRegressionTests
-
-
-type TestsWrittenFor
-    = ComplicatedFunctions
-    | FunctionsThatReturnCmds
-    | AllPublicFunctions
-    | HtmlFunctions
-    | JsonDecodersAndEncoders
-    | MostPublicFunctions
-
-
-allHowFarAlong : Nonempty HowFarAlong
-allHowFarAlong =
-    Nonempty IHaveNotStarted
-        [ PlanningLearningExplorationPhase
-        , InDevelopment
-        , InStaging
-        , Shipped
-        ]
-
-
-allHowIsProjectLicensed : Nonempty HowIsProjectLicensed
-allHowIsProjectLicensed =
-    Nonempty ClosedSource
-        [ OpenSourceShareAlike
-        , OpenSourcePermissive
-        ]
-
-
 allWhatElmVersion : Nonempty WhatElmVersion
 allWhatElmVersion =
     Nonempty Version0_19
@@ -738,7 +769,9 @@ allStylingTools =
         , ElmUi
         , Tailwind
         , Bootstrap
+        , ElmTailwindModules
         ]
+        |> List.Nonempty.sortBy stylingToolsToString
 
 
 allBuildTools : Nonempty BuildTools
@@ -767,6 +800,7 @@ allEditor =
         , VSCode
         , Intellij
         ]
+        |> List.Nonempty.sortBy editorToString
 
 
 allTestTools : Nonempty TestTools
@@ -789,57 +823,6 @@ allTestsWrittenFor =
         , JsonDecodersAndEncoders
         , MostPublicFunctions
         ]
-
-
-howFarAlongToStringWork : HowFarAlong -> String
-howFarAlongToStringWork howFarAlong =
-    case howFarAlong of
-        IHaveNotStarted ->
-            "I have not started an Elm project at work"
-
-        PlanningLearningExplorationPhase ->
-            "In the planning / learning / exploration phase"
-
-        InDevelopment ->
-            "In development"
-
-        InStaging ->
-            "In staging"
-
-        Shipped ->
-            "Shipped / released to users / in production"
-
-
-howFarAlongToStringHobby : HowFarAlong -> String
-howFarAlongToStringHobby howFarAlong =
-    case howFarAlong of
-        IHaveNotStarted ->
-            "I have not started a side project using Elm"
-
-        PlanningLearningExplorationPhase ->
-            "In the planning / learning / exploration phase"
-
-        InDevelopment ->
-            "In development"
-
-        InStaging ->
-            "In staging"
-
-        Shipped ->
-            "Shipped / released to users / in production"
-
-
-howIsProjectLicensedToString : HowIsProjectLicensed -> String
-howIsProjectLicensedToString a =
-    case a of
-        ClosedSource ->
-            "Closed source"
-
-        OpenSourceShareAlike ->
-            "Open source (share-alike license like GPL)"
-
-        OpenSourcePermissive ->
-            "Open source (permissive license like BSD)"
 
 
 whatElmVersionToString : WhatElmVersion -> String
@@ -894,6 +877,9 @@ stylingToolsToString a =
 
         Bootstrap ->
             "Bootstrap"
+
+        ElmTailwindModules ->
+            "elm-tailwind-modules"
 
 
 buildToolsToString : BuildTools -> String
@@ -997,3 +983,191 @@ testsWrittenForToString a =
 
         MostPublicFunctions ->
             "Most public functions in your modules"
+
+
+allDoYouUseElmReview : Nonempty DoYouUseElmReview
+allDoYouUseElmReview =
+    Nonempty NeverHeardOfElmReview
+        [ HeardOfItButNeverTriedElmReview
+        , IveTriedElmReview
+        , IUseElmReviewRegularly
+        ]
+
+
+allWhichElmReviewRulesDoYouUse : Nonempty WhichElmReviewRulesDoYouUse
+allWhichElmReviewRulesDoYouUse =
+    Nonempty ElmReviewUnused
+        [ ElmReviewSimplify
+        , ElmReviewLicense
+        , ElmReviewDebug
+        , ElmReviewCommon
+        , ElmReviewCognitiveComplexity
+        ]
+
+
+allDoYouUseElmAtWork : Nonempty DoYouUseElmAtWork
+allDoYouUseElmAtWork =
+    Nonempty NotInterestedInElmAtWork
+        [ WouldLikeToUseElmAtWork
+        , HaveTriedElmInAWorkProject
+        , MyTeamMostlyWritesNewCodeInElm
+        , NotEmployed
+        ]
+
+
+allHowLargeIsTheCompany : Nonempty HowLargeIsTheCompany
+allHowLargeIsTheCompany =
+    Nonempty Size1To10Employees
+        [ Size11To50Employees
+        , Size50To100Employees
+        , Size100OrMore
+        ]
+
+
+allWhatLanguageDoYouUseForTheBackend : Nonempty WhatLanguageDoYouUseForTheBackend
+allWhatLanguageDoYouUseForTheBackend =
+    Nonempty JavaScript_
+        [ TypeScript_
+        , Go_
+        , Haskell_
+        , CSharp_
+        , OCaml_
+        , Python_
+        , PHP_
+        , Java_
+        , Ruby_
+        , Elixir_
+        , Clojure_
+        , Rust_
+        , FSharp_
+        , AlsoElm
+        , NotApplicable
+        ]
+
+
+doYouUseElmReview : DoYouUseElmReview -> String
+doYouUseElmReview value =
+    case value of
+        NeverHeardOfElmReview ->
+            "I've never heard of it"
+
+        HeardOfItButNeverTriedElmReview ->
+            "I've heard of it but never tried it"
+
+        IveTriedElmReview ->
+            "I've tried it"
+
+        IUseElmReviewRegularly ->
+            "I use elm-review regularly"
+
+
+whichElmReviewRulesDoYouUse : WhichElmReviewRulesDoYouUse -> String
+whichElmReviewRulesDoYouUse value =
+    case value of
+        ElmReviewUnused ->
+            "jfmengels/elm-review-unused"
+
+        ElmReviewSimplify ->
+            "jfmengels/elm-review-simplify"
+
+        ElmReviewLicense ->
+            "jfmengels/elm-review-license"
+
+        ElmReviewDebug ->
+            "jfmengels/elm-review-debug"
+
+        ElmReviewCommon ->
+            "jfmengels/elm-review-common"
+
+        ElmReviewCognitiveComplexity ->
+            "jfmengels/elm-review-cognitive-complexity"
+
+
+doYouUseElmAtWorkToString : DoYouUseElmAtWork -> String
+doYouUseElmAtWorkToString value =
+    case value of
+        NotInterestedInElmAtWork ->
+            "No, and not interested"
+
+        WouldLikeToUseElmAtWork ->
+            "No, but I am interested"
+
+        HaveTriedElmInAWorkProject ->
+            "I have tried Elm at work"
+
+        MyTeamMostlyWritesNewCodeInElm ->
+            "My team mostly writes new code in Elm"
+
+        NotEmployed ->
+            "Not employed"
+
+
+howLargeIsTheCompanyToString : HowLargeIsTheCompany -> String
+howLargeIsTheCompanyToString value =
+    case value of
+        Size1To10Employees ->
+            "1 to 10 employees"
+
+        Size11To50Employees ->
+            "11 to 50 employees"
+
+        Size50To100Employees ->
+            "50 to 100 employees"
+
+        Size100OrMore ->
+            "100+ employees"
+
+        NotEmployed_ ->
+            "Not employed"
+
+
+whatLanguageDoYouUseForTheBackendToString : WhatLanguageDoYouUseForTheBackend -> String
+whatLanguageDoYouUseForTheBackendToString value =
+    case value of
+        JavaScript_ ->
+            "JavaScript"
+
+        TypeScript_ ->
+            "TypeScript"
+
+        Go_ ->
+            "Go"
+
+        Haskell_ ->
+            "Haskell"
+
+        CSharp_ ->
+            "CSharp"
+
+        OCaml_ ->
+            "OCaml"
+
+        Python_ ->
+            "Python"
+
+        PHP_ ->
+            "PHP"
+
+        Java_ ->
+            "Java"
+
+        Ruby_ ->
+            "Ruby"
+
+        Elixir_ ->
+            "Elixir"
+
+        Clojure_ ->
+            "Clojure"
+
+        Rust_ ->
+            "Rust"
+
+        FSharp_ ->
+            "FSharp"
+
+        AlsoElm ->
+            "Elm"
+
+        NotApplicable ->
+            "NotApplicable"

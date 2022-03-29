@@ -11,7 +11,7 @@ import Element.Input
 import Element.Region
 import Lamdera
 import Process
-import Questions exposing (DoYouUseElm(..), ExperienceLevel(..), HowFarAlong(..))
+import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), ExperienceLevel(..))
 import Svg
 import Svg.Attributes
 import Task
@@ -170,13 +170,9 @@ updateFromBackend msg model =
                                     , elmResources = Ui.multiChoiceWithOtherInit
                                     , countryLivingIn = ""
                                     , applicationDomains = Ui.multiChoiceWithOtherInit
+                                    , doYouUseElmAtWork = Nothing
+                                    , howLargeIsTheCompany = Nothing
                                     , howLong = Nothing
-                                    , howFarAlongWork = Nothing
-                                    , howIsProjectLicensedWork = Nothing
-                                    , workAdoptionChallenge = ""
-                                    , howFarAlongHobby = Nothing
-                                    , howIsProjectLicensedHobby = Nothing
-                                    , hobbyAdoptionChallenge = ""
                                     , elmVersion = Ui.multiChoiceWithOtherInit
                                     , doYouUseElmFormat = Nothing
                                     , stylingTools = Ui.multiChoiceWithOtherInit
@@ -526,11 +522,32 @@ formView form =
             section "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     "In which application domains, if any, have you used Elm?"
-                    Nothing
+                    (Just "Either at work or in you free time")
                     Questions.allApplicationDomains
                     Questions.applicationDomainsToString
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
+                , Ui.singleChoiceQuestion
+                    "Do you use Elm at work?"
+                    (Just "Either for customer facing products or internal tools")
+                    Questions.allDoYouUseElmAtWork
+                    Questions.doYouUseElmAtWorkToString
+                    form.doYouUseElmAtWork
+                    (\a -> FormChanged { form | doYouUseElmAtWork = a })
+                , Ui.singleChoiceQuestion
+                    "How large is the company you work at?"
+                    Nothing
+                    Questions.allHowLargeIsTheCompany
+                    Questions.howLargeIsTheCompanyToString
+                    form.howLargeIsTheCompany
+                    (\a -> FormChanged { form | howLargeIsTheCompany = a })
+                , Ui.singleChoiceQuestion
+                    "What languages does your company use on the backend?"
+                    Nothing
+                    Questions.allHowLargeIsTheCompany
+                    Questions.howLargeIsTheCompanyToString
+                    form.howLargeIsTheCompany
+                    (\a -> FormChanged { form | howLargeIsTheCompany = a })
                 , Ui.singleChoiceQuestion
                     "How long have you been using Elm?"
                     Nothing
@@ -538,70 +555,6 @@ formView form =
                     Questions.howLongToString
                     form.howLong
                     (\a -> FormChanged { form | howLong = a })
-                , Element.column
-                    []
-                    [ Ui.singleChoiceQuestion
-                        "How far along is your most mature Elm project at work?"
-                        Nothing
-                        Questions.allHowFarAlong
-                        Questions.howFarAlongToStringWork
-                        form.howFarAlongWork
-                        (\a -> FormChanged { form | howFarAlongWork = a })
-                    , case form.howFarAlongWork of
-                        Just IHaveNotStarted ->
-                            Ui.textInput
-                                "What's the main challenge preventing your organization from adopting Elm?"
-                                Nothing
-                                form.workAdoptionChallenge
-                                (\a -> FormChanged { form | workAdoptionChallenge = a })
-
-                        Just PlanningLearningExplorationPhase ->
-                            workProjectLicenseQuestion form
-
-                        Just InDevelopment ->
-                            workProjectLicenseQuestion form
-
-                        Just InStaging ->
-                            workProjectLicenseQuestion form
-
-                        Just Shipped ->
-                            workProjectLicenseQuestion form
-
-                        Nothing ->
-                            Element.none
-                    ]
-                , Element.column
-                    []
-                    [ Ui.singleChoiceQuestion
-                        "How far along is your most mature Elm side project?"
-                        (Just "Meaning anything done in your spare time. For example, an application or package.")
-                        Questions.allHowFarAlong
-                        Questions.howFarAlongToStringHobby
-                        form.howFarAlongHobby
-                        (\a -> FormChanged { form | howFarAlongHobby = a })
-                    , case form.howFarAlongHobby of
-                        Just IHaveNotStarted ->
-                            Ui.textInput
-                                "What is the biggest thing that prevents you from using Elm in your side projects?"
-                                Nothing
-                                form.hobbyAdoptionChallenge
-                                (\a -> FormChanged { form | hobbyAdoptionChallenge = a })
-
-                        Just PlanningLearningExplorationPhase ->
-                            hobbyProjectLicenseQuestion form
-
-                        Just InDevelopment ->
-                            hobbyProjectLicenseQuestion form
-
-                        Just InStaging ->
-                            hobbyProjectLicenseQuestion form
-
-                        Just Shipped ->
-                            hobbyProjectLicenseQuestion form
-
-                        Nothing ->
-                            Element.none
-                    ]
                 , Ui.multiChoiceQuestionWithOther
                     "What versions of Elm are you using?"
                     Nothing
@@ -679,23 +632,3 @@ formView form =
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })
                 ]
         ]
-
-
-workProjectLicenseQuestion form =
-    Ui.singleChoiceQuestion
-        "How is that work project licensed?"
-        (Just "Or, if it is not yet released, how will it be licensed?")
-        Questions.allHowIsProjectLicensed
-        Questions.howIsProjectLicensedToString
-        form.howIsProjectLicensedWork
-        (\a -> FormChanged { form | howIsProjectLicensedWork = a })
-
-
-hobbyProjectLicenseQuestion form =
-    Ui.singleChoiceQuestion
-        "How is that side project licensed?"
-        (Just "Or, if it is not yet released, how will it be licensed?")
-        Questions.allHowIsProjectLicensed
-        Questions.howIsProjectLicensedToString
-        form.howIsProjectLicensedHobby
-        (\a -> FormChanged { form | howIsProjectLicensedHobby = a })

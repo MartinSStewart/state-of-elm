@@ -4,7 +4,7 @@ import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
-import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm)
+import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm)
 import Time
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
@@ -36,13 +36,9 @@ type alias Form =
     , elmResources : MultiChoiceWithOther ElmResources
     , countryLivingIn : String
     , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
+    , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
+    , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
     , howLong : Maybe HowLong
-    , howFarAlongWork : Maybe HowFarAlong
-    , howIsProjectLicensedWork : Maybe HowIsProjectLicensed
-    , workAdoptionChallenge : String
-    , howFarAlongHobby : Maybe HowFarAlong
-    , howIsProjectLicensedHobby : Maybe HowIsProjectLicensed
-    , hobbyAdoptionChallenge : String
     , elmVersion : MultiChoiceWithOther WhatElmVersion
     , doYouUseElmFormat : Maybe DoYouUseElmFormat
     , stylingTools : MultiChoiceWithOther StylingTools
