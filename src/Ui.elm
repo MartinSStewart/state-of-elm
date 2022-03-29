@@ -8,6 +8,7 @@ module Ui exposing
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
+    , searchableTextInput
     , singleChoiceQuestion
     , slider
     , textInput
@@ -46,6 +47,31 @@ textInput title maybeSubtitle text updateModel =
                     (titleAndSubtitle title maybeSubtitle)
             , spellcheck = True
             }
+        ]
+
+
+searchableTextInput : String -> Maybe String -> List String -> String -> (String -> model) -> Element model
+searchableTextInput title maybeSubtitle choices text updateModel =
+    let
+        id =
+            title ++ "_list"
+    in
+    container
+        [ Element.Input.text
+            (Element.htmlAttribute (Html.Attributes.list id) :: multilineAttributes)
+            { onChange = updateModel
+            , text = text
+            , placeholder = Nothing
+            , label =
+                Element.Input.labelAbove
+                    [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 16 } ]
+                    (titleAndSubtitle title maybeSubtitle)
+            }
+        , Html.datalist
+            [ Html.Attributes.id id ]
+            (List.map (\choice -> Html.option [ Html.Attributes.value choice ] []) choices)
+            |> Element.html
+            |> Element.el []
         ]
 
 
@@ -205,7 +231,6 @@ acceptTosQuestion acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
                     , label = Element.text "Submit survey"
                     }
               )
-            , ( "disclaimer", disclaimer )
             ]
         )
 

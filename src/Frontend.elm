@@ -3,6 +3,7 @@ module Frontend exposing (..)
 import AssocSet as Set
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Countries
 import Element exposing (Element)
 import Element.Background
 import Element.Font
@@ -167,8 +168,7 @@ updateFromBackend msg model =
                                     , otherLanguages = Ui.multiChoiceWithOtherInit
                                     , newsAndDiscussions = Ui.multiChoiceWithOtherInit
                                     , elmResources = Ui.multiChoiceWithOtherInit
-                                    , userGroupNearYou = Nothing
-                                    , nearestCity = ""
+                                    , countryLivingIn = ""
                                     , applicationDomains = Ui.multiChoiceWithOtherInit
                                     , howLong = Nothing
                                     , howFarAlongWork = Nothing
@@ -273,6 +273,7 @@ view model =
                                 , Element.paragraph
                                     []
                                     [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
+                                , Ui.disclaimer
                                 ]
                             )
                         , formView formLoaded.form
@@ -403,6 +404,11 @@ section text content =
         ]
 
 
+countries : List String
+countries =
+    List.map (\country -> country.name ++ " " ++ country.flag) Countries.all
+
+
 formView : Form -> Element FrontendMsg
 formView form =
     let
@@ -506,18 +512,12 @@ formView form =
                     Questions.elmResourcesToString
                     form.elmResources
                     (\a -> FormChanged { form | elmResources = a })
-            , Ui.singleChoiceQuestion
-                "Is there an Elm user group near you?"
+            , Ui.searchableTextInput
+                "Which country do you live in?"
                 Nothing
-                Questions.allYesNo
-                Questions.yesNoToString
-                form.userGroupNearYou
-                (\a -> FormChanged { form | userGroupNearYou = a })
-            , Ui.textInput
-                "What's the nearest city to you?"
-                (Just "If you are already using Elm at work, please skip this question.")
-                form.nearestCity
-                (\a -> FormChanged { form | nearestCity = a })
+                countries
+                form.countryLivingIn
+                (\a -> FormChanged { form | countryLivingIn = a })
             ]
         , if doesNotUseElm then
             Element.none
@@ -526,7 +526,7 @@ formView form =
             section "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     "In which application domains, if any, have you used Elm?"
-                    (Just "We're asking both to get an idea of where Elm users are located and where might be good to encourage new user groups.")
+                    Nothing
                     Questions.allApplicationDomains
                     Questions.applicationDomainsToString
                     form.applicationDomains
@@ -637,7 +637,7 @@ formView form =
                     form.buildTools
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
-                    "What editor(s) do you use to build your Elm applications?"
+                    "What editor(s) do you use to write your Elm applications?"
                     Nothing
                     Questions.allEditor
                     Questions.editorToString

@@ -16,7 +16,6 @@ module Questions exposing
     , TestsWrittenFor(..)
     , WhatElmVersion(..)
     , WhereDoYouUseElm(..)
-    , YesNo(..)
     , ageToString
     , allAge
     , allApplicationDomains
@@ -34,7 +33,6 @@ module Questions exposing
     , allTestTools
     , allTestsWrittenFor
     , allWhatElmVersion
-    , allYesNo
     , applicationDomainsToString
     , buildToolsToString
     , doYouUseElmFormatToString
@@ -53,7 +51,6 @@ module Questions exposing
     , testToolsToString
     , testsWrittenForToString
     , whatElmVersionToString
-    , yesNoToString
     )
 
 import List.Nonempty exposing (Nonempty(..))
@@ -103,7 +100,7 @@ ageToString age =
             "Between 50 and 60"
 
         Over60 ->
-            "Older than 60"
+            "60 years or older"
 
 
 type ExperienceLevel
@@ -281,6 +278,7 @@ allOtherLanguages =
         , Rust
         , FSharp
         ]
+        |> List.Nonempty.sortBy otherLanguagesToString
 
 
 otherLanguagesToString : OtherLanguages -> String
@@ -367,6 +365,7 @@ allNewsAndDiscussions =
         , ElmWeekly
         , ElmNews
         ]
+        |> List.Nonempty.sortBy newsAndDiscussionsToString
 
 
 newsAndDiscussionsToString : NewsAndDiscussions -> String
@@ -419,6 +418,7 @@ type ElmResources
     | GuideElmLang
     | ElmForBeginners
     | ElmSlack_
+    | FrontendMasters
 
 
 allElmResources : Nonempty ElmResources
@@ -436,7 +436,9 @@ allElmResources =
         , GuideElmLang
         , ElmForBeginners
         , ElmSlack_
+        , FrontendMasters
         ]
+        |> List.Nonempty.sortBy elmResourcesToString
 
 
 elmResourcesToString : ElmResources -> String
@@ -478,25 +480,8 @@ elmResourcesToString elmResources =
         ElmSlack_ ->
             "Elm Slack"
 
-
-type YesNo
-    = Yes
-    | No
-
-
-allYesNo : Nonempty YesNo
-allYesNo =
-    Nonempty Yes [ No ]
-
-
-yesNoToString : YesNo -> String
-yesNoToString yesNo =
-    case yesNo of
-        Yes ->
-            "Yes"
-
-        No ->
-            "No"
+        FrontendMasters ->
+            "Frontend Masters"
 
 
 type WhereDoYouUseElm
@@ -509,7 +494,6 @@ type WhereDoYouUseElm
     | Productivity
     | Communication
     | DataVisualization
-    | Graphics
     | Transportation
 
 
@@ -525,9 +509,9 @@ allApplicationDomains =
         , Productivity
         , Communication
         , DataVisualization
-        , Graphics
         , Transportation
         ]
+        |> List.Nonempty.sortBy applicationDomainsToString
 
 
 applicationDomainsToString : WhereDoYouUseElm -> String
@@ -559,9 +543,6 @@ applicationDomainsToString whereDoYouUseElm =
 
         DataVisualization ->
             "Data visualization"
-
-        Graphics ->
-            "Graphics"
 
         Transportation ->
             "Transportation"
@@ -774,6 +755,7 @@ allBuildTools =
         , Lamdera
         , Parcel
         ]
+        |> List.Nonempty.sortBy buildToolsToString
 
 
 allEditor : Nonempty Editor

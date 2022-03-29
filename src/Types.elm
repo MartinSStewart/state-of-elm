@@ -4,7 +4,7 @@ import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
-import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm, YesNo)
+import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowFarAlong, HowIsProjectLicensed, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm)
 import Time
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
@@ -34,8 +34,7 @@ type alias Form =
     , otherLanguages : MultiChoiceWithOther OtherLanguages
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
     , elmResources : MultiChoiceWithOther ElmResources
-    , nearestCity : String
-    , userGroupNearYou : Maybe YesNo
+    , countryLivingIn : String
     , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
     , howLong : Maybe HowLong
     , howFarAlongWork : Maybe HowFarAlong
