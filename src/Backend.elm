@@ -27,15 +27,7 @@ init =
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { autoSavedSurveyCount =
-        Dict.values model.forms
-            |> List.map (.submitTime >> (==) Nothing)
-            |> List.length
-    , submittedSurveyCount =
-        Dict.values model.forms
-            |> List.map (.submitTime >> (/=) Nothing)
-            |> List.length
-    }
+    { forms = Dict.values model.forms }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )

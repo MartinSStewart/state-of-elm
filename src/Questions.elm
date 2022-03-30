@@ -46,7 +46,7 @@ module Questions exposing
     , buildToolsToString
     , doYouUseElmAtWorkToString
     , doYouUseElmFormatToString
-    , doYouUseElmReview
+    , doYouUseElmReviewToString
     , doYouUseElmToString
     , editorToString
     , elmResourcesToString
@@ -61,7 +61,7 @@ module Questions exposing
     , testsWrittenForToString
     , whatElmVersionToString
     , whatLanguageDoYouUseForTheBackendToString
-    , whichElmReviewRulesDoYouUse
+    , whichElmReviewRulesDoYouUseToString
     )
 
 import List.Nonempty exposing (Nonempty(..))
@@ -998,8 +998,8 @@ allWhatLanguageDoYouUseForTheBackend =
         ]
 
 
-doYouUseElmReview : DoYouUseElmReview -> String
-doYouUseElmReview value =
+doYouUseElmReviewToString : DoYouUseElmReview -> String
+doYouUseElmReviewToString value =
     case value of
         NeverHeardOfElmReview ->
             "I've never heard of it"
@@ -1014,8 +1014,8 @@ doYouUseElmReview value =
             "I use elm-review regularly"
 
 
-whichElmReviewRulesDoYouUse : WhichElmReviewRulesDoYouUse -> String
-whichElmReviewRulesDoYouUse value =
+whichElmReviewRulesDoYouUseToString : WhichElmReviewRulesDoYouUse -> String
+whichElmReviewRulesDoYouUseToString value =
     case value of
         ElmReviewUnused ->
             "elm-review-unused"

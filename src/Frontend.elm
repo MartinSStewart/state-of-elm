@@ -1,6 +1,6 @@
 module Frontend exposing (..)
 
-import AssocSet as Set
+import AssocSet as Set exposing (Set)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Countries
@@ -15,6 +15,7 @@ import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmRe
 import Svg
 import Svg.Attributes
 import Task
+import Time
 import Types exposing (..)
 import Ui
 import Url
@@ -361,14 +362,93 @@ view model =
 
                 Admin admin ->
                     Element.column
-                        []
-                        [ Element.text "Admin view"
-                        , Element.text ("autoSavedSurveyCount: " ++ String.fromInt admin.autoSavedSurveyCount)
-                        , Element.text ("submittedSurveyCount: " ++ String.fromInt admin.submittedSurveyCount)
+                        [ Element.spacing 32, Element.padding 16 ]
+                        [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
+                        , Element.column
+                            [ Element.spacing 32 ]
+                            (List.map adminFormView admin.forms)
                         ]
             )
         ]
     }
+
+
+adminFormView : { form : Form, submitTime : Maybe Time.Posix } -> Element msg
+adminFormView { form, submitTime } =
+    Element.column
+        [ Element.spacing 8 ]
+        [ case submitTime of
+            Just time ->
+                Element.text ("Submitted at " ++ String.fromInt (Time.posixToMillis time))
+
+            Nothing ->
+                Element.text "Not submitted"
+        , infoRow "doYouUseElm" (setToString Questions.doYouUseElmToString form.doYouUseElm)
+        , infoRow "age" (maybeToString Questions.ageToString form.age)
+        , infoRow "functionalProgrammingExperience" (maybeToString Questions.experienceLevelToString form.functionalProgrammingExperience)
+        , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguagesToString form.otherLanguages)
+        , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussionsToString form.newsAndDiscussions)
+        , infoRow "elmResources" (multichoiceToString Questions.elmResourcesToString form.elmResources)
+        , infoRow "countryLivingIn" form.countryLivingIn
+        , infoRow "applicationDomains" (multichoiceToString Questions.applicationDomainsToString form.applicationDomains)
+        , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWorkToString form.doYouUseElmAtWork)
+        , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompanyToString form.howLargeIsTheCompany)
+        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForTheBackendToString form.whatLanguageDoYouUseForBackend)
+        , infoRow "howLong" (maybeToString Questions.howLongToString form.howLong)
+        , infoRow "elmVersion" (multichoiceToString Questions.whatElmVersionToString form.elmVersion)
+        , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormatToString form.doYouUseElmFormat)
+        , infoRow "stylingTools" (multichoiceToString Questions.stylingToolsToString form.stylingTools)
+        , infoRow "buildTools" (multichoiceToString Questions.buildToolsToString form.buildTools)
+        , infoRow "frameworks" (multichoiceToString Questions.frameworkToString form.frameworks)
+        , infoRow "editors" (multichoiceToString Questions.editorToString form.editors)
+        , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReviewToString form.doYouUseElmReview)
+        , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUseToString form.whichElmReviewRulesDoYouUse)
+        , infoRow "testTools" (multichoiceToString Questions.testToolsToString form.testTools)
+        , infoRow "testsWrittenFor" (multichoiceToString Questions.testsWrittenForToString form.testsWrittenFor)
+        , infoRow "elmInitialInterest" form.elmInitialInterest
+        , infoRow "biggestPainPoint" form.biggestPainPoint
+        , infoRow "whatDoYouLikeMost" form.whatDoYouLikeMost
+        , infoRow "emailAddress" form.emailAddress
+        ]
+
+
+multichoiceToString : (a -> String) -> Ui.MultiChoiceWithOther a -> String
+multichoiceToString toString multiChoiceWithOther =
+    Set.toList multiChoiceWithOther.choices
+        |> List.map toString
+        |> (\choices ->
+                if multiChoiceWithOther.otherChecked then
+                    choices ++ [ multiChoiceWithOther.otherText ]
+
+                else
+                    choices
+           )
+        |> String.join ", "
+
+
+setToString : (a -> String) -> Set a -> String
+setToString toString set =
+    Set.toList set
+        |> List.map toString
+        |> String.join ", "
+
+
+maybeToString : (a -> String) -> Maybe a -> String
+maybeToString toString maybe =
+    case maybe of
+        Just a ->
+            toString a
+
+        Nothing ->
+            ""
+
+
+infoRow name value =
+    Element.row
+        [ Element.spacing 24 ]
+        [ Element.el [ Element.Font.color (Element.rgb 0.4 0.5 0.5) ] (Element.text name)
+        , Element.paragraph [] [ Element.text value ]
+        ]
 
 
 githubLogo : Element msg
@@ -622,7 +702,7 @@ formView form =
                     "Do you use elm-review?"
                     Nothing
                     Questions.allDoYouUseElmReview
-                    Questions.doYouUseElmReview
+                    Questions.doYouUseElmReviewToString
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
                 , if
@@ -636,7 +716,7 @@ formView form =
                         "Which elm-review rules do you use?"
                         (Just "If you have custom unpublished rules, select \"Other\" and describe what they do")
                         Questions.allWhichElmReviewRulesDoYouUse
-                        Questions.whichElmReviewRulesDoYouUse
+                        Questions.whichElmReviewRulesDoYouUseToString
                         form.whichElmReviewRulesDoYouUse
                         (\a -> FormChanged { form | whichElmReviewRulesDoYouUse = a })
                 , Ui.multiChoiceQuestionWithOther

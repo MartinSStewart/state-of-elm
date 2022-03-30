@@ -98,6 +98,5 @@ type ToFrontend
 
 
 type alias AdminLoginData =
-    { autoSavedSurveyCount : Int
-    , submittedSurveyCount : Int
+    { forms : List { form : Form, submitTime : Maybe Time.Posix }
     }
