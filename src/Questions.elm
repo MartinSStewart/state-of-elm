@@ -4,9 +4,11 @@ module Questions exposing
     , DoYouUseElm(..)
     , DoYouUseElmAtWork(..)
     , DoYouUseElmFormat(..)
+    , DoYouUseElmReview(..)
     , Editor(..)
     , ElmResources(..)
     , ExperienceLevel(..)
+    , Frameworks(..)
     , HowLargeIsTheCompany(..)
     , HowLong(..)
     , NewsAndDiscussions(..)
@@ -17,6 +19,7 @@ module Questions exposing
     , WhatElmVersion(..)
     , WhatLanguageDoYouUseForTheBackend(..)
     , WhereDoYouUseElm(..)
+    , WhichElmReviewRulesDoYouUse(..)
     , ageToString
     , allAge
     , allApplicationDomains
@@ -27,6 +30,7 @@ module Questions exposing
     , allDoYouUseElmReview
     , allEditor
     , allElmResources
+    , allFrameworks
     , allHowLargeIsTheCompany
     , allHowLong
     , allNewsAndDiscussions
@@ -46,6 +50,7 @@ module Questions exposing
     , editorToString
     , elmResourcesToString
     , experienceToInt
+    , frameworkToString
     , howLargeIsTheCompanyToString
     , howLongToString
     , intToExperience
@@ -484,7 +489,6 @@ type HowLargeIsTheCompany
     | Size11To50Employees
     | Size50To100Employees
     | Size100OrMore
-    | NotEmployed_
 
 
 type WhatLanguageDoYouUseForTheBackend
@@ -544,6 +548,13 @@ type BuildTools
     | Parcel
 
 
+type Frameworks
+    = Lamdera_
+    | ElmSpa
+    | ElmPages
+    | ElmPlayground
+
+
 type Editor
     = SublimeText
     | Vim
@@ -554,8 +565,7 @@ type Editor
 
 
 type TestTools
-    = IDontWriteTests
-    | BrowserAcceptanceTests
+    = BrowserAcceptanceTests
     | ElmBenchmark
     | ElmTest
     | ElmProgramTest
@@ -805,9 +815,8 @@ allEditor =
 
 allTestTools : Nonempty TestTools
 allTestTools =
-    Nonempty IDontWriteTests
-        [ BrowserAcceptanceTests
-        , ElmBenchmark
+    Nonempty BrowserAcceptanceTests
+        [ ElmBenchmark
         , ElmTest
         , ElmProgramTest
         , VisualRegressionTests
@@ -901,7 +910,7 @@ buildToolsToString a =
             "Brunch"
 
         ElmMakeStandalone ->
-            "ElmMakeStandalone"
+            "elm-make standalone"
 
         Gulp ->
             "Gulp"
@@ -944,9 +953,6 @@ editorToString a =
 testToolsToString : TestTools -> String
 testToolsToString a =
     case a of
-        IDontWriteTests ->
-            "I don't write tests for my Elm projects"
-
         BrowserAcceptanceTests ->
             "Browser acceptance testing (e.g. Capybara)"
 
@@ -1065,29 +1071,29 @@ whichElmReviewRulesDoYouUse : WhichElmReviewRulesDoYouUse -> String
 whichElmReviewRulesDoYouUse value =
     case value of
         ElmReviewUnused ->
-            "jfmengels/elm-review-unused"
+            "elm-review-unused"
 
         ElmReviewSimplify ->
-            "jfmengels/elm-review-simplify"
+            "elm-review-simplify"
 
         ElmReviewLicense ->
-            "jfmengels/elm-review-license"
+            "elm-review-license"
 
         ElmReviewDebug ->
-            "jfmengels/elm-review-debug"
+            "elm-review-debug"
 
         ElmReviewCommon ->
-            "jfmengels/elm-review-common"
+            "elm-review-common"
 
         ElmReviewCognitiveComplexity ->
-            "jfmengels/elm-review-cognitive-complexity"
+            "elm-review-cognitive-complexity"
 
 
 doYouUseElmAtWorkToString : DoYouUseElmAtWork -> String
 doYouUseElmAtWorkToString value =
     case value of
         NotInterestedInElmAtWork ->
-            "No, and not interested"
+            "No, and I'm not interested"
 
         WouldLikeToUseElmAtWork ->
             "No, but I am interested"
@@ -1117,9 +1123,6 @@ howLargeIsTheCompanyToString value =
         Size100OrMore ->
             "100+ employees"
 
-        NotEmployed_ ->
-            "Not employed"
-
 
 whatLanguageDoYouUseForTheBackendToString : WhatLanguageDoYouUseForTheBackend -> String
 whatLanguageDoYouUseForTheBackendToString value =
@@ -1137,7 +1140,7 @@ whatLanguageDoYouUseForTheBackendToString value =
             "Haskell"
 
         CSharp_ ->
-            "CSharp"
+            "C#"
 
         OCaml_ ->
             "OCaml"
@@ -1164,10 +1167,37 @@ whatLanguageDoYouUseForTheBackendToString value =
             "Rust"
 
         FSharp_ ->
-            "FSharp"
+            "F#"
 
         AlsoElm ->
             "Elm"
 
         NotApplicable ->
-            "NotApplicable"
+            "Not applicable"
+
+
+allFrameworks : Nonempty Frameworks
+allFrameworks =
+    Nonempty
+        Lamdera_
+        [ ElmSpa
+        , ElmPages
+        , ElmPlayground
+        ]
+        |> List.Nonempty.sortBy frameworkToString
+
+
+frameworkToString : Frameworks -> String
+frameworkToString value =
+    case value of
+        Lamdera_ ->
+            "Lamdera"
+
+        ElmSpa ->
+            "elm-spa"
+
+        ElmPages ->
+            "elm-pages"
+
+        ElmPlayground ->
+            "elm-playground"

@@ -4,7 +4,7 @@ import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
-import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, Editor, ElmResources, ExperienceLevel, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhereDoYouUseElm)
+import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
 import Time
 import Ui exposing (MultiChoiceWithOther)
 import Url exposing (Url)
@@ -38,18 +38,22 @@ type alias Form =
     , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
     , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
     , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
+    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForTheBackend
     , howLong : Maybe HowLong
     , elmVersion : MultiChoiceWithOther WhatElmVersion
     , doYouUseElmFormat : Maybe DoYouUseElmFormat
     , stylingTools : MultiChoiceWithOther StylingTools
     , buildTools : MultiChoiceWithOther BuildTools
+    , frameworks : MultiChoiceWithOther Frameworks
     , editors : MultiChoiceWithOther Editor
-    , jsInteropUseCases : String
+    , doYouUseElmReview : Maybe DoYouUseElmReview
+    , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
     , testTools : MultiChoiceWithOther TestTools
     , testsWrittenFor : MultiChoiceWithOther TestsWrittenFor
     , elmInitialInterest : String
     , biggestPainPoint : String
     , whatDoYouLikeMost : String
+    , emailAddress : String
     }
 
 

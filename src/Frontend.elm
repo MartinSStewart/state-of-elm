@@ -11,7 +11,7 @@ import Element.Input
 import Element.Region
 import Lamdera
 import Process
-import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), ExperienceLevel(..))
+import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), ExperienceLevel(..))
 import Svg
 import Svg.Attributes
 import Task
@@ -27,7 +27,7 @@ app =
         , onUrlChange = UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions = \m -> Sub.none
+        , subscriptions = \_ -> Sub.none
         , view = view
         }
 
@@ -172,18 +172,22 @@ updateFromBackend msg model =
                                     , applicationDomains = Ui.multiChoiceWithOtherInit
                                     , doYouUseElmAtWork = Nothing
                                     , howLargeIsTheCompany = Nothing
+                                    , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
                                     , howLong = Nothing
                                     , elmVersion = Ui.multiChoiceWithOtherInit
                                     , doYouUseElmFormat = Nothing
                                     , stylingTools = Ui.multiChoiceWithOtherInit
                                     , buildTools = Ui.multiChoiceWithOtherInit
+                                    , frameworks = Ui.multiChoiceWithOtherInit
                                     , editors = Ui.multiChoiceWithOtherInit
-                                    , jsInteropUseCases = ""
+                                    , doYouUseElmReview = Nothing
+                                    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
                                     , testTools = Ui.multiChoiceWithOtherInit
                                     , testsWrittenFor = Ui.multiChoiceWithOtherInit
                                     , elmInitialInterest = ""
                                     , biggestPainPoint = ""
                                     , whatDoYouLikeMost = ""
+                                    , emailAddress = ""
                                     }
                             in
                             FormLoaded
@@ -514,6 +518,9 @@ formView form =
                 countries
                 form.countryLivingIn
                 (\a -> FormChanged { form | countryLivingIn = a })
+            , Ui.emailAddressInput
+                form.emailAddress
+                (\a -> FormChanged { form | emailAddress = a })
             ]
         , if doesNotUseElm then
             Element.none
@@ -522,32 +529,40 @@ formView form =
             section "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     "In which application domains, if any, have you used Elm?"
-                    (Just "Either at work or in you free time")
+                    (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
                     Questions.allApplicationDomains
                     Questions.applicationDomainsToString
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
                 , Ui.singleChoiceQuestion
                     "Do you use Elm at work?"
-                    (Just "Either for customer facing products or internal tools")
+                    (Just "Either for a consumer product or an internal tool")
                     Questions.allDoYouUseElmAtWork
                     Questions.doYouUseElmAtWorkToString
                     form.doYouUseElmAtWork
                     (\a -> FormChanged { form | doYouUseElmAtWork = a })
-                , Ui.singleChoiceQuestion
-                    "How large is the company you work at?"
-                    Nothing
-                    Questions.allHowLargeIsTheCompany
-                    Questions.howLargeIsTheCompanyToString
-                    form.howLargeIsTheCompany
-                    (\a -> FormChanged { form | howLargeIsTheCompany = a })
-                , Ui.singleChoiceQuestion
-                    "What languages does your company use on the backend?"
-                    Nothing
-                    Questions.allHowLargeIsTheCompany
-                    Questions.howLargeIsTheCompanyToString
-                    form.howLargeIsTheCompany
-                    (\a -> FormChanged { form | howLargeIsTheCompany = a })
+                , if form.doYouUseElmAtWork == Just NotEmployed then
+                    Element.none
+
+                  else
+                    Ui.singleChoiceQuestion
+                        "How large is the company you work at?"
+                        Nothing
+                        Questions.allHowLargeIsTheCompany
+                        Questions.howLargeIsTheCompanyToString
+                        form.howLargeIsTheCompany
+                        (\a -> FormChanged { form | howLargeIsTheCompany = a })
+                , if form.doYouUseElmAtWork == Just NotEmployed then
+                    Element.none
+
+                  else
+                    Ui.multiChoiceQuestionWithOther
+                        "What languages does your company use on the backend?"
+                        Nothing
+                        Questions.allWhatLanguageDoYouUseForTheBackend
+                        Questions.whatLanguageDoYouUseForTheBackendToString
+                        form.whatLanguageDoYouUseForBackend
+                        (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
                 , Ui.singleChoiceQuestion
                     "How long have you been using Elm?"
                     Nothing
@@ -590,17 +605,40 @@ formView form =
                     form.buildTools
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
+                    "What frameworks do you use?"
+                    Nothing
+                    Questions.allFrameworks
+                    Questions.frameworkToString
+                    form.frameworks
+                    (\a -> FormChanged { form | frameworks = a })
+                , Ui.multiChoiceQuestionWithOther
                     "What editor(s) do you use to write your Elm applications?"
                     Nothing
                     Questions.allEditor
                     Questions.editorToString
                     form.editors
                     (\a -> FormChanged { form | editors = a })
-                , Ui.textInput
-                    "If you've used JavaScript interop, what have you used it for?"
+                , Ui.singleChoiceQuestion
+                    "Do you use elm-review?"
                     Nothing
-                    form.jsInteropUseCases
-                    (\a -> FormChanged { form | jsInteropUseCases = a })
+                    Questions.allDoYouUseElmReview
+                    Questions.doYouUseElmReview
+                    form.doYouUseElmReview
+                    (\a -> FormChanged { form | doYouUseElmReview = a })
+                , if
+                    (form.doYouUseElmReview == Just NeverHeardOfElmReview)
+                        || (form.doYouUseElmReview == Just HeardOfItButNeverTriedElmReview)
+                  then
+                    Element.none
+
+                  else
+                    Ui.multiChoiceQuestionWithOther
+                        "Which elm-review rules do you use?"
+                        (Just "If you have custom unpublished rules, select \"Other\" and describe what they do")
+                        Questions.allWhichElmReviewRulesDoYouUse
+                        Questions.whichElmReviewRulesDoYouUse
+                        form.whichElmReviewRulesDoYouUse
+                        (\a -> FormChanged { form | whichElmReviewRulesDoYouUse = a })
                 , Ui.multiChoiceQuestionWithOther
                     "What tools do you use to test your Elm projects?"
                     Nothing

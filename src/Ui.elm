@@ -5,6 +5,7 @@ module Ui exposing
     , blue0
     , blue1
     , disclaimer
+    , emailAddressInput
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
@@ -87,6 +88,22 @@ multilineAttributes =
 type AnswerWithOther a
     = Answer a
     | Other String
+
+
+emailAddressInput : String -> (String -> model) -> Element model
+emailAddressInput emailAddress updateModel =
+    container
+        [ titleAndSubtitle
+            "What is your email address?"
+            (Just "This is optional. We will only use it to notify you when the survey results are released and when future surveys happen.")
+        , Element.Input.email
+            multilineAttributes
+            { onChange = updateModel
+            , text = emailAddress
+            , label = Element.Input.labelHidden "What is your email address?"
+            , placeholder = Nothing
+            }
+        ]
 
 
 singleChoiceQuestion :
