@@ -474,19 +474,19 @@ formView form =
                         }
                 )
             , Ui.singleChoiceQuestion
-                "How many years old are you?"
+                "How old are you?"
                 Nothing
                 Questions.allAge
                 Questions.ageToString
                 form.age
                 (\a -> FormChanged { form | age = a })
-            , Ui.slider
+            , Ui.singleChoiceQuestion
                 "What is your level of experience with functional programming?"
-                (Just "Where 0 is beginner and 10 is expert.")
-                0
-                10
-                (Maybe.map Questions.experienceToInt form.functionalProgrammingExperience)
-                (\a -> FormChanged { form | functionalProgrammingExperience = Questions.intToExperience a |> Just })
+                Nothing
+                Questions.allExperienceLevel
+                Questions.experienceLevelToString
+                form.functionalProgrammingExperience
+                (\a -> FormChanged { form | functionalProgrammingExperience = a })
             , Ui.multiChoiceQuestionWithOther
                 "What programming languages, other than Elm, are you most familiar with?"
                 Nothing

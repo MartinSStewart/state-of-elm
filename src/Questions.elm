@@ -30,6 +30,7 @@ module Questions exposing
     , allDoYouUseElmReview
     , allEditor
     , allElmResources
+    , allExperienceLevel
     , allFrameworks
     , allHowLargeIsTheCompany
     , allHowLong
@@ -49,11 +50,10 @@ module Questions exposing
     , doYouUseElmToString
     , editorToString
     , elmResourcesToString
-    , experienceToInt
+    , experienceLevelToString
     , frameworkToString
     , howLargeIsTheCompanyToString
     , howLongToString
-    , intToExperience
     , newsAndDiscussionsToString
     , otherLanguagesToString
     , stylingToolsToString
@@ -115,94 +115,36 @@ ageToString age =
 
 
 type ExperienceLevel
-    = Level0
-    | Level1
-    | Level2
-    | Level3
-    | Level4
-    | Level5
-    | Level6
-    | Level7
-    | Level8
-    | Level9
-    | Level10
+    = Beginner
+    | Intermediate
+    | Professional
+    | Expert
 
 
-experienceToInt : ExperienceLevel -> Int
-experienceToInt a =
-    case a of
-        Level0 ->
-            0
-
-        Level1 ->
-            1
-
-        Level2 ->
-            2
-
-        Level3 ->
-            3
-
-        Level4 ->
-            4
-
-        Level5 ->
-            5
-
-        Level6 ->
-            6
-
-        Level7 ->
-            7
-
-        Level8 ->
-            8
-
-        Level9 ->
-            9
-
-        Level10 ->
-            10
+allExperienceLevel : Nonempty ExperienceLevel
+allExperienceLevel =
+    Nonempty
+        Beginner
+        [ Intermediate
+        , Professional
+        , Expert
+        ]
 
 
-intToExperience : Int -> ExperienceLevel
-intToExperience a =
-    case a of
-        0 ->
-            Level0
+experienceLevelToString : ExperienceLevel -> String
+experienceLevelToString experienceLevel =
+    case experienceLevel of
+        Beginner ->
+            "I'm a beginner"
 
-        1 ->
-            Level1
+        Intermediate ->
+            "Intermediate"
 
-        2 ->
-            Level2
+        Professional ->
+            "I'm good enough to use it professionally"
 
-        3 ->
-            Level3
-
-        4 ->
-            Level4
-
-        5 ->
-            Level5
-
-        6 ->
-            Level6
-
-        7 ->
-            Level7
-
-        8 ->
-            Level8
-
-        9 ->
-            Level9
-
-        10 ->
-            Level10
-
-        _ ->
-            Level0
+        Expert ->
+            "I'm an expert and could probably give a talk on category theory"
 
 
 type DoYouUseElm
@@ -1066,7 +1008,7 @@ doYouUseElmReview value =
             "I've heard of it but never tried it"
 
         IveTriedElmReview ->
-            "I've tried it"
+            "I've use elm-review infrequently"
 
         IUseElmReviewRegularly ->
             "I use elm-review regularly"
