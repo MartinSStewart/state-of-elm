@@ -629,6 +629,12 @@ formView windowSize form =
                     Questions.elmResourcesToString
                     form.elmResources
                     (\a -> FormChanged { form | elmResources = a })
+            , Ui.textInput
+                windowSize
+                "What initially attracted you to Elm, or motivated you to try it?"
+                Nothing
+                form.elmInitialInterest
+                (\a -> FormChanged { form | elmInitialInterest = a })
             , Ui.searchableTextInput
                 windowSize
                 "Which country do you live in?"
@@ -789,12 +795,6 @@ formView windowSize form =
                     Questions.testsWrittenForToString
                     form.testsWrittenFor
                     (\a -> FormChanged { form | testsWrittenFor = a })
-                , Ui.textInput
-                    windowSize
-                    "What initially attracted you to Elm, or motivated you to try it?"
-                    Nothing
-                    form.elmInitialInterest
-                    (\a -> FormChanged { form | elmInitialInterest = a })
                 , Ui.textInput
                     windowSize
                     "What has been your biggest pain point in your use of Elm?"
