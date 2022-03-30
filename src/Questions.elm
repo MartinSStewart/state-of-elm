@@ -549,8 +549,8 @@ type BuildTools
     | Gulp
     | Make
     | ElmReactor
-    | Lamdera
     | Parcel
+    | Vite
 
 
 type Frameworks
@@ -800,8 +800,8 @@ allBuildTools =
         , Gulp
         , Make
         , ElmReactor
-        , Lamdera
         , Parcel
+        , Vite
         ]
         |> List.Nonempty.sortBy buildToolsToString
 
@@ -926,11 +926,11 @@ buildToolsToString a =
         ElmReactor ->
             "elm-reactor"
 
-        Lamdera ->
-            "Lamdera"
-
         Parcel ->
             "Parcel"
+
+        Vite ->
+            "Vite"
 
 
 editorToString : Editor -> String
