@@ -1008,7 +1008,7 @@ doYouUseElmReview value =
             "I've heard of it but never tried it"
 
         IveTriedElmReview ->
-            "I've use elm-review infrequently"
+            "I use elm-review infrequently"
 
         IUseElmReviewRegularly ->
             "I use elm-review regularly"
