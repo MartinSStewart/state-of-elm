@@ -99,4 +99,6 @@ type ToFrontend
 
 
 type alias AdminLoginData =
-    { autoSavedSurveyCount : Int, submittedSurveyCount : Int }
+    { autoSavedSurveyCount : Int
+    , submittedSurveyCount : Int
+    }

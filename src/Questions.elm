@@ -359,6 +359,7 @@ type NewsAndDiscussions
     | Meetups
     | ElmWeekly
     | ElmNews
+    | ElmCraft
 
 
 allNewsAndDiscussions : Nonempty NewsAndDiscussions
@@ -375,6 +376,7 @@ allNewsAndDiscussions =
         , Meetups
         , ElmWeekly
         , ElmNews
+        , ElmCraft
         ]
         |> List.Nonempty.sortBy newsAndDiscussionsToString
 
@@ -414,6 +416,9 @@ newsAndDiscussionsToString newsAndDiscussions =
 
         ElmNews ->
             "elm-news.com"
+
+        ElmCraft ->
+            "elmcraft.org"
 
 
 type ElmResources
