@@ -1,9 +1,11 @@
 module Ui exposing
     ( MultiChoiceWithOther
+    , Size
     , acceptTosQuestion
     , blue0
     , disclaimer
     , emailAddressInput
+    , ifMobile
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
@@ -31,9 +33,13 @@ import Simple.Animation.Animated
 import Simple.Animation.Property
 
 
-textInput : String -> Maybe String -> String -> (String -> model) -> Element model
-textInput title maybeSubtitle text updateModel =
-    container
+type alias Size =
+    { width : Int, height : Int }
+
+
+textInput : Size -> String -> Maybe String -> String -> (String -> model) -> Element model
+textInput windowSize title maybeSubtitle text updateModel =
+    container windowSize
         [ Element.Input.multiline
             multilineAttributes
             { onChange = updateModel
@@ -48,13 +54,13 @@ textInput title maybeSubtitle text updateModel =
         ]
 
 
-searchableTextInput : String -> Maybe String -> List String -> String -> (String -> model) -> Element model
-searchableTextInput title maybeSubtitle choices text updateModel =
+searchableTextInput : Size -> String -> Maybe String -> List String -> String -> (String -> model) -> Element model
+searchableTextInput windowSize title maybeSubtitle choices text updateModel =
     let
         id =
             title ++ "_list"
     in
-    container
+    container windowSize
         [ Element.Input.text
             (Element.htmlAttribute (Html.Attributes.list id) :: multilineAttributes)
             { onChange = updateModel
@@ -82,9 +88,9 @@ multilineAttributes =
     ]
 
 
-emailAddressInput : String -> (String -> model) -> Element model
-emailAddressInput emailAddress updateModel =
-    container
+emailAddressInput : Size -> String -> (String -> model) -> Element model
+emailAddressInput windowSize emailAddress updateModel =
+    container windowSize
         [ titleAndSubtitle
             "What is your email address?"
             (Just "This is optional. We will only use it to notify you when the survey results are released and when future surveys happen.")
@@ -99,15 +105,16 @@ emailAddressInput emailAddress updateModel =
 
 
 singleChoiceQuestion :
-    String
+    Size
+    -> String
     -> Maybe String
     -> Nonempty a
     -> (a -> String)
     -> Maybe a
     -> (Maybe a -> model)
     -> Element model
-singleChoiceQuestion title maybeSubtitle choices choiceToString selection updateModel =
-    container
+singleChoiceQuestion windowSize title maybeSubtitle choices choiceToString selection updateModel =
+    container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , List.Nonempty.toList choices
             |> List.map
@@ -170,15 +177,16 @@ checkButton text isChecked =
 
 
 multiChoiceQuestion :
-    String
+    Size
+    -> String
     -> Maybe String
     -> Nonempty a
     -> (a -> String)
     -> Set a
     -> (Set a -> model)
     -> Element model
-multiChoiceQuestion title maybeSubtitle choices choiceToString selection updateModel =
-    container
+multiChoiceQuestion windowSize title maybeSubtitle choices choiceToString selection updateModel =
+    container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
             [ Element.spacing 8 ]
@@ -194,12 +202,12 @@ multiChoiceQuestion title maybeSubtitle choices choiceToString selection updateM
         ]
 
 
-acceptTosQuestion : Bool -> (Bool -> msg) -> msg -> Int -> Element msg
-acceptTosQuestion acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
+acceptTosQuestion : Size -> Bool -> (Bool -> msg) -> msg -> Int -> Element msg
+acceptTosQuestion windowSize acceptedTos toggledIAccept pressedSubmit pressSubmitCount =
     Element.el
         [ Element.Background.color blue0, Element.width Element.fill ]
         (Element.Keyed.column
-            [ Element.paddingXY 22 24
+            [ ifMobile windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
             , Element.Font.color white
             , Element.spacing 16
             , Element.centerX
@@ -312,8 +320,17 @@ blue0 =
     Element.rgb255 18 147 216
 
 
-container : List (Element msg) -> Element msg
-container content =
+ifMobile : Size -> a -> a -> a
+ifMobile windowSize ifTrue ifFalse =
+    if windowSize.width < 800 then
+        ifTrue
+
+    else
+        ifFalse
+
+
+container : Size -> List (Element msg) -> Element msg
+container windowSize content =
     Element.el
         [ Element.behindContent
             (Element.el
@@ -331,7 +348,7 @@ container content =
             , Element.Border.width 2
             , Element.Border.color blue0
             , Element.Background.color white
-            , Element.padding 12
+            , Element.padding (ifMobile windowSize 12 24)
             , Element.width Element.fill
             ]
             content
@@ -339,15 +356,16 @@ container content =
 
 
 multiChoiceQuestionWithOther :
-    String
+    Size
+    -> String
     -> Maybe String
     -> Nonempty a
     -> (a -> String)
     -> MultiChoiceWithOther a
     -> (MultiChoiceWithOther a -> model)
     -> Element model
-multiChoiceQuestionWithOther title maybeSubtitle choices choiceToString selection updateModel =
-    container
+multiChoiceQuestionWithOther windowSize title maybeSubtitle choices choiceToString selection updateModel =
+    container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
             [ Element.width Element.fill, Element.spacing 8 ]

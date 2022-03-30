@@ -2,6 +2,8 @@ module Frontend exposing (..)
 
 import AssocSet as Set exposing (Set)
 import Browser exposing (UrlRequest(..))
+import Browser.Dom
+import Browser.Events
 import Browser.Navigation as Nav
 import Countries
 import Element exposing (Element)
@@ -17,7 +19,7 @@ import Svg.Attributes
 import Task
 import Time
 import Types exposing (..)
-import Ui
+import Ui exposing (Size)
 import Url
 
 
@@ -28,18 +30,22 @@ app =
         , onUrlChange = \_ -> UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
         , view = view
         }
 
 
 init : Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
 init url _ =
-    if url.path == "/admin" then
-        ( AdminLogin { password = "", loginFailed = False }, Cmd.none )
+    ( if url.path == "/admin" then
+        AdminLogin { password = "", loginFailed = False }
 
-    else
-        ( Loading, Cmd.none )
+      else
+        Loading Nothing
+    , Task.perform
+        (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
+        Browser.Dom.getViewport
+    )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -55,7 +61,7 @@ update msg model =
                     in
                     ( FormLoaded newFormLoaded, cmd )
 
-                Loading ->
+                Loading _ ->
                     ( model, Cmd.none )
 
                 FormCompleted ->
@@ -72,7 +78,7 @@ update msg model =
                 FormLoaded _ ->
                     ( model, Cmd.none )
 
-                Loading ->
+                Loading _ ->
                     ( model, Cmd.none )
 
                 FormCompleted ->
@@ -151,13 +157,32 @@ update msg model =
             updateAdminLogin
                 (\adminLogin -> ( adminLogin, Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
 
+        GotWindowSize windowSize ->
+            ( case model of
+                Loading _ ->
+                    Loading (Just windowSize)
+
+                FormLoaded formLoaded_ ->
+                    FormLoaded { formLoaded_ | windowSize = windowSize }
+
+                FormCompleted ->
+                    FormCompleted
+
+                AdminLogin record ->
+                    AdminLogin record
+
+                Admin adminLoginData ->
+                    Admin adminLoginData
+            , Cmd.none
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
     ( case msg of
         LoadForm formStatus ->
             case model of
-                Loading ->
+                Loading maybeWindowSize ->
                     case formStatus of
                         NoFormFound ->
                             let
@@ -197,6 +222,7 @@ updateFromBackend msg model =
                                 , submitting = False
                                 , pressedSubmitCount = 0
                                 , debounceCounter = 0
+                                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
                                 }
 
                         FormAutoSaved form ->
@@ -206,6 +232,7 @@ updateFromBackend msg model =
                                 , submitting = False
                                 , pressedSubmitCount = 0
                                 , debounceCounter = 0
+                                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
                                 }
 
                         FormSubmitted ->
@@ -254,7 +281,7 @@ view model =
                             ]
                             (Element.column
                                 [ Element.Font.color Ui.white
-                                , Element.paddingXY 22 24
+                                , Ui.ifMobile formLoaded.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
                                 , Element.centerX
                                 , Element.width (Element.maximum 800 Element.fill)
                                 , Element.spacing 24
@@ -277,15 +304,16 @@ view model =
                                 , Ui.disclaimer
                                 ]
                             )
-                        , formView formLoaded.form
+                        , formView formLoaded.windowSize formLoaded.form
                         , Ui.acceptTosQuestion
+                            formLoaded.windowSize
                             formLoaded.acceptedTos
                             PressedAcceptTosAnswer
                             PressedSubmitSurvey
                             formLoaded.pressedSubmitCount
                         ]
 
-                Loading ->
+                Loading _ ->
                     Element.none
 
                 FormCompleted ->
@@ -469,8 +497,8 @@ githubLogo =
         |> Element.el []
 
 
-section : String -> List (Element msg) -> Element msg
-section text content =
+section : Size -> String -> List (Element msg) -> Element msg
+section windowSize text content =
     Element.column
         [ Element.spacing 24 ]
         [ Element.paragraph
@@ -480,7 +508,9 @@ section text content =
             , Element.Font.color Ui.blue0
             ]
             [ Element.text text ]
-        , Element.column [ Element.spacing 32 ] content
+        , Element.column
+            [ Element.spacing (Ui.ifMobile windowSize 36 48) ]
+            content
         ]
 
 
@@ -489,8 +519,8 @@ countries =
     List.map (\country -> country.name ++ " " ++ country.flag) Countries.all
 
 
-formView : Form -> Element FrontendMsg
-formView form =
+formView : Size -> Form -> Element FrontendMsg
+formView windowSize form =
     let
         doesNotUseElm : Bool
         doesNotUseElm =
@@ -503,8 +533,10 @@ formView form =
         , Element.width (Element.maximum 800 Element.fill)
         , Element.centerX
         ]
-        [ section "About you"
+        [ section windowSize
+            "About you"
             [ Ui.multiChoiceQuestion
+                windowSize
                 "Do you use Elm?"
                 Nothing
                 Questions.allDoYouUseElm
@@ -554,6 +586,7 @@ formView form =
                         }
                 )
             , Ui.singleChoiceQuestion
+                windowSize
                 "How old are you?"
                 Nothing
                 Questions.allAge
@@ -561,6 +594,7 @@ formView form =
                 form.age
                 (\a -> FormChanged { form | age = a })
             , Ui.singleChoiceQuestion
+                windowSize
                 "What is your level of experience with functional programming?"
                 Nothing
                 Questions.allExperienceLevel
@@ -568,6 +602,7 @@ formView form =
                 form.functionalProgrammingExperience
                 (\a -> FormChanged { form | functionalProgrammingExperience = a })
             , Ui.multiChoiceQuestionWithOther
+                windowSize
                 "What programming languages, other than Elm, are you most familiar with?"
                 Nothing
                 Questions.allOtherLanguages
@@ -575,6 +610,7 @@ formView form =
                 form.otherLanguages
                 (\a -> FormChanged { form | otherLanguages = a })
             , Ui.multiChoiceQuestionWithOther
+                windowSize
                 "Where do you go for Elm news and discussion?"
                 Nothing
                 Questions.allNewsAndDiscussions
@@ -586,6 +622,7 @@ formView form =
 
               else
                 Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What resources did you use to learn Elm?"
                     Nothing
                     Questions.allElmResources
@@ -593,12 +630,14 @@ formView form =
                     form.elmResources
                     (\a -> FormChanged { form | elmResources = a })
             , Ui.searchableTextInput
+                windowSize
                 "Which country do you live in?"
                 Nothing
                 countries
                 form.countryLivingIn
                 (\a -> FormChanged { form | countryLivingIn = a })
             , Ui.emailAddressInput
+                windowSize
                 form.emailAddress
                 (\a -> FormChanged { form | emailAddress = a })
             ]
@@ -606,8 +645,10 @@ formView form =
             Element.none
 
           else
-            section "Where do you use Elm?"
+            section windowSize
+                "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "In which application domains, if any, have you used Elm?"
                     (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
                     Questions.allApplicationDomains
@@ -615,6 +656,7 @@ formView form =
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
                 , Ui.singleChoiceQuestion
+                    windowSize
                     "Do you use Elm at work?"
                     (Just "Either for a consumer product or an internal tool")
                     Questions.allDoYouUseElmAtWork
@@ -626,6 +668,7 @@ formView form =
 
                   else
                     Ui.singleChoiceQuestion
+                        windowSize
                         "How large is the company you work at?"
                         Nothing
                         Questions.allHowLargeIsTheCompany
@@ -637,6 +680,7 @@ formView form =
 
                   else
                     Ui.multiChoiceQuestionWithOther
+                        windowSize
                         "What languages does your company use on the backend?"
                         Nothing
                         Questions.allWhatLanguageDoYouUseForTheBackend
@@ -644,6 +688,7 @@ formView form =
                         form.whatLanguageDoYouUseForBackend
                         (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
                 , Ui.singleChoiceQuestion
+                    windowSize
                     "How long have you been using Elm?"
                     Nothing
                     Questions.allHowLong
@@ -651,6 +696,7 @@ formView form =
                     form.howLong
                     (\a -> FormChanged { form | howLong = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What versions of Elm are you using?"
                     Nothing
                     Questions.allWhatElmVersion
@@ -662,8 +708,10 @@ formView form =
             Element.none
 
           else
-            section "How do you use Elm?"
+            section windowSize
+                "How do you use Elm?"
                 [ Ui.singleChoiceQuestion
+                    windowSize
                     "Do you format your code with elm-format?"
                     Nothing
                     Questions.allDoYouUseElmFormat
@@ -671,6 +719,7 @@ formView form =
                     form.doYouUseElmFormat
                     (\a -> FormChanged { form | doYouUseElmFormat = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What tools or libraries do you use to style your Elm applications?"
                     Nothing
                     Questions.allStylingTools
@@ -678,6 +727,7 @@ formView form =
                     form.stylingTools
                     (\a -> FormChanged { form | stylingTools = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What tools do you use to build your Elm applications?"
                     Nothing
                     Questions.allBuildTools
@@ -685,6 +735,7 @@ formView form =
                     form.buildTools
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What frameworks do you use?"
                     Nothing
                     Questions.allFrameworks
@@ -692,6 +743,7 @@ formView form =
                     form.frameworks
                     (\a -> FormChanged { form | frameworks = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What editor(s) do you use to write your Elm applications?"
                     Nothing
                     Questions.allEditor
@@ -699,6 +751,7 @@ formView form =
                     form.editors
                     (\a -> FormChanged { form | editors = a })
                 , Ui.singleChoiceQuestion
+                    windowSize
                     "Do you use elm-review?"
                     Nothing
                     Questions.allDoYouUseElmReview
@@ -713,6 +766,7 @@ formView form =
 
                   else
                     Ui.multiChoiceQuestionWithOther
+                        windowSize
                         "Which elm-review rules do you use?"
                         (Just "If you have custom unpublished rules, select \"Other\" and describe what they do")
                         Questions.allWhichElmReviewRulesDoYouUse
@@ -720,6 +774,7 @@ formView form =
                         form.whichElmReviewRulesDoYouUse
                         (\a -> FormChanged { form | whichElmReviewRulesDoYouUse = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What tools do you use to test your Elm projects?"
                     Nothing
                     Questions.allTestTools
@@ -727,6 +782,7 @@ formView form =
                     form.testTools
                     (\a -> FormChanged { form | testTools = a })
                 , Ui.multiChoiceQuestionWithOther
+                    windowSize
                     "What do you write tests for in your Elm projects?"
                     Nothing
                     Questions.allTestsWrittenFor
@@ -734,16 +790,19 @@ formView form =
                     form.testsWrittenFor
                     (\a -> FormChanged { form | testsWrittenFor = a })
                 , Ui.textInput
+                    windowSize
                     "What initially attracted you to Elm, or motivated you to try it?"
                     Nothing
                     form.elmInitialInterest
                     (\a -> FormChanged { form | elmInitialInterest = a })
                 , Ui.textInput
+                    windowSize
                     "What has been your biggest pain point in your use of Elm?"
                     Nothing
                     form.biggestPainPoint
                     (\a -> FormChanged { form | biggestPainPoint = a })
                 , Ui.textInput
+                    windowSize
                     "What do you like the most about your use of Elm?"
                     Nothing
                     form.whatDoYouLikeMost

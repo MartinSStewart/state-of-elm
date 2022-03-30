@@ -6,11 +6,11 @@ import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
 import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
 import Time
-import Ui exposing (MultiChoiceWithOther)
+import Ui exposing (MultiChoiceWithOther, Size)
 
 
 type FrontendModel
-    = Loading
+    = Loading (Maybe Size)
     | FormLoaded FormLoaded_
     | FormCompleted
     | AdminLogin { password : String, loginFailed : Bool }
@@ -23,6 +23,7 @@ type alias FormLoaded_ =
     , submitting : Bool
     , pressedSubmitCount : Int
     , debounceCounter : Int
+    , windowSize : Size
     }
 
 
@@ -71,6 +72,7 @@ type FrontendMsg
     | Debounce Int
     | TypedPassword String
     | PressedLogin
+    | GotWindowSize Size
 
 
 type ToBackend
