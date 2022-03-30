@@ -1,9 +1,7 @@
 module Ui exposing
-    ( AnswerWithOther(..)
-    , MultiChoiceWithOther
+    ( MultiChoiceWithOther
     , acceptTosQuestion
     , blue0
-    , blue1
     , disclaimer
     , emailAddressInput
     , multiChoiceQuestion
@@ -11,7 +9,6 @@ module Ui exposing
     , multiChoiceWithOtherInit
     , searchableTextInput
     , singleChoiceQuestion
-    , slider
     , textInput
     , titleFontSize
     , white
@@ -83,11 +80,6 @@ multilineAttributes =
     , Element.htmlAttribute (Html.Attributes.attribute "data-enable-grammarly" "false")
     , Element.Font.size 18
     ]
-
-
-type AnswerWithOther a
-    = Answer a
-    | Other String
 
 
 emailAddressInput : String -> (String -> model) -> Element model
@@ -320,11 +312,6 @@ blue0 =
     Element.rgb255 18 147 216
 
 
-blue1 : Element.Color
-blue1 =
-    Element.rgb255 183 222 243
-
-
 container : List (Element msg) -> Element msg
 container content =
     Element.el
@@ -349,60 +336,6 @@ container content =
             ]
             content
         )
-
-
-slider : String -> Maybe String -> Int -> Int -> Maybe Int -> (Int -> model) -> Element model
-slider title maybeSubtitle minValue maxValue maybeSelection updateModel =
-    container
-        [ titleAndSubtitle title maybeSubtitle
-        , Element.column
-            [ Element.width Element.fill, Element.spacing 16 ]
-            [ Element.el
-                [ Element.Font.color blue0, Element.Font.size 16 ]
-                (case maybeSelection of
-                    Just selection ->
-                        Element.text ("You selected: " ++ String.fromInt selection)
-
-                    Nothing ->
-                        Element.text "Drag the slider"
-                )
-            , Element.row
-                [ Element.width Element.fill, Element.spacing 8 ]
-                [ Element.text (String.fromInt minValue)
-                , Element.Input.slider
-                    [ Element.width Element.fill
-                    , Element.height (Element.px 24)
-                    , Element.behindContent
-                        (Element.el
-                            [ Element.Background.color blue1
-                            , Element.paddingXY 4 0
-                            , Element.width Element.fill
-                            , Element.height (Element.px 6)
-                            , Element.centerY
-                            ]
-                            Element.none
-                        )
-                    ]
-                    { onChange = round >> updateModel
-                    , label = Element.Input.labelHidden title
-                    , value = toFloat (Maybe.withDefault 0 maybeSelection)
-                    , min = toFloat minValue
-                    , max = toFloat maxValue
-                    , step = Just 1
-                    , thumb =
-                        Element.Input.thumb
-                            [ Element.width (Element.px 24)
-                            , Element.height (Element.px 24)
-                            , Element.Border.rounded 99
-                            , Element.Border.width 1
-                            , Element.Border.color (Element.rgb 0.5 0.5 0.5)
-                            , Element.Background.color (Element.rgb 1 1 1)
-                            ]
-                    }
-                , Element.text (String.fromInt maxValue)
-                ]
-            ]
-        ]
 
 
 multiChoiceQuestionWithOther :

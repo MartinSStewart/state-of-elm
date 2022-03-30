@@ -7,7 +7,6 @@ import Lamdera exposing (ClientId, SessionId)
 import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
 import Time
 import Ui exposing (MultiChoiceWithOther)
-import Url exposing (Url)
 
 
 type FrontendModel
@@ -65,7 +64,7 @@ type alias BackendModel =
 
 type FrontendMsg
     = UrlClicked UrlRequest
-    | UrlChanged Url
+    | UrlChanged
     | FormChanged Form
     | PressedAcceptTosAnswer Bool
     | PressedSubmitSurvey

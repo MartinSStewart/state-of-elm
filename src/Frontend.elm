@@ -11,7 +11,7 @@ import Element.Input
 import Element.Region
 import Lamdera
 import Process
-import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), ExperienceLevel(..))
+import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
 import Svg
 import Svg.Attributes
 import Task
@@ -24,7 +24,7 @@ app =
     Lamdera.frontend
         { init = init
         , onUrlRequest = UrlClicked
-        , onUrlChange = UrlChanged
+        , onUrlChange = \_ -> UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
         , subscriptions = \_ -> Sub.none
@@ -100,7 +100,7 @@ update msg model =
                     , Nav.load url
                     )
 
-        UrlChanged _ ->
+        UrlChanged ->
             ( model, Cmd.none )
 
         FormChanged form ->

@@ -14,7 +14,7 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \m -> Lamdera.onConnect UserConnected
+        , subscriptions = \_ -> Lamdera.onConnect UserConnected
         }
 
 
