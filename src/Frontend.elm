@@ -5,7 +5,8 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
-import Countries
+import Countries exposing (Country)
+import Dict exposing (Dict)
 import Element exposing (Element)
 import Element.Background
 import Element.Font
@@ -516,7 +517,19 @@ section windowSize text content =
 
 countries : List String
 countries =
-    List.map (\country -> country.name ++ " " ++ country.flag) Countries.all
+    let
+        overrides : Dict String Country
+        overrides =
+            Dict.fromList
+                [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
+    in
+    List.map
+        (\country ->
+            Dict.get country.code overrides
+                |> Maybe.withDefault country
+                |> (\{ name, flag } -> name ++ " " ++ flag)
+        )
+        Countries.all
 
 
 formView : Size -> Form -> Element FrontendMsg
