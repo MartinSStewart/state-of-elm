@@ -14,9 +14,11 @@
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
+            "elm-community/list-extra": "8.5.2",
             "erlandsona/assoc-set": "1.1.0",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
+            "langyu-app/elm-ancillary-nonempty-list": "1.1.0",
             "mdgriffith/elm-ui": "1.1.8",
             "mgold/elm-nonempty-list": "4.2.0",
             "pzp1997/assoc-list": "1.0.0",
@@ -30,7 +32,8 @@
             "elm/random": "1.0.0",
             "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
-            "elm-community/list-extra": "8.5.2"
+            "elm-community/basics-extra": "4.1.0",
+            "elm-community/random-extra": "3.2.0"
         }
     },
     "test-dependencies": {

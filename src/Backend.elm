@@ -1,8 +1,10 @@
 module Backend exposing (..)
 
 import AssocList as Dict
+import DataEntry
 import Env
 import Lamdera exposing (ClientId, SessionId)
+import Questions
 import Sha256
 import Task
 import Time
@@ -35,22 +37,50 @@ update msg model =
     case msg of
         UserConnected sessionId clientId ->
             ( model
-            , (case ( model.adminLogin == Just sessionId, Dict.get sessionId model.forms ) of
-                ( True, _ ) ->
-                    LoadAdmin (getAdminData model)
+            , if model.adminLogin == Just sessionId then
+                LoadAdmin (getAdminData model) |> Lamdera.sendToFrontend clientId
 
-                ( False, Just value ) ->
-                    case value.submitTime of
-                        Just _ ->
-                            LoadForm FormSubmitted
+              else
+                case Env.surveyStatus of
+                    SurveyOpen ->
+                        (case Dict.get sessionId model.forms of
+                            Just value ->
+                                case value.submitTime of
+                                    Just _ ->
+                                        LoadForm FormSubmitted
 
-                        Nothing ->
-                            FormAutoSaved value.form |> LoadForm
+                                    Nothing ->
+                                        FormAutoSaved value.form |> LoadForm
 
-                ( False, Nothing ) ->
-                    LoadForm NoFormFound
-              )
-                |> Lamdera.sendToFrontend clientId
+                            Nothing ->
+                                LoadForm NoFormFound
+                        )
+                            |> Lamdera.sendToFrontend clientId
+
+                    AwaitingResults ->
+                        Cmd.none
+
+                    SurveyFinished ->
+                        let
+                            forms : List Form
+                            forms =
+                                Dict.values model.forms
+                                    |> List.filterMap
+                                        (\{ form, submitTime } ->
+                                            case submitTime of
+                                                Just _ ->
+                                                    Just form
+
+                                                Nothing ->
+                                                    Nothing
+                                        )
+                        in
+                        { age = List.filterMap .age forms |> DataEntry.fromForms Questions.allAge
+                        , functionalProgrammingExperience = List.filterMap .functionalProgrammingExperience forms |> DataEntry.fromForms Questions.allExperienceLevel
+                        }
+                            |> SurveyResults
+                            |> LoadForm
+                            |> Lamdera.sendToFrontend clientId
             )
 
         GotTimeWithUpdate sessionId clientId toBackend time ->
@@ -66,50 +96,66 @@ updateFromFrontendWithTime : Time.Posix -> SessionId -> ClientId -> ToBackend ->
 updateFromFrontendWithTime time sessionId clientId msg model =
     case msg of
         AutoSaveForm form ->
-            ( { model
-                | forms =
-                    Dict.update
-                        sessionId
-                        (\maybeValue ->
-                            case maybeValue of
-                                Just value ->
-                                    case value.submitTime of
-                                        Just _ ->
-                                            maybeValue
+            case Env.surveyStatus of
+                SurveyOpen ->
+                    ( { model
+                        | forms =
+                            Dict.update
+                                sessionId
+                                (\maybeValue ->
+                                    case maybeValue of
+                                        Just value ->
+                                            case value.submitTime of
+                                                Just _ ->
+                                                    maybeValue
+
+                                                Nothing ->
+                                                    Just { value | form = form }
 
                                         Nothing ->
-                                            Just { value | form = form }
+                                            Just { form = form, submitTime = Nothing }
+                                )
+                                model.forms
+                      }
+                    , Cmd.none
+                    )
 
-                                Nothing ->
-                                    Just { form = form, submitTime = Nothing }
-                        )
-                        model.forms
-              }
-            , Cmd.none
-            )
+                AwaitingResults ->
+                    ( model, Cmd.none )
+
+                SurveyFinished ->
+                    ( model, Cmd.none )
 
         SubmitForm form ->
-            ( { model
-                | forms =
-                    Dict.update
-                        sessionId
-                        (\maybeValue ->
-                            case maybeValue of
-                                Just value ->
-                                    case value.submitTime of
-                                        Just _ ->
-                                            maybeValue
+            case Env.surveyStatus of
+                SurveyOpen ->
+                    ( { model
+                        | forms =
+                            Dict.update
+                                sessionId
+                                (\maybeValue ->
+                                    case maybeValue of
+                                        Just value ->
+                                            case value.submitTime of
+                                                Just _ ->
+                                                    maybeValue
+
+                                                Nothing ->
+                                                    Just { value | form = form, submitTime = Just time }
 
                                         Nothing ->
-                                            Just { value | form = form, submitTime = Just time }
+                                            Just { form = form, submitTime = Just time }
+                                )
+                                model.forms
+                      }
+                    , Lamdera.sendToFrontend clientId SubmitConfirmed
+                    )
 
-                                Nothing ->
-                                    Just { form = form, submitTime = Just time }
-                        )
-                        model.forms
-              }
-            , Lamdera.sendToFrontend clientId SubmitConfirmed
-            )
+                AwaitingResults ->
+                    ( model, Cmd.none )
+
+                SurveyFinished ->
+                    ( model, Cmd.none )
 
         AdminLoginRequest password ->
             if Env.adminPasswordHash == Sha256.sha256 password then
