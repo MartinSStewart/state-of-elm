@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import AssocList as Dict
+import AssocSet as Set
 import DataEntry
 import Env
 import Lamdera exposing (ClientId, SessionId)
@@ -75,8 +76,26 @@ update msg model =
                                                     Nothing
                                         )
                         in
-                        { age = List.filterMap .age forms |> DataEntry.fromForms Questions.allAge
-                        , functionalProgrammingExperience = List.filterMap .functionalProgrammingExperience forms |> DataEntry.fromForms Questions.allExperienceLevel
+                        { doYouUseElm =
+                            List.concatMap (.doYouUseElm >> Set.toList) forms
+                                |> DataEntry.fromForms Questions.allDoYouUseElm
+                        , age = List.filterMap .age forms |> DataEntry.fromForms Questions.allAge
+                        , functionalProgrammingExperience =
+                            List.filterMap .functionalProgrammingExperience forms
+                                |> DataEntry.fromForms Questions.allExperienceLevel
+                        , doYouUseElmAtWork =
+                            List.filterMap .doYouUseElmAtWork forms
+                                |> DataEntry.fromForms Questions.allDoYouUseElmAtWork
+                        , howLargeIsTheCompany =
+                            List.filterMap .howLargeIsTheCompany forms
+                                |> DataEntry.fromForms Questions.allHowLargeIsTheCompany
+                        , howLong = List.filterMap .howLong forms |> DataEntry.fromForms Questions.allHowLong
+                        , doYouUseElmFormat =
+                            List.filterMap .doYouUseElmFormat forms
+                                |> DataEntry.fromForms Questions.allDoYouUseElmFormat
+                        , doYouUseElmReview =
+                            List.filterMap .doYouUseElmReview forms
+                                |> DataEntry.fromForms Questions.allDoYouUseElmReview
                         }
                             |> SurveyResults
                             |> LoadForm

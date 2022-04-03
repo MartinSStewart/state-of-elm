@@ -9,6 +9,10 @@ type DataEntry a
     = DataEntry (Nonempty Int)
 
 
+type DataEntryWithOther a
+    = DataEntryWithOther (Nonempty Int) (List { choice : String, count : Int })
+
+
 get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }
 get choices (DataEntry dataEntry) =
     Nonempty.zip choices dataEntry
