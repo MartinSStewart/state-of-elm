@@ -5,6 +5,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
+import Codecs
 import Countries exposing (Country)
 import Dict exposing (Dict)
 import Element exposing (Element)
@@ -12,9 +13,12 @@ import Element.Background
 import Element.Font
 import Element.Input
 import Element.Region
+import Env
 import Lamdera
 import Process
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
+import Serialize
+import SurveyResults
 import Svg
 import Svg.Attributes
 import Task
@@ -74,6 +78,9 @@ update msg model =
                 AdminLogin _ ->
                     ( model, Cmd.none )
 
+                SurveyResultsLoaded _ ->
+                    ( model, Cmd.none )
+
         updateAdminLogin func =
             case model of
                 FormLoaded _ ->
@@ -94,6 +101,9 @@ update msg model =
                             func adminLogin
                     in
                     ( AdminLogin newAdminLogin, cmd )
+
+                SurveyResultsLoaded _ ->
+                    ( model, Cmd.none )
     in
     case msg of
         UrlClicked urlRequest ->
@@ -174,6 +184,30 @@ update msg model =
 
                 Admin adminLoginData ->
                     Admin adminLoginData
+
+                SurveyResultsLoaded data ->
+                    SurveyResultsLoaded data
+            , Cmd.none
+            )
+
+        TypedFormsData text ->
+            ( case model of
+                Admin admin ->
+                    case Serialize.decodeFromString (Serialize.list Codecs.formCodec) text of
+                        Ok forms ->
+                            Admin
+                                { admin
+                                    | forms =
+                                        List.map
+                                            (\form -> { form = form, submitTime = Just (Time.millisToPosix 0) })
+                                            forms
+                                }
+
+                        Err _ ->
+                            Admin admin
+
+                _ ->
+                    model
             , Cmd.none
             )
 
@@ -239,6 +273,9 @@ updateFromBackend msg model =
                         FormSubmitted ->
                             FormCompleted
 
+                        SurveyResults data ->
+                            SurveyResultsLoaded data
+
                 _ ->
                     model
 
@@ -272,95 +309,37 @@ view model =
             [ Element.Region.mainContent ]
             (case model of
                 FormLoaded formLoaded ->
-                    Element.column
-                        [ Element.spacing 24
-                        , Element.width Element.fill
-                        ]
-                        [ Element.el
-                            [ Element.Background.color Ui.blue0
-                            , Element.width Element.fill
-                            ]
-                            (Element.column
-                                [ Element.Font.color Ui.white
-                                , Ui.ifMobile formLoaded.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
-                                , Element.centerX
-                                , Element.width (Element.maximum 800 Element.fill)
-                                , Element.spacing 24
-                                ]
-                                [ Element.paragraph
-                                    [ Element.Font.size 48
-                                    , Element.Font.bold
-                                    , Element.Font.center
-                                    ]
-                                    [ Element.text "State of Elm 2022" ]
-                                , Element.paragraph
-                                    [ Ui.titleFontSize, Element.Font.bold ]
-                                    [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
-                                , Element.paragraph
-                                    []
-                                    [ Element.text "This is a survey to better understand the Elm community." ]
-                                , Element.paragraph
-                                    []
-                                    [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
-                                , Ui.disclaimer
-                                ]
-                            )
-                        , formView formLoaded.windowSize formLoaded.form
-                        , Ui.acceptTosQuestion
-                            formLoaded.windowSize
-                            formLoaded.acceptedTos
-                            PressedAcceptTosAnswer
-                            PressedSubmitSurvey
-                            formLoaded.pressedSubmitCount
-                        ]
+                    case Env.surveyStatus of
+                        SurveyOpen ->
+                            answerSurveyView formLoaded
+
+                        AwaitingResults ->
+                            awaitingResultsView
+
+                        SurveyFinished ->
+                            Element.none
 
                 Loading _ ->
-                    Element.none
+                    case Env.surveyStatus of
+                        SurveyOpen ->
+                            Element.none
+
+                        AwaitingResults ->
+                            awaitingResultsView
+
+                        SurveyFinished ->
+                            Element.none
 
                 FormCompleted ->
-                    Element.el
-                        [ Element.Background.color Ui.blue0
-                        , Element.width Element.fill
-                        , Element.height Element.fill
-                        , Element.inFront
-                            (Element.column
-                                [ Element.alignBottom, Element.spacing 16, Element.paddingXY 22 24 ]
-                                [ Element.link
-                                    [ Element.Font.color Ui.white
-                                    ]
-                                    { url = "https://github.com/MartinSStewart/state-of-elm"
-                                    , label =
-                                        Element.row
-                                            [ Element.Font.size 32
-                                            , Element.spacing 8
-                                            ]
-                                            [ githubLogo
-                                            , Element.el [ Element.moveDown 2 ] (Element.text "Source")
-                                            ]
-                                    }
-                                , Element.el [] Ui.disclaimer
-                                ]
-                            )
-                        ]
-                        (Element.column
-                            [ Element.centerX
-                            , Element.centerY
-                            , Element.Font.color Ui.white
-                            , Element.spacing 24
-                            , Element.paddingXY 22 24
-                            , Element.width (Element.maximum 800 Element.fill)
-                            ]
-                            [ Element.paragraph
-                                [ Element.Font.center
-                                , Element.Font.size 36
-                                , Element.Font.bold
-                                ]
-                                [ Element.text "Survey submitted!" ]
-                            , Element.paragraph
-                                [ Element.Font.center ]
-                                [ Element.text "Thanks for participating in the State of Elm 2022 survey. The results will be presented in a few weeks on this website." ]
-                            ]
-                        )
+                    case Env.surveyStatus of
+                        SurveyOpen ->
+                            formCompletedView
+
+                        AwaitingResults ->
+                            awaitingResultsView
+
+                        SurveyFinished ->
+                            Element.none
 
                 AdminLogin { password, loginFailed } ->
                     Element.column
@@ -393,13 +372,173 @@ view model =
                     Element.column
                         [ Element.spacing 32, Element.padding 16 ]
                         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
+                        , Element.Input.text
+                            []
+                            { onChange = TypedFormsData
+                            , text =
+                                List.filterMap
+                                    (\{ form, submitTime } ->
+                                        case submitTime of
+                                            Just _ ->
+                                                Just form
+
+                                            Nothing ->
+                                                Nothing
+                                    )
+                                    admin.forms
+                                    |> Serialize.encodeToString (Serialize.list Codecs.formCodec)
+
+                            --|> Json.Encode.encode 0
+                            , placeholder = Nothing
+                            , label = Element.Input.labelHidden ""
+                            }
                         , Element.column
                             [ Element.spacing 32 ]
                             (List.map adminFormView admin.forms)
                         ]
+
+                SurveyResultsLoaded data ->
+                    SurveyResults.view data
             )
         ]
     }
+
+
+formCompletedView : Element msg
+formCompletedView =
+    Element.el
+        [ Element.Background.color Ui.blue0
+        , Element.width Element.fill
+        , Element.height Element.fill
+        , Element.inFront
+            (Element.column
+                [ Element.alignBottom, Element.spacing 16, Element.paddingXY 22 24 ]
+                [ Element.link
+                    [ Element.Font.color Ui.white
+                    ]
+                    { url = "https://github.com/MartinSStewart/state-of-elm"
+                    , label =
+                        Element.row
+                            [ Element.Font.size 32
+                            , Element.spacing 8
+                            ]
+                            [ githubLogo
+                            , Element.el [ Element.moveDown 2 ] (Element.text "Source")
+                            ]
+                    }
+                , Element.el [] Ui.disclaimer
+                ]
+            )
+        ]
+        (Element.column
+            [ Element.centerX
+            , Element.centerY
+            , Element.Font.color Ui.white
+            , Element.spacing 24
+            , Element.paddingXY 22 24
+            , Element.width (Element.maximum 800 Element.fill)
+            ]
+            [ Element.paragraph
+                [ Element.Font.center
+                , Element.Font.size 36
+                , Element.Font.bold
+                ]
+                [ Element.text "Survey submitted!" ]
+            , Element.paragraph
+                [ Element.Font.center ]
+                [ Element.text "Thanks for participating in the State of Elm 2022 survey. The results will be presented in a few weeks on this website." ]
+            ]
+        )
+
+
+answerSurveyView formLoaded =
+    Element.column
+        [ Element.spacing 24
+        , Element.width Element.fill
+        ]
+        [ Element.el
+            [ Element.Background.color Ui.blue0
+            , Element.width Element.fill
+            ]
+            (Element.column
+                [ Element.Font.color Ui.white
+                , Ui.ifMobile formLoaded.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
+                , Element.centerX
+                , Element.width (Element.maximum 800 Element.fill)
+                , Element.spacing 24
+                ]
+                [ Element.paragraph
+                    [ Element.Font.size 48
+                    , Element.Font.bold
+                    , Element.Font.center
+                    ]
+                    [ Element.text "State of Elm 2022" ]
+                , Element.paragraph
+                    [ Ui.titleFontSize, Element.Font.bold ]
+                    [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
+                , Element.paragraph
+                    []
+                    [ Element.text "This is a survey to better understand the Elm community." ]
+                , Element.paragraph
+                    []
+                    [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
+                , Ui.disclaimer
+                ]
+            )
+        , formView formLoaded.windowSize formLoaded.form
+        , Ui.acceptTosQuestion
+            formLoaded.windowSize
+            formLoaded.acceptedTos
+            PressedAcceptTosAnswer
+            PressedSubmitSurvey
+            formLoaded.pressedSubmitCount
+        ]
+
+
+awaitingResultsView =
+    Element.el
+        [ Element.Background.color Ui.blue0
+        , Element.width Element.fill
+        , Element.height Element.fill
+        , Element.inFront
+            (Element.column
+                [ Element.alignBottom, Element.spacing 16, Element.paddingXY 22 24 ]
+                [ Element.link
+                    [ Element.Font.color Ui.white
+                    ]
+                    { url = "https://github.com/MartinSStewart/state-of-elm"
+                    , label =
+                        Element.row
+                            [ Element.Font.size 32
+                            , Element.spacing 8
+                            ]
+                            [ githubLogo
+                            , Element.el [ Element.moveDown 2 ] (Element.text "Source")
+                            ]
+                    }
+                , Element.el [] Ui.disclaimer
+                ]
+            )
+        ]
+        (Element.column
+            [ Element.centerX
+            , Element.centerY
+            , Element.Font.color Ui.white
+            , Element.spacing 24
+            , Element.paddingXY 22 24
+            , Element.width (Element.maximum 800 Element.fill)
+            ]
+            [ Element.paragraph
+                [ Element.Font.center
+                , Element.Font.size 36
+                , Element.Font.bold
+                ]
+                [ Element.text "Survey closed" ]
+            , Element.paragraph
+                [ Element.Font.center ]
+                [ Element.text "The survey is now closed and the results are being tallied. They should be released on this website in a few days." ]
+            ]
+        )
 
 
 adminFormView : { form : Form, submitTime : Maybe Time.Posix } -> Element msg

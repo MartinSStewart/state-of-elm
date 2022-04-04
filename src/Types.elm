@@ -5,6 +5,7 @@ import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
 import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
+import SurveyResults
 import Time
 import Ui exposing (MultiChoiceWithOther, Size)
 
@@ -15,6 +16,13 @@ type FrontendModel
     | FormCompleted
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminLoginData
+    | SurveyResultsLoaded SurveyResults.Data
+
+
+type SurveyStatus
+    = SurveyOpen
+    | AwaitingResults
+    | SurveyFinished
 
 
 type alias FormLoaded_ =
@@ -73,6 +81,7 @@ type FrontendMsg
     | TypedPassword String
     | PressedLogin
     | GotWindowSize Size
+    | TypedFormsData String
 
 
 type ToBackend
@@ -90,6 +99,7 @@ type LoadFormStatus
     = NoFormFound
     | FormAutoSaved Form
     | FormSubmitted
+    | SurveyResults SurveyResults.Data
 
 
 type ToFrontend
