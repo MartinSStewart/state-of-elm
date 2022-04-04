@@ -38,34 +38,39 @@ update msg model =
     case msg of
         UserConnected sessionId clientId ->
             ( model
-            , if model.adminLogin == Just sessionId then
+            , if isAdmin sessionId model then
                 LoadAdmin (getAdminData model) |> Lamdera.sendToFrontend clientId
 
               else
-                loadFormData sessionId model |> LoadForm |> Lamdera.sendToFrontend clientId
+                Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
             )
+
+        GotTimeWithLoadFormData sessionId clientId time ->
+            ( model, loadFormData sessionId time model |> LoadForm |> Lamdera.sendToFrontend clientId )
 
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
 
 
-loadFormData sessionId model =
+loadFormData : SessionId -> Time.Posix -> BackendModel -> LoadFormStatus
+loadFormData sessionId time model =
     case Env.surveyStatus of
         SurveyOpen ->
-            case Dict.get sessionId model.forms of
-                Just value ->
-                    case value.submitTime of
-                        Just _ ->
-                            FormSubmitted
+            if Env.surveyIsOpen time then
+                case Dict.get sessionId model.forms of
+                    Just value ->
+                        case value.submitTime of
+                            Just _ ->
+                                FormSubmitted
 
-                        Nothing ->
-                            FormAutoSaved value.form
+                            Nothing ->
+                                FormAutoSaved value.form
 
-                Nothing ->
-                    NoFormFound
+                    Nothing ->
+                        NoFormFound
 
-        AwaitingResults ->
-            AwaitingResultsData
+            else
+                AwaitingResultsData
 
         SurveyFinished ->
             let
@@ -117,30 +122,31 @@ updateFromFrontendWithTime time sessionId clientId msg model =
         AutoSaveForm form ->
             case Env.surveyStatus of
                 SurveyOpen ->
-                    ( { model
-                        | forms =
-                            Dict.update
-                                sessionId
-                                (\maybeValue ->
-                                    case maybeValue of
-                                        Just value ->
-                                            case value.submitTime of
-                                                Just _ ->
-                                                    maybeValue
+                    ( if Env.surveyIsOpen time then
+                        { model
+                            | forms =
+                                Dict.update
+                                    sessionId
+                                    (\maybeValue ->
+                                        case maybeValue of
+                                            Just value ->
+                                                case value.submitTime of
+                                                    Just _ ->
+                                                        maybeValue
 
-                                                Nothing ->
-                                                    Just { value | form = form }
+                                                    Nothing ->
+                                                        Just { value | form = form }
 
-                                        Nothing ->
-                                            Just { form = form, submitTime = Nothing }
-                                )
-                                model.forms
-                      }
+                                            Nothing ->
+                                                Just { form = form, submitTime = Nothing }
+                                    )
+                                    model.forms
+                        }
+
+                      else
+                        model
                     , Cmd.none
                     )
-
-                AwaitingResults ->
-                    ( model, Cmd.none )
 
                 SurveyFinished ->
                     ( model, Cmd.none )
@@ -148,30 +154,31 @@ updateFromFrontendWithTime time sessionId clientId msg model =
         SubmitForm form ->
             case Env.surveyStatus of
                 SurveyOpen ->
-                    ( { model
-                        | forms =
-                            Dict.update
-                                sessionId
-                                (\maybeValue ->
-                                    case maybeValue of
-                                        Just value ->
-                                            case value.submitTime of
-                                                Just _ ->
-                                                    maybeValue
+                    if Env.surveyIsOpen time then
+                        ( { model
+                            | forms =
+                                Dict.update
+                                    sessionId
+                                    (\maybeValue ->
+                                        case maybeValue of
+                                            Just value ->
+                                                case value.submitTime of
+                                                    Just _ ->
+                                                        maybeValue
 
-                                                Nothing ->
-                                                    Just { value | form = form, submitTime = Just time }
+                                                    Nothing ->
+                                                        Just { value | form = form, submitTime = Just time }
 
-                                        Nothing ->
-                                            Just { form = form, submitTime = Just time }
-                                )
-                                model.forms
-                      }
-                    , Lamdera.sendToFrontend clientId SubmitConfirmed
-                    )
+                                            Nothing ->
+                                                Just { form = form, submitTime = Just time }
+                                    )
+                                    model.forms
+                          }
+                        , Lamdera.sendToFrontend clientId SubmitConfirmed
+                        )
 
-                AwaitingResults ->
-                    ( model, Cmd.none )
+                    else
+                        ( model, Cmd.none )
 
                 SurveyFinished ->
                     ( model, Cmd.none )
@@ -186,10 +193,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                 ( model, Err () |> AdminLoginResponse |> Lamdera.sendToFrontend clientId )
 
         ReplaceFormsRequest forms ->
-            ( if Env.isProduction then
-                model
-
-              else
+            ( if not Env.isProduction && isAdmin sessionId model then
                 { model
                     | forms =
                         List.indexedMap
@@ -201,14 +205,22 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                             forms
                             |> Dict.fromList
                 }
+
+              else
+                model
             , Cmd.none
             )
 
         LogOutRequest ->
-            if Just sessionId == model.adminLogin then
+            if isAdmin sessionId model then
                 ( { model | adminLogin = Nothing }
-                , loadFormData sessionId model |> LogOutResponse |> Lamdera.sendToFrontend clientId
+                , loadFormData sessionId time model |> LogOutResponse |> Lamdera.sendToFrontend clientId
                 )
 
             else
                 ( model, Cmd.none )
+
+
+isAdmin : SessionId -> BackendModel -> Bool
+isAdmin sessionId model =
+    Just sessionId == model.adminLogin

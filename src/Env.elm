@@ -1,6 +1,9 @@
 module Env exposing (..)
 
+import Duration
+import Quantity
 import Sha256
+import Time
 import Types exposing (SurveyStatus(..))
 
 
@@ -25,9 +28,6 @@ surveyStatus =
         "SurveyOpen" ->
             SurveyOpen
 
-        "AwaitingResults" ->
-            AwaitingResults
-
         "SurveyFinished" ->
             SurveyFinished
 
@@ -43,3 +43,13 @@ isProduction_ =
 isProduction : Bool
 isProduction =
     String.toLower isProduction_ == "true"
+
+
+surveyCloseTime : Time.Posix
+surveyCloseTime =
+    Time.millisToPosix 1650286800000
+
+
+surveyIsOpen : Time.Posix -> Bool
+surveyIsOpen time =
+    Duration.from time surveyCloseTime |> Quantity.greaterThanZero

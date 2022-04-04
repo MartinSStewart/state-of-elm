@@ -54,7 +54,7 @@ type alias Data =
 view : Data -> Element msg
 view data =
     Element.column
-        [ Element.width Element.fill, Element.spacing 24, Element.padding 16 ]
+        [ Element.width Element.fill, Element.spacing 24, Element.paddingXY 0 16 ]
         [ singleChoiceGraph data.doYouUseElm Questions.doYouUseElm
         , singleChoiceGraph data.age Questions.age
         , singleChoiceGraph data.functionalProgrammingExperience Questions.experienceLevel
@@ -68,10 +68,10 @@ view data =
 
 ellipsis text =
     if String.length text > 40 then
-        String.left 37 text ++ "..."
+        Element.el [ Element.Font.size 14 ] (Element.text text)
 
     else
-        text
+        Element.text text
 
 
 singleChoiceGraph : DataEntry a -> Question a -> Element msg
@@ -84,52 +84,56 @@ singleChoiceGraph dataEntry { title, choices, choiceToString } =
             Nonempty.map .count data |> Nonempty.maximum |> max 1
 
         total =
-            Nonempty.map .count data |> Nonempty.toList |> List.sum
+            Nonempty.map .count data |> Nonempty.toList |> List.sum |> max 1
     in
-    Element.table
-        [ Element.width Element.fill, Element.paddingEach { left = 0, top = 0, bottom = 0, right = 48 } ]
-        { data = Nonempty.toList data
-        , columns =
-            [ { header = Element.none
-              , width = Element.shrink
-              , view =
-                    \{ choice } ->
-                        Element.paragraph
-                            [ Element.Font.alignRight, Element.Font.size 16, Element.padding 4 ]
-                            [ choiceToString choice |> ellipsis |> Element.text ]
-              }
-            , { header = Element.none
-              , width = Element.fill
-              , view =
-                    \{ count } ->
-                        let
-                            a =
-                                10000
+    Element.column
+        [ Element.width Element.fill ]
+        [ Element.paragraph [] [ Element.text title ]
+        , Element.table
+            [ Element.width Element.fill, Element.paddingEach { left = 0, top = 0, bottom = 0, right = 48 } ]
+            { data = Nonempty.toList data
+            , columns =
+                [ { header = Element.none
+                  , width = Element.shrink
+                  , view =
+                        \{ choice } ->
+                            Element.paragraph
+                                [ Element.Font.alignRight, Element.Font.size 16, Element.padding 4 ]
+                                [ choiceToString choice |> ellipsis ]
+                  }
+                , { header = Element.none
+                  , width = Element.fill
+                  , view =
+                        \{ count } ->
+                            let
+                                a =
+                                    10000
 
-                            percentage =
-                                100 * toFloat count / toFloat total |> StringExtra.removeTrailing0s 1
-                        in
-                        Element.row
-                            [ Element.width Element.fill
-                            , Element.height Element.fill
-                            , Element.padding 4
-                            ]
-                            [ Element.el
-                                [ Element.Background.color (Element.rgb 0 0 0)
-                                , Element.fillPortion (a * count) |> Element.minimum 2 |> Element.width
+                                percentage =
+                                    100 * toFloat count / toFloat total |> StringExtra.removeTrailing0s 1
+                            in
+                            Element.row
+                                [ Element.width Element.fill
                                 , Element.height Element.fill
-                                , Element.Border.rounded 4
-                                , Element.Font.size 16
-                                , (percentage ++ "%")
-                                    |> Element.text
-                                    |> Element.el [ Element.moveRight 4 ]
-                                    |> Element.onRight
+                                , Element.padding 4
                                 ]
-                                Element.none
-                            , Element.el
-                                [ Element.fillPortion (a * (maxCount - count)) |> Element.width ]
-                                Element.none
-                            ]
-              }
-            ]
-        }
+                                [ Element.el
+                                    [ Element.Background.color (Element.rgb 0 0 0)
+                                    , Element.fillPortion (a * count) |> Element.minimum 2 |> Element.width
+                                    , Element.height Element.fill
+                                    , Element.Border.rounded 4
+                                    , Element.Font.size 16
+                                    , (percentage ++ "%")
+                                        |> Element.text
+                                        |> Element.el [ Element.moveRight 4 ]
+                                        |> Element.onRight
+                                    ]
+                                    Element.none
+                                , Element.el
+                                    [ Element.fillPortion (a * (maxCount - count)) |> Element.width ]
+                                    Element.none
+                                ]
+                  }
+                ]
+            }
+        ]
