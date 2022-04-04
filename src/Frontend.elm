@@ -14,7 +14,6 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Env
-import Json.Encode
 import Lamdera
 import Process
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))

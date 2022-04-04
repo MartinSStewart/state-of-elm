@@ -97,7 +97,7 @@ singleChoiceGraph dataEntry choices choiceToString =
             , { header = Element.none
               , width = Element.fill
               , view =
-                    \{ choice, count } ->
+                    \{ count } ->
                         let
                             a =
                                 10000
