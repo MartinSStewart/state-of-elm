@@ -3,6 +3,7 @@ module Ui exposing
     , Size
     , acceptTosQuestion
     , blue0
+    , button
     , disclaimer
     , emailAddressInput
     , ifMobile
@@ -27,7 +28,8 @@ import Element.Region
 import Html
 import Html.Attributes
 import Html.Events
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty
+import Questions exposing (Question)
 import Simple.Animation
 import Simple.Animation.Animated
 import Simple.Animation.Property
@@ -106,14 +108,12 @@ emailAddressInput windowSize emailAddress updateModel =
 
 singleChoiceQuestion :
     Size
-    -> String
+    -> Question a
     -> Maybe String
-    -> Nonempty a
-    -> (a -> String)
     -> Maybe a
     -> (Maybe a -> model)
     -> Element model
-singleChoiceQuestion windowSize title maybeSubtitle choices choiceToString selection updateModel =
+singleChoiceQuestion windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
     container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , List.Nonempty.toList choices
@@ -178,14 +178,12 @@ checkButton text isChecked =
 
 multiChoiceQuestion :
     Size
-    -> String
+    -> Question a
     -> Maybe String
-    -> Nonempty a
-    -> (a -> String)
     -> Set a
     -> (Set a -> model)
     -> Element model
-multiChoiceQuestion windowSize title maybeSubtitle choices choiceToString selection updateModel =
+multiChoiceQuestion windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
     container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
@@ -238,18 +236,23 @@ acceptTosQuestion windowSize acceptedTos toggledIAccept pressedSubmit pressSubmi
                     |> Element.map (\() -> not acceptedTos |> toggledIAccept)
               )
             , ( "submit"
-              , Element.Input.button
-                    [ Element.Background.color white
-                    , Element.Font.color black
-                    , Element.Font.bold
-                    , Element.padding 16
-                    ]
-                    { onPress = Just pressedSubmit
-                    , label = Element.text "Submit survey"
-                    }
+              , button pressedSubmit "Submit survey"
               )
             ]
         )
+
+
+button : msg -> String -> Element msg
+button onPress text =
+    Element.Input.button
+        [ Element.Background.color white
+        , Element.Font.color black
+        , Element.Font.bold
+        , Element.padding 16
+        ]
+        { onPress = Just onPress
+        , label = Element.text text
+        }
 
 
 disclaimer : Element msg
@@ -357,14 +360,12 @@ container windowSize content =
 
 multiChoiceQuestionWithOther :
     Size
-    -> String
+    -> Question a
     -> Maybe String
-    -> Nonempty a
-    -> (a -> String)
     -> MultiChoiceWithOther a
     -> (MultiChoiceWithOther a -> model)
     -> Element model
-multiChoiceQuestionWithOther windowSize title maybeSubtitle choices choiceToString selection updateModel =
+multiChoiceQuestionWithOther windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
     container windowSize
         [ titleAndSubtitle title maybeSubtitle
         , Element.column

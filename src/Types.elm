@@ -11,9 +11,9 @@ import Ui exposing (MultiChoiceWithOther, Size)
 
 
 type FrontendModel
-    = Loading (Maybe Size)
+    = Loading (Maybe Size) (Maybe Time.Posix)
     | FormLoaded FormLoaded_
-    | FormCompleted
+    | FormCompleted Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminLoginData
     | SurveyResultsLoaded SurveyResults.Data
@@ -21,7 +21,6 @@ type FrontendModel
 
 type SurveyStatus
     = SurveyOpen
-    | AwaitingResults
     | SurveyFinished
 
 
@@ -32,6 +31,7 @@ type alias FormLoaded_ =
     , pressedSubmitCount : Int
     , debounceCounter : Int
     , windowSize : Size
+    , time : Time.Posix
     }
 
 
@@ -82,16 +82,21 @@ type FrontendMsg
     | PressedLogin
     | GotWindowSize Size
     | TypedFormsData String
+    | PressedLogOut
+    | GotTime Time.Posix
 
 
 type ToBackend
     = AutoSaveForm Form
     | SubmitForm Form
     | AdminLoginRequest String
+    | ReplaceFormsRequest (List Form)
+    | LogOutRequest
 
 
 type BackendMsg
     = UserConnected SessionId ClientId
+    | GotTimeWithLoadFormData SessionId ClientId Time.Posix
     | GotTimeWithUpdate SessionId ClientId ToBackend Time.Posix
 
 
@@ -100,6 +105,7 @@ type LoadFormStatus
     | FormAutoSaved Form
     | FormSubmitted
     | SurveyResults SurveyResults.Data
+    | AwaitingResultsData
 
 
 type ToFrontend
@@ -107,6 +113,7 @@ type ToFrontend
     | LoadAdmin AdminLoginData
     | AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
+    | LogOutResponse LoadFormStatus
 
 
 type alias AdminLoginData =

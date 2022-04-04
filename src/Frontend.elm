@@ -8,6 +8,7 @@ import Browser.Navigation as Nav
 import Codecs
 import Countries exposing (Country)
 import Dict exposing (Dict)
+import Duration exposing (Duration)
 import Element exposing (Element)
 import Element.Background
 import Element.Font
@@ -15,8 +16,10 @@ import Element.Input
 import Element.Region
 import Env
 import Lamdera
+import List.Extra as List
 import Process
-import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
+import Quantity
+import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
 import Serialize
 import SurveyResults
 import Svg
@@ -35,7 +38,12 @@ app =
         , onUrlChange = \_ -> UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions = \_ -> Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
+        , subscriptions =
+            \_ ->
+                Sub.batch
+                    [ Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
+                    , Time.every 1000 GotTime
+                    ]
         , view = view
         }
 
@@ -46,10 +54,13 @@ init url _ =
         AdminLogin { password = "", loginFailed = False }
 
       else
-        Loading Nothing
-    , Task.perform
-        (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
-        Browser.Dom.getViewport
+        Loading Nothing Nothing
+    , Cmd.batch
+        [ Task.perform
+            (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
+            Browser.Dom.getViewport
+        , Task.perform GotTime Time.now
+        ]
     )
 
 
@@ -66,10 +77,10 @@ update msg model =
                     in
                     ( FormLoaded newFormLoaded, cmd )
 
-                Loading _ ->
+                Loading _ _ ->
                     ( model, Cmd.none )
 
-                FormCompleted ->
+                FormCompleted _ ->
                     ( model, Cmd.none )
 
                 Admin _ ->
@@ -86,10 +97,10 @@ update msg model =
                 FormLoaded _ ->
                     ( model, Cmd.none )
 
-                Loading _ ->
+                Loading _ _ ->
                     ( model, Cmd.none )
 
-                FormCompleted ->
+                FormCompleted _ ->
                     ( model, Cmd.none )
 
                 Admin _ ->
@@ -170,14 +181,14 @@ update msg model =
 
         GotWindowSize windowSize ->
             ( case model of
-                Loading _ ->
-                    Loading (Just windowSize)
+                Loading _ maybeTime ->
+                    Loading (Just windowSize) maybeTime
 
                 FormLoaded formLoaded_ ->
                     FormLoaded { formLoaded_ | windowSize = windowSize }
 
-                FormCompleted ->
-                    FormCompleted
+                FormCompleted time ->
+                    FormCompleted time
 
                 AdminLogin record ->
                     AdminLogin record
@@ -191,22 +202,51 @@ update msg model =
             )
 
         TypedFormsData text ->
+            if Env.isProduction then
+                ( model, Cmd.none )
+
+            else
+                case model of
+                    Admin admin ->
+                        case Serialize.decodeFromString (Serialize.list Codecs.formCodec) text of
+                            Ok forms ->
+                                ( Admin
+                                    { admin
+                                        | forms =
+                                            List.map
+                                                (\form -> { form = form, submitTime = Just (Time.millisToPosix 0) })
+                                                forms
+                                    }
+                                , ReplaceFormsRequest forms |> Lamdera.sendToBackend
+                                )
+
+                            Err _ ->
+                                ( Admin admin, Cmd.none )
+
+                    _ ->
+                        ( model, Cmd.none )
+
+        PressedLogOut ->
+            ( model, Lamdera.sendToBackend LogOutRequest )
+
+        GotTime time ->
             ( case model of
-                Admin admin ->
-                    case Serialize.decodeFromString (Serialize.list Codecs.formCodec) text of
-                        Ok forms ->
-                            Admin
-                                { admin
-                                    | forms =
-                                        List.map
-                                            (\form -> { form = form, submitTime = Just (Time.millisToPosix 0) })
-                                            forms
-                                }
+                Loading maybeSize _ ->
+                    Loading maybeSize (Just time)
 
-                        Err _ ->
-                            Admin admin
+                FormLoaded formLoaded_ ->
+                    FormLoaded { formLoaded_ | time = time }
 
-                _ ->
+                FormCompleted _ ->
+                    FormCompleted time
+
+                AdminLogin _ ->
+                    model
+
+                Admin _ ->
+                    model
+
+                SurveyResultsLoaded _ ->
                     model
             , Cmd.none
             )
@@ -217,70 +257,19 @@ updateFromBackend msg model =
     ( case msg of
         LoadForm formStatus ->
             case model of
-                Loading maybeWindowSize ->
-                    case formStatus of
-                        NoFormFound ->
-                            let
-                                form : Form
-                                form =
-                                    { doYouUseElm = Set.empty
-                                    , age = Nothing
-                                    , functionalProgrammingExperience = Nothing
-                                    , otherLanguages = Ui.multiChoiceWithOtherInit
-                                    , newsAndDiscussions = Ui.multiChoiceWithOtherInit
-                                    , elmResources = Ui.multiChoiceWithOtherInit
-                                    , countryLivingIn = ""
-                                    , applicationDomains = Ui.multiChoiceWithOtherInit
-                                    , doYouUseElmAtWork = Nothing
-                                    , howLargeIsTheCompany = Nothing
-                                    , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
-                                    , howLong = Nothing
-                                    , elmVersion = Ui.multiChoiceWithOtherInit
-                                    , doYouUseElmFormat = Nothing
-                                    , stylingTools = Ui.multiChoiceWithOtherInit
-                                    , buildTools = Ui.multiChoiceWithOtherInit
-                                    , frameworks = Ui.multiChoiceWithOtherInit
-                                    , editors = Ui.multiChoiceWithOtherInit
-                                    , doYouUseElmReview = Nothing
-                                    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
-                                    , testTools = Ui.multiChoiceWithOtherInit
-                                    , testsWrittenFor = Ui.multiChoiceWithOtherInit
-                                    , elmInitialInterest = ""
-                                    , biggestPainPoint = ""
-                                    , whatDoYouLikeMost = ""
-                                    , emailAddress = ""
-                                    }
-                            in
-                            FormLoaded
-                                { form = form
-                                , acceptedTos = False
-                                , submitting = False
-                                , pressedSubmitCount = 0
-                                , debounceCounter = 0
-                                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
-                                }
-
-                        FormAutoSaved form ->
-                            FormLoaded
-                                { form = form
-                                , acceptedTos = False
-                                , submitting = False
-                                , pressedSubmitCount = 0
-                                , debounceCounter = 0
-                                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
-                                }
-
-                        FormSubmitted ->
-                            FormCompleted
-
-                        SurveyResults data ->
-                            SurveyResultsLoaded data
+                Loading maybeWindowSize maybeTime ->
+                    loadForm formStatus maybeWindowSize maybeTime
 
                 _ ->
                     model
 
         SubmitConfirmed ->
-            FormCompleted
+            case model of
+                FormLoaded formLoaded ->
+                    FormCompleted formLoaded.time
+
+                _ ->
+                    model
 
         LoadAdmin adminData ->
             Admin adminData
@@ -297,8 +286,82 @@ updateFromBackend msg model =
 
                 _ ->
                     model
+
+        LogOutResponse formStatus ->
+            case model of
+                Admin _ ->
+                    loadForm formStatus Nothing Nothing
+
+                _ ->
+                    model
     , Cmd.none
     )
+
+
+loadForm : LoadFormStatus -> Maybe Size -> Maybe Time.Posix -> FrontendModel
+loadForm formStatus maybeWindowSize maybeTime =
+    case formStatus of
+        NoFormFound ->
+            let
+                form : Form
+                form =
+                    { doYouUseElm = Set.empty
+                    , age = Nothing
+                    , functionalProgrammingExperience = Nothing
+                    , otherLanguages = Ui.multiChoiceWithOtherInit
+                    , newsAndDiscussions = Ui.multiChoiceWithOtherInit
+                    , elmResources = Ui.multiChoiceWithOtherInit
+                    , countryLivingIn = ""
+                    , applicationDomains = Ui.multiChoiceWithOtherInit
+                    , doYouUseElmAtWork = Nothing
+                    , howLargeIsTheCompany = Nothing
+                    , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
+                    , howLong = Nothing
+                    , elmVersion = Ui.multiChoiceWithOtherInit
+                    , doYouUseElmFormat = Nothing
+                    , stylingTools = Ui.multiChoiceWithOtherInit
+                    , buildTools = Ui.multiChoiceWithOtherInit
+                    , frameworks = Ui.multiChoiceWithOtherInit
+                    , editors = Ui.multiChoiceWithOtherInit
+                    , doYouUseElmReview = Nothing
+                    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
+                    , testTools = Ui.multiChoiceWithOtherInit
+                    , testsWrittenFor = Ui.multiChoiceWithOtherInit
+                    , elmInitialInterest = ""
+                    , biggestPainPoint = ""
+                    , whatDoYouLikeMost = ""
+                    , emailAddress = ""
+                    }
+            in
+            FormLoaded
+                { form = form
+                , acceptedTos = False
+                , submitting = False
+                , pressedSubmitCount = 0
+                , debounceCounter = 0
+                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , time = Maybe.withDefault (Time.millisToPosix 0) maybeTime
+                }
+
+        FormAutoSaved form ->
+            FormLoaded
+                { form = form
+                , acceptedTos = False
+                , submitting = False
+                , pressedSubmitCount = 0
+                , debounceCounter = 0
+                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , time = Maybe.withDefault (Time.millisToPosix 0) maybeTime
+                }
+
+        FormSubmitted ->
+            FormCompleted (Maybe.withDefault (Time.millisToPosix 0) maybeTime)
+
+        SurveyResults data ->
+            SurveyResultsLoaded data
+
+        AwaitingResultsData ->
+            Loading maybeWindowSize maybeTime
 
 
 view : FrontendModel -> Browser.Document FrontendMsg
@@ -311,32 +374,40 @@ view model =
                 FormLoaded formLoaded ->
                     case Env.surveyStatus of
                         SurveyOpen ->
-                            answerSurveyView formLoaded
+                            if Env.surveyIsOpen formLoaded.time then
+                                answerSurveyView formLoaded
 
-                        AwaitingResults ->
-                            awaitingResultsView
-
-                        SurveyFinished ->
-                            Element.none
-
-                Loading _ ->
-                    case Env.surveyStatus of
-                        SurveyOpen ->
-                            Element.none
-
-                        AwaitingResults ->
-                            awaitingResultsView
+                            else
+                                awaitingResultsView
 
                         SurveyFinished ->
                             Element.none
 
-                FormCompleted ->
+                Loading _ maybeTime ->
                     case Env.surveyStatus of
                         SurveyOpen ->
-                            formCompletedView
+                            case maybeTime of
+                                Just time ->
+                                    if Env.surveyIsOpen time then
+                                        Element.none
 
-                        AwaitingResults ->
-                            awaitingResultsView
+                                    else
+                                        awaitingResultsView
+
+                                Nothing ->
+                                    Element.none
+
+                        SurveyFinished ->
+                            Element.none
+
+                FormCompleted time ->
+                    case Env.surveyStatus of
+                        SurveyOpen ->
+                            if Env.surveyIsOpen time then
+                                formCompletedView
+
+                            else
+                                awaitingResultsView
 
                         SurveyFinished ->
                             Element.none
@@ -361,17 +432,14 @@ view model =
                                         Element.text "Enter password"
                                     )
                             }
-                        , Element.Input.button
-                            []
-                            { onPress = Just PressedLogin
-                            , label = Element.text "Login"
-                            }
+                        , Ui.button PressedLogin "Login"
                         ]
 
                 Admin admin ->
                     Element.column
                         [ Element.spacing 32, Element.padding 16 ]
                         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
+                        , Ui.button PressedLogOut "Log out"
                         , Element.Input.text
                             []
                             { onChange = TypedFormsData
@@ -451,6 +519,7 @@ formCompletedView =
         )
 
 
+answerSurveyView : FormLoaded_ -> Element FrontendMsg
 answerSurveyView formLoaded =
     Element.column
         [ Element.spacing 24
@@ -482,6 +551,9 @@ answerSurveyView formLoaded =
                 , Element.paragraph
                     []
                     [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
+                , Element.paragraph
+                    []
+                    [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
                 , Ui.disclaimer
                 ]
             )
@@ -493,6 +565,69 @@ answerSurveyView formLoaded =
             PressedSubmitSurvey
             formLoaded.pressedSubmitCount
         ]
+
+
+timeLeft : Time.Posix -> Time.Posix -> String
+timeLeft closingTime time =
+    let
+        difference : Duration
+        difference =
+            Duration.from closingTime time |> Quantity.abs
+
+        years =
+            Duration.inDays difference / 365.242 |> floor
+
+        yearsRemainder =
+            difference |> Quantity.minus (Duration.days (toFloat years * 365.242))
+
+        months =
+            Duration.inDays yearsRemainder / 30 |> floor
+
+        monthRemainder =
+            yearsRemainder |> Quantity.minus (Duration.days (toFloat months * 30))
+
+        days =
+            Duration.inDays monthRemainder |> floor
+
+        dayRemainder =
+            monthRemainder |> Quantity.minus (Duration.days (toFloat days))
+
+        hours =
+            Duration.inHours dayRemainder |> floor
+
+        hourRemainder =
+            dayRemainder |> Quantity.minus (Duration.hours (toFloat hours))
+
+        minutes =
+            Duration.inMinutes hourRemainder |> floor
+
+        minutesRemainder =
+            hourRemainder |> Quantity.minus (Duration.minutes (toFloat minutes))
+
+        seconds =
+            Duration.inSeconds minutesRemainder |> round
+
+        pluralize : Int -> String -> { isZero : Bool, text : String }
+        pluralize value text =
+            if value == 1 then
+                { isZero = False, text = "1 " ++ text }
+
+            else
+                { isZero = value == 0, text = String.fromInt value ++ " " ++ text ++ "s" }
+
+        a =
+            [ pluralize years "year"
+            , pluralize months "month"
+            , pluralize days "day"
+            , pluralize hours "hour"
+            , pluralize minutes "minute"
+            , pluralize seconds "second"
+            ]
+                |> List.dropWhile .isZero
+                |> List.map .text
+                |> String.join ", "
+    in
+    a
 
 
 awaitingResultsView =
@@ -551,28 +686,28 @@ adminFormView { form, submitTime } =
 
             Nothing ->
                 Element.text "Not submitted"
-        , infoRow "doYouUseElm" (setToString Questions.doYouUseElmToString form.doYouUseElm)
-        , infoRow "age" (maybeToString Questions.ageToString form.age)
-        , infoRow "functionalProgrammingExperience" (maybeToString Questions.experienceLevelToString form.functionalProgrammingExperience)
-        , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguagesToString form.otherLanguages)
-        , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussionsToString form.newsAndDiscussions)
-        , infoRow "elmResources" (multichoiceToString Questions.elmResourcesToString form.elmResources)
+        , infoRow "doYouUseElm" (setToString Questions.doYouUseElm form.doYouUseElm)
+        , infoRow "age" (maybeToString Questions.age form.age)
+        , infoRow "functionalProgrammingExperience" (maybeToString Questions.experienceLevel form.functionalProgrammingExperience)
+        , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguages form.otherLanguages)
+        , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussions form.newsAndDiscussions)
+        , infoRow "elmResources" (multichoiceToString Questions.elmResources form.elmResources)
         , infoRow "countryLivingIn" form.countryLivingIn
-        , infoRow "applicationDomains" (multichoiceToString Questions.applicationDomainsToString form.applicationDomains)
-        , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWorkToString form.doYouUseElmAtWork)
-        , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompanyToString form.howLargeIsTheCompany)
-        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForTheBackendToString form.whatLanguageDoYouUseForBackend)
-        , infoRow "howLong" (maybeToString Questions.howLongToString form.howLong)
-        , infoRow "elmVersion" (multichoiceToString Questions.whatElmVersionToString form.elmVersion)
-        , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormatToString form.doYouUseElmFormat)
-        , infoRow "stylingTools" (multichoiceToString Questions.stylingToolsToString form.stylingTools)
-        , infoRow "buildTools" (multichoiceToString Questions.buildToolsToString form.buildTools)
-        , infoRow "frameworks" (multichoiceToString Questions.frameworkToString form.frameworks)
-        , infoRow "editors" (multichoiceToString Questions.editorToString form.editors)
-        , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReviewToString form.doYouUseElmReview)
-        , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUseToString form.whichElmReviewRulesDoYouUse)
-        , infoRow "testTools" (multichoiceToString Questions.testToolsToString form.testTools)
-        , infoRow "testsWrittenFor" (multichoiceToString Questions.testsWrittenForToString form.testsWrittenFor)
+        , infoRow "applicationDomains" (multichoiceToString Questions.whereDoYouUseElm form.applicationDomains)
+        , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWork form.doYouUseElmAtWork)
+        , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompany form.howLargeIsTheCompany)
+        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForTheBackend form.whatLanguageDoYouUseForBackend)
+        , infoRow "howLong" (maybeToString Questions.howLong form.howLong)
+        , infoRow "elmVersion" (multichoiceToString Questions.whatElmVersion form.elmVersion)
+        , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormat form.doYouUseElmFormat)
+        , infoRow "stylingTools" (multichoiceToString Questions.stylingTools form.stylingTools)
+        , infoRow "buildTools" (multichoiceToString Questions.buildTools form.buildTools)
+        , infoRow "frameworks" (multichoiceToString Questions.frameworks form.frameworks)
+        , infoRow "editors" (multichoiceToString Questions.editor form.editors)
+        , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReview form.doYouUseElmReview)
+        , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUse form.whichElmReviewRulesDoYouUse)
+        , infoRow "testTools" (multichoiceToString Questions.testTools form.testTools)
+        , infoRow "testsWrittenFor" (multichoiceToString Questions.testsWrittenFor form.testsWrittenFor)
         , infoRow "elmInitialInterest" form.elmInitialInterest
         , infoRow "biggestPainPoint" form.biggestPainPoint
         , infoRow "whatDoYouLikeMost" form.whatDoYouLikeMost
@@ -580,10 +715,10 @@ adminFormView { form, submitTime } =
         ]
 
 
-multichoiceToString : (a -> String) -> Ui.MultiChoiceWithOther a -> String
-multichoiceToString toString multiChoiceWithOther =
+multichoiceToString : Question a -> Ui.MultiChoiceWithOther a -> String
+multichoiceToString { choiceToString } multiChoiceWithOther =
     Set.toList multiChoiceWithOther.choices
-        |> List.map toString
+        |> List.map choiceToString
         |> (\choices ->
                 if multiChoiceWithOther.otherChecked then
                     choices ++ [ multiChoiceWithOther.otherText ]
@@ -594,18 +729,18 @@ multichoiceToString toString multiChoiceWithOther =
         |> String.join ", "
 
 
-setToString : (a -> String) -> Set a -> String
-setToString toString set =
+setToString : Question a -> Set a -> String
+setToString { choiceToString } set =
     Set.toList set
-        |> List.map toString
+        |> List.map choiceToString
         |> String.join ", "
 
 
-maybeToString : (a -> String) -> Maybe a -> String
-maybeToString toString maybe =
+maybeToString : Question a -> Maybe a -> String
+maybeToString { choiceToString } maybe =
     case maybe of
         Just a ->
-            toString a
+            choiceToString a
 
         Nothing ->
             ""
@@ -689,10 +824,8 @@ formView windowSize form =
             "About you"
             [ Ui.multiChoiceQuestion
                 windowSize
-                "Do you use Elm?"
+                Questions.doYouUseElm
                 Nothing
-                Questions.allDoYouUseElm
-                Questions.doYouUseElmToString
                 form.doYouUseElm
                 (\a ->
                     FormChanged
@@ -739,34 +872,26 @@ formView windowSize form =
                 )
             , Ui.singleChoiceQuestion
                 windowSize
-                "How old are you?"
+                Questions.age
                 Nothing
-                Questions.allAge
-                Questions.ageToString
                 form.age
                 (\a -> FormChanged { form | age = a })
             , Ui.singleChoiceQuestion
                 windowSize
-                "What is your level of experience with functional programming?"
+                Questions.experienceLevel
                 Nothing
-                Questions.allExperienceLevel
-                Questions.experienceLevelToString
                 form.functionalProgrammingExperience
                 (\a -> FormChanged { form | functionalProgrammingExperience = a })
             , Ui.multiChoiceQuestionWithOther
                 windowSize
-                "What programming languages, other than Elm, are you most familiar with?"
+                Questions.otherLanguages
                 Nothing
-                Questions.allOtherLanguages
-                Questions.otherLanguagesToString
                 form.otherLanguages
                 (\a -> FormChanged { form | otherLanguages = a })
             , Ui.multiChoiceQuestionWithOther
                 windowSize
-                "Where do you go for Elm news and discussion?"
+                Questions.newsAndDiscussions
                 Nothing
-                Questions.allNewsAndDiscussions
-                Questions.newsAndDiscussionsToString
                 form.newsAndDiscussions
                 (\a -> FormChanged { form | newsAndDiscussions = a })
             , if doesNotUseElm then
@@ -775,21 +900,19 @@ formView windowSize form =
               else
                 Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What resources did you use to learn Elm?"
+                    Questions.elmResources
                     Nothing
-                    Questions.allElmResources
-                    Questions.elmResourcesToString
                     form.elmResources
                     (\a -> FormChanged { form | elmResources = a })
             , Ui.textInput
                 windowSize
-                "What initially attracted you to Elm, or motivated you to try it?"
+                Questions.initialInterestTitle
                 Nothing
                 form.elmInitialInterest
                 (\a -> FormChanged { form | elmInitialInterest = a })
             , Ui.searchableTextInput
                 windowSize
-                "Which country do you live in?"
+                Questions.countryLivingInTitle
                 Nothing
                 countries
                 form.countryLivingIn
@@ -807,18 +930,14 @@ formView windowSize form =
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "In which application domains, if any, have you used Elm?"
+                    Questions.whereDoYouUseElm
                     (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
-                    Questions.allApplicationDomains
-                    Questions.applicationDomainsToString
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    "Do you use Elm at work?"
+                    Questions.doYouUseElmAtWork
                     (Just "Either for a consumer product or an internal tool")
-                    Questions.allDoYouUseElmAtWork
-                    Questions.doYouUseElmAtWorkToString
                     form.doYouUseElmAtWork
                     (\a -> FormChanged { form | doYouUseElmAtWork = a })
                 , if form.doYouUseElmAtWork == Just NotEmployed then
@@ -827,10 +946,8 @@ formView windowSize form =
                   else
                     Ui.singleChoiceQuestion
                         windowSize
-                        "How large is the company you work at?"
+                        Questions.howLargeIsTheCompany
                         Nothing
-                        Questions.allHowLargeIsTheCompany
-                        Questions.howLargeIsTheCompanyToString
                         form.howLargeIsTheCompany
                         (\a -> FormChanged { form | howLargeIsTheCompany = a })
                 , if form.doYouUseElmAtWork == Just NotEmployed then
@@ -839,26 +956,20 @@ formView windowSize form =
                   else
                     Ui.multiChoiceQuestionWithOther
                         windowSize
-                        "What languages does your company use on the backend?"
+                        Questions.whatLanguageDoYouUseForTheBackend
                         Nothing
-                        Questions.allWhatLanguageDoYouUseForTheBackend
-                        Questions.whatLanguageDoYouUseForTheBackendToString
                         form.whatLanguageDoYouUseForBackend
                         (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    "How long have you been using Elm?"
+                    Questions.howLong
                     Nothing
-                    Questions.allHowLong
-                    Questions.howLongToString
                     form.howLong
                     (\a -> FormChanged { form | howLong = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What versions of Elm are you using?"
+                    Questions.whatElmVersion
                     Nothing
-                    Questions.allWhatElmVersion
-                    Questions.whatElmVersionToString
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
                 ]
@@ -870,50 +981,38 @@ formView windowSize form =
                 "How do you use Elm?"
                 [ Ui.singleChoiceQuestion
                     windowSize
-                    "Do you format your code with elm-format?"
+                    Questions.doYouUseElmFormat
                     Nothing
-                    Questions.allDoYouUseElmFormat
-                    Questions.doYouUseElmFormatToString
                     form.doYouUseElmFormat
                     (\a -> FormChanged { form | doYouUseElmFormat = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What tools or libraries do you use to style your Elm applications?"
+                    Questions.stylingTools
                     Nothing
-                    Questions.allStylingTools
-                    Questions.stylingToolsToString
                     form.stylingTools
                     (\a -> FormChanged { form | stylingTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What tools do you use to build your Elm applications?"
+                    Questions.buildTools
                     Nothing
-                    Questions.allBuildTools
-                    Questions.buildToolsToString
                     form.buildTools
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What frameworks do you use?"
+                    Questions.frameworks
                     Nothing
-                    Questions.allFrameworks
-                    Questions.frameworkToString
                     form.frameworks
                     (\a -> FormChanged { form | frameworks = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What editor(s) do you use to write your Elm applications?"
+                    Questions.editor
                     Nothing
-                    Questions.allEditor
-                    Questions.editorToString
                     form.editors
                     (\a -> FormChanged { form | editors = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    "Do you use elm-review?"
+                    Questions.doYouUseElmReview
                     Nothing
-                    Questions.allDoYouUseElmReview
-                    Questions.doYouUseElmReviewToString
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
                 , if
@@ -925,37 +1024,31 @@ formView windowSize form =
                   else
                     Ui.multiChoiceQuestionWithOther
                         windowSize
-                        "Which elm-review rules do you use?"
+                        Questions.whichElmReviewRulesDoYouUse
                         (Just "If you have custom unpublished rules, select \"Other\" and describe what they do")
-                        Questions.allWhichElmReviewRulesDoYouUse
-                        Questions.whichElmReviewRulesDoYouUseToString
                         form.whichElmReviewRulesDoYouUse
                         (\a -> FormChanged { form | whichElmReviewRulesDoYouUse = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What tools do you use to test your Elm projects?"
+                    Questions.testTools
                     Nothing
-                    Questions.allTestTools
-                    Questions.testToolsToString
                     form.testTools
                     (\a -> FormChanged { form | testTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    "What do you write tests for in your Elm projects?"
+                    Questions.testsWrittenFor
                     Nothing
-                    Questions.allTestsWrittenFor
-                    Questions.testsWrittenForToString
                     form.testsWrittenFor
                     (\a -> FormChanged { form | testsWrittenFor = a })
                 , Ui.textInput
                     windowSize
-                    "What has been your biggest pain point in your use of Elm?"
+                    Questions.biggestPainPointTitle
                     Nothing
                     form.biggestPainPoint
                     (\a -> FormChanged { form | biggestPainPoint = a })
                 , Ui.textInput
                     windowSize
-                    "What do you like the most about your use of Elm?"
+                    Questions.whatDoYouLikeMostTitle
                     Nothing
                     form.whatDoYouLikeMost
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })

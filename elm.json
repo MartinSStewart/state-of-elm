@@ -17,11 +17,13 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.5.2",
             "erlandsona/assoc-set": "1.1.0",
+            "ianmackenzie/elm-units": "2.9.0",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
             "langyu-app/elm-ancillary-nonempty-list": "1.1.0",
             "mdgriffith/elm-ui": "1.1.8",
             "mgold/elm-nonempty-list": "4.2.0",
+            "myrho/elm-round": "1.0.4",
             "pzp1997/assoc-list": "1.0.0",
             "supermario/elm-countries": "1.1.1"
         },

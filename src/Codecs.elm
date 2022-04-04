@@ -539,7 +539,7 @@ whereDoYouUseElmCodec =
                 ECommerce ->
                     c
 
-                Audio ->
+                Music ->
                     d
 
                 Finance ->
@@ -563,7 +563,7 @@ whereDoYouUseElmCodec =
         |> Serialize.variant0 Education
         |> Serialize.variant0 Gaming
         |> Serialize.variant0 ECommerce
-        |> Serialize.variant0 Audio
+        |> Serialize.variant0 Music
         |> Serialize.variant0 Finance
         |> Serialize.variant0 Health
         |> Serialize.variant0 Productivity
