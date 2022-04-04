@@ -42,68 +42,68 @@ update msg model =
                 LoadAdmin (getAdminData model) |> Lamdera.sendToFrontend clientId
 
               else
-                case Env.surveyStatus of
-                    SurveyOpen ->
-                        (case Dict.get sessionId model.forms of
-                            Just value ->
-                                case value.submitTime of
-                                    Just _ ->
-                                        LoadForm FormSubmitted
-
-                                    Nothing ->
-                                        FormAutoSaved value.form |> LoadForm
-
-                            Nothing ->
-                                LoadForm NoFormFound
-                        )
-                            |> Lamdera.sendToFrontend clientId
-
-                    AwaitingResults ->
-                        Cmd.none
-
-                    SurveyFinished ->
-                        let
-                            forms : List Form
-                            forms =
-                                Dict.values model.forms
-                                    |> List.filterMap
-                                        (\{ form, submitTime } ->
-                                            case submitTime of
-                                                Just _ ->
-                                                    Just form
-
-                                                Nothing ->
-                                                    Nothing
-                                        )
-                        in
-                        { doYouUseElm =
-                            List.concatMap (.doYouUseElm >> Set.toList) forms
-                                |> DataEntry.fromForms Questions.allDoYouUseElm
-                        , age = List.filterMap .age forms |> DataEntry.fromForms Questions.allAge
-                        , functionalProgrammingExperience =
-                            List.filterMap .functionalProgrammingExperience forms
-                                |> DataEntry.fromForms Questions.allExperienceLevel
-                        , doYouUseElmAtWork =
-                            List.filterMap .doYouUseElmAtWork forms
-                                |> DataEntry.fromForms Questions.allDoYouUseElmAtWork
-                        , howLargeIsTheCompany =
-                            List.filterMap .howLargeIsTheCompany forms
-                                |> DataEntry.fromForms Questions.allHowLargeIsTheCompany
-                        , howLong = List.filterMap .howLong forms |> DataEntry.fromForms Questions.allHowLong
-                        , doYouUseElmFormat =
-                            List.filterMap .doYouUseElmFormat forms
-                                |> DataEntry.fromForms Questions.allDoYouUseElmFormat
-                        , doYouUseElmReview =
-                            List.filterMap .doYouUseElmReview forms
-                                |> DataEntry.fromForms Questions.allDoYouUseElmReview
-                        }
-                            |> SurveyResults
-                            |> LoadForm
-                            |> Lamdera.sendToFrontend clientId
+                loadFormData sessionId model |> LoadForm |> Lamdera.sendToFrontend clientId
             )
 
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
+
+
+loadFormData sessionId model =
+    case Env.surveyStatus of
+        SurveyOpen ->
+            case Dict.get sessionId model.forms of
+                Just value ->
+                    case value.submitTime of
+                        Just _ ->
+                            FormSubmitted
+
+                        Nothing ->
+                            FormAutoSaved value.form
+
+                Nothing ->
+                    NoFormFound
+
+        AwaitingResults ->
+            AwaitingResultsData
+
+        SurveyFinished ->
+            let
+                forms : List Form
+                forms =
+                    Dict.values model.forms
+                        |> List.filterMap
+                            (\{ form, submitTime } ->
+                                case submitTime of
+                                    Just _ ->
+                                        Just form
+
+                                    Nothing ->
+                                        Nothing
+                            )
+            in
+            { doYouUseElm =
+                List.concatMap (.doYouUseElm >> Set.toList) forms
+                    |> DataEntry.fromForms Questions.doYouUseElm.choices
+            , age = List.filterMap .age forms |> DataEntry.fromForms Questions.age.choices
+            , functionalProgrammingExperience =
+                List.filterMap .functionalProgrammingExperience forms
+                    |> DataEntry.fromForms Questions.experienceLevel.choices
+            , doYouUseElmAtWork =
+                List.filterMap .doYouUseElmAtWork forms
+                    |> DataEntry.fromForms Questions.doYouUseElmAtWork.choices
+            , howLargeIsTheCompany =
+                List.filterMap .howLargeIsTheCompany forms
+                    |> DataEntry.fromForms Questions.howLargeIsTheCompany.choices
+            , howLong = List.filterMap .howLong forms |> DataEntry.fromForms Questions.howLong.choices
+            , doYouUseElmFormat =
+                List.filterMap .doYouUseElmFormat forms
+                    |> DataEntry.fromForms Questions.doYouUseElmFormat.choices
+            , doYouUseElmReview =
+                List.filterMap .doYouUseElmReview forms
+                    |> DataEntry.fromForms Questions.doYouUseElmReview.choices
+            }
+                |> SurveyResults
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
@@ -184,3 +184,31 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
             else
                 ( model, Err () |> AdminLoginResponse |> Lamdera.sendToFrontend clientId )
+
+        ReplaceFormsRequest forms ->
+            ( if Env.isProduction then
+                model
+
+              else
+                { model
+                    | forms =
+                        List.indexedMap
+                            (\index form ->
+                                ( Char.fromCode index |> String.fromChar
+                                , { form = form, submitTime = Just (Time.millisToPosix 0) }
+                                )
+                            )
+                            forms
+                            |> Dict.fromList
+                }
+            , Cmd.none
+            )
+
+        LogOutRequest ->
+            if Just sessionId == model.adminLogin then
+                ( { model | adminLogin = Nothing }
+                , loadFormData sessionId model |> LogOutResponse |> Lamdera.sendToFrontend clientId
+                )
+
+            else
+                ( model, Cmd.none )

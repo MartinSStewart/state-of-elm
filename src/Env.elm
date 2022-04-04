@@ -33,3 +33,13 @@ surveyStatus =
 
         _ ->
             SurveyOpen
+
+
+isProduction_ : String
+isProduction_ =
+    "false"
+
+
+isProduction : Bool
+isProduction =
+    String.toLower isProduction_ == "true"

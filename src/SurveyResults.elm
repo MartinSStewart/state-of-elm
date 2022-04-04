@@ -7,7 +7,8 @@ import Element.Border
 import Element.Font
 import List.Nonempty as Nonempty exposing (Nonempty)
 import List.Nonempty.Ancillary as Nonempty
-import Questions exposing (Age, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, ExperienceLevel, HowLargeIsTheCompany, HowLong)
+import Questions exposing (Age, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, ExperienceLevel, HowLargeIsTheCompany, HowLong, Question)
+import StringExtra
 
 
 type alias Data =
@@ -53,15 +54,15 @@ type alias Data =
 view : Data -> Element msg
 view data =
     Element.column
-        [ Element.width Element.fill, Element.spacing 24 ]
-        [ singleChoiceGraph data.doYouUseElm Questions.allDoYouUseElm Questions.doYouUseElmToString
-        , singleChoiceGraph data.age Questions.allAge Questions.ageToString
-        , singleChoiceGraph data.functionalProgrammingExperience Questions.allExperienceLevel Questions.experienceLevelToString
-        , singleChoiceGraph data.doYouUseElmAtWork Questions.allDoYouUseElmAtWork Questions.doYouUseElmAtWorkToString
-        , singleChoiceGraph data.howLargeIsTheCompany Questions.allHowLargeIsTheCompany Questions.howLargeIsTheCompanyToString
-        , singleChoiceGraph data.howLong Questions.allHowLong Questions.howLongToString
-        , singleChoiceGraph data.doYouUseElmFormat Questions.allDoYouUseElmFormat Questions.doYouUseElmFormatToString
-        , singleChoiceGraph data.doYouUseElmReview Questions.allDoYouUseElmReview Questions.doYouUseElmReviewToString
+        [ Element.width Element.fill, Element.spacing 24, Element.padding 16 ]
+        [ singleChoiceGraph data.doYouUseElm Questions.doYouUseElm
+        , singleChoiceGraph data.age Questions.age
+        , singleChoiceGraph data.functionalProgrammingExperience Questions.experienceLevel
+        , singleChoiceGraph data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+        , singleChoiceGraph data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+        , singleChoiceGraph data.howLong Questions.howLong
+        , singleChoiceGraph data.doYouUseElmFormat Questions.doYouUseElmFormat
+        , singleChoiceGraph data.doYouUseElmReview Questions.doYouUseElmReview
         ]
 
 
@@ -73,17 +74,20 @@ ellipsis text =
         text
 
 
-singleChoiceGraph : DataEntry a -> Nonempty a -> (a -> String) -> Element msg
-singleChoiceGraph dataEntry choices choiceToString =
+singleChoiceGraph : DataEntry a -> Question a -> Element msg
+singleChoiceGraph dataEntry { title, choices, choiceToString } =
     let
         data =
             DataEntry.get choices dataEntry
 
         maxCount =
             Nonempty.map .count data |> Nonempty.maximum |> max 1
+
+        total =
+            Nonempty.map .count data |> Nonempty.toList |> List.sum
     in
     Element.table
-        [ Element.width Element.fill ]
+        [ Element.width Element.fill, Element.paddingEach { left = 0, top = 0, bottom = 0, right = 48 } ]
         { data = Nonempty.toList data
         , columns =
             [ { header = Element.none
@@ -101,6 +105,9 @@ singleChoiceGraph dataEntry choices choiceToString =
                         let
                             a =
                                 10000
+
+                            percentage =
+                                100 * toFloat count / toFloat total |> StringExtra.removeTrailing0s 1
                         in
                         Element.row
                             [ Element.width Element.fill
@@ -109,13 +116,18 @@ singleChoiceGraph dataEntry choices choiceToString =
                             ]
                             [ Element.el
                                 [ Element.Background.color (Element.rgb 0 0 0)
-                                , Element.fillPortion ((a * count) // (a * maxCount)) |> Element.width
+                                , Element.fillPortion (a * count) |> Element.minimum 2 |> Element.width
                                 , Element.height Element.fill
                                 , Element.Border.rounded 4
+                                , Element.Font.size 16
+                                , (percentage ++ "%")
+                                    |> Element.text
+                                    |> Element.el [ Element.moveRight 4 ]
+                                    |> Element.onRight
                                 ]
                                 Element.none
                             , Element.el
-                                [ Element.fillPortion ((a * (maxCount - count)) // (a * maxCount)) |> Element.width ]
+                                [ Element.fillPortion (a * (maxCount - count)) |> Element.width ]
                                 Element.none
                             ]
               }

@@ -82,12 +82,15 @@ type FrontendMsg
     | PressedLogin
     | GotWindowSize Size
     | TypedFormsData String
+    | PressedLogOut
 
 
 type ToBackend
     = AutoSaveForm Form
     | SubmitForm Form
     | AdminLoginRequest String
+    | ReplaceFormsRequest (List Form)
+    | LogOutRequest
 
 
 type BackendMsg
@@ -100,6 +103,7 @@ type LoadFormStatus
     | FormAutoSaved Form
     | FormSubmitted
     | SurveyResults SurveyResults.Data
+    | AwaitingResultsData
 
 
 type ToFrontend
@@ -107,6 +111,7 @@ type ToFrontend
     | LoadAdmin AdminLoginData
     | AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
+    | LogOutResponse LoadFormStatus
 
 
 type alias AdminLoginData =

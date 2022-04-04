@@ -22,6 +22,7 @@
             "langyu-app/elm-ancillary-nonempty-list": "1.1.0",
             "mdgriffith/elm-ui": "1.1.8",
             "mgold/elm-nonempty-list": "4.2.0",
+            "myrho/elm-round": "1.0.4",
             "pzp1997/assoc-list": "1.0.0",
             "supermario/elm-countries": "1.1.1"
         },
