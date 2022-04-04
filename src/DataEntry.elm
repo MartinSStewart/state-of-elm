@@ -1,4 +1,4 @@
-module DataEntry exposing (DataEntry, fromForms, get)
+module DataEntry exposing (DataEntry(..), fromForms, get)
 
 import List.Extra as List
 import List.Nonempty as Nonempty exposing (Nonempty)
