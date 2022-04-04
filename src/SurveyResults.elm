@@ -5,7 +5,7 @@ import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font
-import List.Nonempty as Nonempty exposing (Nonempty)
+import List.Nonempty as Nonempty
 import List.Nonempty.Ancillary as Nonempty
 import Questions exposing (Age, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, ExperienceLevel, HowLargeIsTheCompany, HowLong, Question)
 import StringExtra

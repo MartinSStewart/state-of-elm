@@ -28,7 +28,7 @@ import Element.Region
 import Html
 import Html.Attributes
 import Html.Events
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty
 import Questions exposing (Question)
 import Simple.Animation
 import Simple.Animation.Animated

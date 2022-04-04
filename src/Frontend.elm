@@ -240,13 +240,13 @@ update msg model =
                 FormCompleted _ ->
                     FormCompleted time
 
-                AdminLogin record ->
+                AdminLogin _ ->
                     model
 
-                Admin adminLoginData ->
+                Admin _ ->
                     model
 
-                SurveyResultsLoaded data ->
+                SurveyResultsLoaded _ ->
                     model
             , Cmd.none
             )

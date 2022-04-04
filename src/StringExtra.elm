@@ -1,6 +1,5 @@
-module StringExtra exposing (addSeparators, dropPrefix, dropSuffix, removeTrailing0s)
+module StringExtra exposing (removeTrailing0s)
 
-import List.Extra as List
 import Round
 
 
@@ -35,29 +34,10 @@ removeTrailing0s decimalPoints value =
             "0"
 
 
-addSeparators : String -> String
-addSeparators =
-    String.toList
-        >> List.reverse
-        >> List.greedyGroupsOf 3
-        >> List.map (List.reverse >> String.fromList)
-        >> List.reverse
-        >> String.join " "
-
-
 dropSuffix : String -> String -> String
 dropSuffix suffix string =
     if String.endsWith suffix string then
         String.dropRight (String.length suffix) string
-
-    else
-        string
-
-
-dropPrefix : String -> String -> String
-dropPrefix prefix string =
-    if String.startsWith prefix string then
-        String.dropLeft (String.length prefix) string
 
     else
         string
