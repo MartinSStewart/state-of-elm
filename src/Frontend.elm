@@ -552,7 +552,7 @@ answerSurveyView formLoaded =
                     []
                     [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
                 , Element.paragraph
-                    []
+                    [ Ui.titleFontSize, Element.Font.bold ]
                     [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
                 , Ui.disclaimer
                 ]
