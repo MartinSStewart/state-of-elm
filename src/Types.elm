@@ -1,7 +1,7 @@
 module Types exposing (..)
 
 import AssocList exposing (Dict)
-import AssocSet exposing (Set)
+import AssocSet as Set exposing (Set)
 import Browser exposing (UrlRequest)
 import Lamdera exposing (ClientId, SessionId)
 import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
@@ -81,6 +81,7 @@ type FrontendMsg
     | TypedPassword String
     | PressedLogin
     | GotWindowSize Size
+    | FrontendNoOp
 
 
 type ToBackend

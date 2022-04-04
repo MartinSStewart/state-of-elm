@@ -5,6 +5,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
+import Codecs
 import Countries exposing (Country)
 import Dict exposing (Dict)
 import Element exposing (Element)
@@ -13,9 +14,11 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Env
+import Json.Encode
 import Lamdera
 import Process
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
+import Serialize
 import SurveyResults
 import Svg
 import Svg.Attributes
@@ -188,6 +191,9 @@ update msg model =
             , Cmd.none
             )
 
+        FrontendNoOp ->
+            ( model, Cmd.none )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -349,6 +355,25 @@ view model =
                     Element.column
                         [ Element.spacing 32, Element.padding 16 ]
                         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
+                        , Element.Input.text
+                            []
+                            { onChange = always FrontendNoOp
+                            , text =
+                                List.filterMap
+                                    (\{ form, submitTime } ->
+                                        case submitTime of
+                                            Just _ ->
+                                                Just form
+
+                                            Nothing ->
+                                                Nothing
+                                    )
+                                    admin.forms
+                                    |> Serialize.encodeToJson (Serialize.list Codecs.formCodec)
+                                    |> Json.Encode.encode 0
+                            , placeholder = Nothing
+                            , label = Element.Input.labelHidden ""
+                            }
                         , Element.column
                             [ Element.spacing 32 ]
                             (List.map adminFormView admin.forms)
