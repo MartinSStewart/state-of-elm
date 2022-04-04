@@ -16,7 +16,7 @@ adminPasswordHash =
 
 surveyStatus_ : String
 surveyStatus_ =
-    "SurveyFinished"
+    "SurveyOpen"
 
 
 surveyStatus : SurveyStatus

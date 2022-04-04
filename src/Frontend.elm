@@ -191,8 +191,26 @@ update msg model =
             , Cmd.none
             )
 
-        FrontendNoOp ->
-            ( model, Cmd.none )
+        TypedFormsData text ->
+            ( case model of
+                Admin admin ->
+                    case Serialize.decodeFromString (Serialize.list Codecs.formCodec) text of
+                        Ok forms ->
+                            Admin
+                                { admin
+                                    | forms =
+                                        List.map
+                                            (\form -> { form = form, submitTime = Just (Time.millisToPosix 0) })
+                                            forms
+                                }
+
+                        Err _ ->
+                            Admin admin
+
+                _ ->
+                    model
+            , Cmd.none
+            )
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -357,7 +375,7 @@ view model =
                         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
                         , Element.Input.text
                             []
-                            { onChange = always FrontendNoOp
+                            { onChange = TypedFormsData
                             , text =
                                 List.filterMap
                                     (\{ form, submitTime } ->
@@ -369,8 +387,9 @@ view model =
                                                 Nothing
                                     )
                                     admin.forms
-                                    |> Serialize.encodeToJson (Serialize.list Codecs.formCodec)
-                                    |> Json.Encode.encode 0
+                                    |> Serialize.encodeToString (Serialize.list Codecs.formCodec)
+
+                            --|> Json.Encode.encode 0
                             , placeholder = Nothing
                             , label = Element.Input.labelHidden ""
                             }

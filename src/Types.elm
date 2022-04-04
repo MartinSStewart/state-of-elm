@@ -81,7 +81,7 @@ type FrontendMsg
     | TypedPassword String
     | PressedLogin
     | GotWindowSize Size
-    | FrontendNoOp
+    | TypedFormsData String
 
 
 type ToBackend
