@@ -1,11 +1,11 @@
 module Frontend exposing (..)
 
+import AdminPage
 import AssocSet as Set exposing (Set)
 import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
-import Codecs
 import Countries exposing (Country)
 import Dict exposing (Dict)
 import Duration exposing (Duration)
@@ -15,6 +15,7 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Env
+import Form exposing (Form)
 import Lamdera
 import List.Extra as List
 import Process
@@ -208,7 +209,7 @@ update msg model =
             else
                 case model of
                     Admin admin ->
-                        case Serialize.decodeFromString (Serialize.list Codecs.formCodec) text of
+                        case Serialize.decodeFromString (Serialize.list Form.formCodec) text of
                             Ok forms ->
                                 ( Admin
                                     { admin
@@ -250,6 +251,18 @@ update msg model =
                     model
             , Cmd.none
             )
+
+        AdminPageMsg adminMsg ->
+            case model of
+                Admin admin ->
+                    let
+                        ( newAdmin, cmd ) =
+                            AdminPage.update adminMsg admin
+                    in
+                    ( Admin newAdmin, Cmd.map AdminPageMsg cmd )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
@@ -302,39 +315,8 @@ loadForm : LoadFormStatus -> Maybe Size -> Maybe Time.Posix -> FrontendModel
 loadForm formStatus maybeWindowSize maybeTime =
     case formStatus of
         NoFormFound ->
-            let
-                form : Form
-                form =
-                    { doYouUseElm = Set.empty
-                    , age = Nothing
-                    , functionalProgrammingExperience = Nothing
-                    , otherLanguages = Ui.multiChoiceWithOtherInit
-                    , newsAndDiscussions = Ui.multiChoiceWithOtherInit
-                    , elmResources = Ui.multiChoiceWithOtherInit
-                    , countryLivingIn = ""
-                    , applicationDomains = Ui.multiChoiceWithOtherInit
-                    , doYouUseElmAtWork = Nothing
-                    , howLargeIsTheCompany = Nothing
-                    , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
-                    , howLong = Nothing
-                    , elmVersion = Ui.multiChoiceWithOtherInit
-                    , doYouUseElmFormat = Nothing
-                    , stylingTools = Ui.multiChoiceWithOtherInit
-                    , buildTools = Ui.multiChoiceWithOtherInit
-                    , frameworks = Ui.multiChoiceWithOtherInit
-                    , editors = Ui.multiChoiceWithOtherInit
-                    , doYouUseElmReview = Nothing
-                    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
-                    , testTools = Ui.multiChoiceWithOtherInit
-                    , testsWrittenFor = Ui.multiChoiceWithOtherInit
-                    , elmInitialInterest = ""
-                    , biggestPainPoint = ""
-                    , whatDoYouLikeMost = ""
-                    , emailAddress = ""
-                    }
-            in
             FormLoaded
-                { form = form
+                { form = Form.emptyForm
                 , acceptedTos = False
                 , submitting = False
                 , pressedSubmitCount = 0
@@ -436,34 +418,7 @@ view model =
                         ]
 
                 Admin admin ->
-                    Element.column
-                        [ Element.spacing 32, Element.padding 16 ]
-                        [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
-                        , Ui.button PressedLogOut "Log out"
-                        , Element.Input.text
-                            []
-                            { onChange = TypedFormsData
-                            , text =
-                                List.filterMap
-                                    (\{ form, submitTime } ->
-                                        case submitTime of
-                                            Just _ ->
-                                                Just form
-
-                                            Nothing ->
-                                                Nothing
-                                    )
-                                    admin.forms
-                                    |> Serialize.encodeToString (Serialize.list Codecs.formCodec)
-
-                            --|> Json.Encode.encode 0
-                            , placeholder = Nothing
-                            , label = Element.Input.labelHidden ""
-                            }
-                        , Element.column
-                            [ Element.spacing 32 ]
-                            (List.map adminFormView admin.forms)
-                        ]
+                    AdminPage.adminView admin |> Element.map AdminPageMsg
 
                 SurveyResultsLoaded data ->
                     SurveyResults.view data
@@ -630,6 +585,7 @@ timeLeft closingTime time =
     a
 
 
+awaitingResultsView : Element msg
 awaitingResultsView =
     Element.el
         [ Element.Background.color Ui.blue0
@@ -674,84 +630,6 @@ awaitingResultsView =
                 [ Element.text "The survey is now closed and the results are being tallied. They should be released on this website in a few days." ]
             ]
         )
-
-
-adminFormView : { form : Form, submitTime : Maybe Time.Posix } -> Element msg
-adminFormView { form, submitTime } =
-    Element.column
-        [ Element.spacing 8 ]
-        [ case submitTime of
-            Just time ->
-                Element.text ("Submitted at " ++ String.fromInt (Time.posixToMillis time))
-
-            Nothing ->
-                Element.text "Not submitted"
-        , infoRow "doYouUseElm" (setToString Questions.doYouUseElm form.doYouUseElm)
-        , infoRow "age" (maybeToString Questions.age form.age)
-        , infoRow "functionalProgrammingExperience" (maybeToString Questions.experienceLevel form.functionalProgrammingExperience)
-        , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguages form.otherLanguages)
-        , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussions form.newsAndDiscussions)
-        , infoRow "elmResources" (multichoiceToString Questions.elmResources form.elmResources)
-        , infoRow "countryLivingIn" form.countryLivingIn
-        , infoRow "applicationDomains" (multichoiceToString Questions.whereDoYouUseElm form.applicationDomains)
-        , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWork form.doYouUseElmAtWork)
-        , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompany form.howLargeIsTheCompany)
-        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForTheBackend form.whatLanguageDoYouUseForBackend)
-        , infoRow "howLong" (maybeToString Questions.howLong form.howLong)
-        , infoRow "elmVersion" (multichoiceToString Questions.whatElmVersion form.elmVersion)
-        , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormat form.doYouUseElmFormat)
-        , infoRow "stylingTools" (multichoiceToString Questions.stylingTools form.stylingTools)
-        , infoRow "buildTools" (multichoiceToString Questions.buildTools form.buildTools)
-        , infoRow "frameworks" (multichoiceToString Questions.frameworks form.frameworks)
-        , infoRow "editors" (multichoiceToString Questions.editor form.editors)
-        , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReview form.doYouUseElmReview)
-        , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUse form.whichElmReviewRulesDoYouUse)
-        , infoRow "testTools" (multichoiceToString Questions.testTools form.testTools)
-        , infoRow "testsWrittenFor" (multichoiceToString Questions.testsWrittenFor form.testsWrittenFor)
-        , infoRow "elmInitialInterest" form.elmInitialInterest
-        , infoRow "biggestPainPoint" form.biggestPainPoint
-        , infoRow "whatDoYouLikeMost" form.whatDoYouLikeMost
-        , infoRow "emailAddress" form.emailAddress
-        ]
-
-
-multichoiceToString : Question a -> Ui.MultiChoiceWithOther a -> String
-multichoiceToString { choiceToString } multiChoiceWithOther =
-    Set.toList multiChoiceWithOther.choices
-        |> List.map choiceToString
-        |> (\choices ->
-                if multiChoiceWithOther.otherChecked then
-                    choices ++ [ multiChoiceWithOther.otherText ]
-
-                else
-                    choices
-           )
-        |> String.join ", "
-
-
-setToString : Question a -> Set a -> String
-setToString { choiceToString } set =
-    Set.toList set
-        |> List.map choiceToString
-        |> String.join ", "
-
-
-maybeToString : Question a -> Maybe a -> String
-maybeToString { choiceToString } maybe =
-    case maybe of
-        Just a ->
-            choiceToString a
-
-        Nothing ->
-            ""
-
-
-infoRow name value =
-    Element.row
-        [ Element.spacing 24 ]
-        [ Element.el [ Element.Font.color (Element.rgb 0.4 0.5 0.5) ] (Element.text name)
-        , Element.paragraph [] [ Element.text value ]
-        ]
 
 
 githubLogo : Element msg

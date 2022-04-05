@@ -1,9 +1,11 @@
 module Backend exposing (..)
 
+import AdminPage exposing (AdminLoginData)
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
 import Env
+import Form exposing (Form)
 import Lamdera exposing (ClientId, SessionId)
 import Questions
 import Sha256
@@ -23,14 +25,17 @@ app =
 
 init : ( BackendModel, Cmd BackendMsg )
 init =
-    ( { forms = Dict.empty, adminLogin = Nothing }
+    ( { forms = Dict.empty
+      , formMapping = Form.noMapping
+      , adminLogin = Nothing
+      }
     , Cmd.none
     )
 
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms }
+    { forms = Dict.values model.forms, formMapping = model.formMapping }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
