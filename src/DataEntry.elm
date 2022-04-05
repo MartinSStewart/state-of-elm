@@ -1,5 +1,6 @@
-module DataEntry exposing (DataEntry(..), fromForms, get)
+module DataEntry exposing (DataEntry(..), DataEntryWithOther, fromForms, get)
 
+import AssocList exposing (Dict)
 import List.Extra as List
 import List.Nonempty as Nonempty exposing (Nonempty)
 import List.Nonempty.Ancillary as Nonempty
@@ -7,6 +8,10 @@ import List.Nonempty.Ancillary as Nonempty
 
 type DataEntry a
     = DataEntry (Nonempty Int)
+
+
+type DataEntryWithOther a
+    = DataEntryWithOther (Nonempty Int) (Dict String Int)
 
 
 get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }

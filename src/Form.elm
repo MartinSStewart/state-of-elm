@@ -1,10 +1,135 @@
-module Codecs exposing (formCodec)
+module Form exposing (Form, FormMapping, emptyForm, formCodec, noMapping)
 
+import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
-import Questions exposing (Age(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editor(..), ElmResources(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), StylingTools(..), TestTools(..), TestsWrittenFor(..), WhatElmVersion(..), WhatLanguageDoYouUseForTheBackend(..), WhereDoYouUseElm(..), WhichElmReviewRulesDoYouUse(..))
+import Questions
+    exposing
+        ( Age(..)
+        , BuildTools(..)
+        , DoYouUseElm(..)
+        , DoYouUseElmAtWork(..)
+        , DoYouUseElmFormat(..)
+        , DoYouUseElmReview(..)
+        , Editor(..)
+        , ElmResources(..)
+        , ExperienceLevel(..)
+        , Frameworks(..)
+        , HowLargeIsTheCompany(..)
+        , HowLong(..)
+        , NewsAndDiscussions(..)
+        , OtherLanguages(..)
+        , StylingTools(..)
+        , TestTools(..)
+        , TestsWrittenFor(..)
+        , WhatElmVersion(..)
+        , WhatLanguageDoYouUseForTheBackend(..)
+        , WhereDoYouUseElm(..)
+        , WhichElmReviewRulesDoYouUse(..)
+        )
 import Serialize exposing (Codec)
-import Types exposing (Form)
 import Ui exposing (MultiChoiceWithOther)
+
+
+type alias Form =
+    { doYouUseElm : Set DoYouUseElm
+    , age : Maybe Age
+    , functionalProgrammingExperience : Maybe ExperienceLevel
+    , otherLanguages : MultiChoiceWithOther OtherLanguages
+    , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
+    , elmResources : MultiChoiceWithOther ElmResources
+    , countryLivingIn : String
+    , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
+    , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
+    , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
+    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForTheBackend
+    , howLong : Maybe HowLong
+    , elmVersion : MultiChoiceWithOther WhatElmVersion
+    , doYouUseElmFormat : Maybe DoYouUseElmFormat
+    , stylingTools : MultiChoiceWithOther StylingTools
+    , buildTools : MultiChoiceWithOther BuildTools
+    , frameworks : MultiChoiceWithOther Frameworks
+    , editors : MultiChoiceWithOther Editor
+    , doYouUseElmReview : Maybe DoYouUseElmReview
+    , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
+    , testTools : MultiChoiceWithOther TestTools
+    , testsWrittenFor : MultiChoiceWithOther TestsWrittenFor
+    , elmInitialInterest : String
+    , biggestPainPoint : String
+    , whatDoYouLikeMost : String
+    , emailAddress : String
+    }
+
+
+type alias FormMapping =
+    { otherLanguages : Dict String String
+    , newsAndDiscussions : Dict String String
+    , elmResources : Dict String String
+    , applicationDomains : Dict String String
+    , whatLanguageDoYouUseForBackend : Dict String String
+    , elmVersion : Dict String String
+    , stylingTools : Dict String String
+    , buildTools : Dict String String
+    , frameworks : Dict String String
+    , editors : Dict String String
+    , whichElmReviewRulesDoYouUse : Dict String String
+    , testTools : Dict String String
+    , testsWrittenFor : Dict String String
+    , elmInitialInterest : Dict String String
+    , biggestPainPoint : Dict String String
+    , whatDoYouLikeMost : Dict String String
+    }
+
+
+emptyForm : Form
+emptyForm =
+    { doYouUseElm = Set.empty
+    , age = Nothing
+    , functionalProgrammingExperience = Nothing
+    , otherLanguages = Ui.multiChoiceWithOtherInit
+    , newsAndDiscussions = Ui.multiChoiceWithOtherInit
+    , elmResources = Ui.multiChoiceWithOtherInit
+    , countryLivingIn = ""
+    , applicationDomains = Ui.multiChoiceWithOtherInit
+    , doYouUseElmAtWork = Nothing
+    , howLargeIsTheCompany = Nothing
+    , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
+    , howLong = Nothing
+    , elmVersion = Ui.multiChoiceWithOtherInit
+    , doYouUseElmFormat = Nothing
+    , stylingTools = Ui.multiChoiceWithOtherInit
+    , buildTools = Ui.multiChoiceWithOtherInit
+    , frameworks = Ui.multiChoiceWithOtherInit
+    , editors = Ui.multiChoiceWithOtherInit
+    , doYouUseElmReview = Nothing
+    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
+    , testTools = Ui.multiChoiceWithOtherInit
+    , testsWrittenFor = Ui.multiChoiceWithOtherInit
+    , elmInitialInterest = ""
+    , biggestPainPoint = ""
+    , whatDoYouLikeMost = ""
+    , emailAddress = ""
+    }
+
+
+noMapping : FormMapping
+noMapping =
+    { otherLanguages = Dict.empty
+    , newsAndDiscussions = Dict.empty
+    , elmResources = Dict.empty
+    , applicationDomains = Dict.empty
+    , whatLanguageDoYouUseForBackend = Dict.empty
+    , elmVersion = Dict.empty
+    , stylingTools = Dict.empty
+    , buildTools = Dict.empty
+    , frameworks = Dict.empty
+    , editors = Dict.empty
+    , whichElmReviewRulesDoYouUse = Dict.empty
+    , testTools = Dict.empty
+    , testsWrittenFor = Dict.empty
+    , elmInitialInterest = Dict.empty
+    , biggestPainPoint = Dict.empty
+    , whatDoYouLikeMost = Dict.empty
+    }
 
 
 formCodec : Codec e Form

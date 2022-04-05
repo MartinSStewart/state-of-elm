@@ -1,60 +1,69 @@
 module Backend exposing (..)
 
+import AdminPage exposing (AdminLoginData)
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
+import Effect.Command as Command exposing (BackendOnly, Command)
+import Effect.Lamdera exposing (ClientId, SessionId)
+import Effect.Task
+import Effect.Time
 import Env
-import Lamdera exposing (ClientId, SessionId)
+import Form exposing (Form)
+import Lamdera
 import Questions
 import Sha256
-import Task
-import Time
 import Types exposing (..)
 
 
 app =
-    Lamdera.backend
+    Effect.Lamdera.backend
+        Lamdera.broadcast
+        Lamdera.sendToFrontend
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \_ -> Lamdera.onConnect UserConnected
+        , subscriptions = \_ -> Effect.Lamdera.onConnect UserConnected
         }
 
 
-init : ( BackendModel, Cmd BackendMsg )
+init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
-    ( { forms = Dict.empty, adminLogin = Nothing }
-    , Cmd.none
+    ( { forms = Dict.empty
+      , formMapping = Form.noMapping
+      , adminLogin = Nothing
+      }
+    , Command.none
     )
 
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms }
+    { forms = Dict.values model.forms, formMapping = model.formMapping }
 
 
-update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
 update msg model =
     case msg of
         UserConnected sessionId clientId ->
             ( model
             , if isAdmin sessionId model then
-                LoadAdmin (getAdminData model) |> Lamdera.sendToFrontend clientId
+                LoadAdmin (getAdminData model) |> Effect.Lamdera.sendToFrontend clientId
 
               else
-                Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
+                Effect.Time.now |> Effect.Task.perform (GotTimeWithLoadFormData sessionId clientId)
             )
 
         GotTimeWithLoadFormData sessionId clientId time ->
-            ( model, loadFormData sessionId time model |> LoadForm |> Lamdera.sendToFrontend clientId )
+            ( model, loadFormData sessionId time model |> LoadForm |> Effect.Lamdera.sendToFrontend clientId )
 
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
 
 
-loadFormData : SessionId -> Time.Posix -> BackendModel -> LoadFormStatus
+loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> LoadFormStatus
 loadFormData sessionId time model =
-    case Env.surveyStatus of
+    case Types.surveyStatus of
         SurveyOpen ->
             if Env.surveyIsOpen time then
                 case Dict.get sessionId model.forms of
@@ -111,16 +120,16 @@ loadFormData sessionId time model =
                 |> SurveyResults
 
 
-updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Command restriction toMsg BackendMsg )
 updateFromFrontend sessionId clientId msg model =
-    ( model, Time.now |> Task.perform (GotTimeWithUpdate sessionId clientId msg) )
+    ( model, Effect.Time.now |> Effect.Task.perform (GotTimeWithUpdate sessionId clientId msg) )
 
 
-updateFromFrontendWithTime : Time.Posix -> SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+updateFromFrontendWithTime : Effect.Time.Posix -> SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
 updateFromFrontendWithTime time sessionId clientId msg model =
     case msg of
         AutoSaveForm form ->
-            case Env.surveyStatus of
+            case Types.surveyStatus of
                 SurveyOpen ->
                     ( if Env.surveyIsOpen time then
                         { model
@@ -145,14 +154,14 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
                       else
                         model
-                    , Cmd.none
+                    , Command.none
                     )
 
                 SurveyFinished ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
         SubmitForm form ->
-            case Env.surveyStatus of
+            case Types.surveyStatus of
                 SurveyOpen ->
                     if Env.surveyIsOpen time then
                         ( { model
@@ -174,32 +183,32 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                                     )
                                     model.forms
                           }
-                        , Lamdera.sendToFrontend clientId SubmitConfirmed
+                        , Effect.Lamdera.sendToFrontend clientId SubmitConfirmed
                         )
 
                     else
-                        ( model, Cmd.none )
+                        ( model, Command.none )
 
                 SurveyFinished ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
         AdminLoginRequest password ->
             if Env.adminPasswordHash == Sha256.sha256 password then
                 ( { model | adminLogin = Just sessionId }
-                , getAdminData model |> Ok |> AdminLoginResponse |> Lamdera.sendToFrontend clientId
+                , getAdminData model |> Ok |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId
                 )
 
             else
-                ( model, Err () |> AdminLoginResponse |> Lamdera.sendToFrontend clientId )
+                ( model, Err () |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId )
 
-        ReplaceFormsRequest forms ->
+        AdminToBackend (AdminPage.ReplaceFormsRequest forms) ->
             ( if not Env.isProduction && isAdmin sessionId model then
                 { model
                     | forms =
                         List.indexedMap
                             (\index form ->
-                                ( Char.fromCode index |> String.fromChar
-                                , { form = form, submitTime = Just (Time.millisToPosix 0) }
+                                ( Char.fromCode index |> String.fromChar |> Effect.Lamdera.sessionIdFromString
+                                , { form = form, submitTime = Just (Effect.Time.millisToPosix 0) }
                                 )
                             )
                             forms
@@ -208,17 +217,17 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
               else
                 model
-            , Cmd.none
+            , Command.none
             )
 
-        LogOutRequest ->
+        AdminToBackend AdminPage.LogOutRequest ->
             if isAdmin sessionId model then
                 ( { model | adminLogin = Nothing }
-                , loadFormData sessionId time model |> LogOutResponse |> Lamdera.sendToFrontend clientId
+                , loadFormData sessionId time model |> LogOutResponse |> Effect.Lamdera.sendToFrontend clientId
                 )
 
             else
-                ( model, Cmd.none )
+                ( model, Command.none )
 
 
 isAdmin : SessionId -> BackendModel -> Bool

@@ -1,19 +1,21 @@
 module Types exposing (..)
 
+import AdminPage exposing (AdminLoginData)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser exposing (UrlRequest)
-import Lamdera exposing (ClientId, SessionId)
-import Questions exposing (Age, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editor, ElmResources, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, StylingTools, TestTools, TestsWrittenFor, WhatElmVersion, WhatLanguageDoYouUseForTheBackend, WhereDoYouUseElm, WhichElmReviewRulesDoYouUse)
+import Effect.Lamdera exposing (ClientId, SessionId)
+import Effect.Time
+import Env
+import Form exposing (Form, FormMapping)
 import SurveyResults
-import Time
 import Ui exposing (MultiChoiceWithOther, Size)
 
 
 type FrontendModel
-    = Loading (Maybe Size) (Maybe Time.Posix)
+    = Loading (Maybe Size) (Maybe Effect.Time.Posix)
     | FormLoaded FormLoaded_
-    | FormCompleted Time.Posix
+    | FormCompleted Effect.Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminLoginData
     | SurveyResultsLoaded SurveyResults.Data
@@ -24,6 +26,15 @@ type SurveyStatus
     | SurveyFinished
 
 
+surveyStatus : SurveyStatus
+surveyStatus =
+    if Env.presentSurveyResults then
+        SurveyFinished
+
+    else
+        SurveyOpen
+
+
 type alias FormLoaded_ =
     { form : Form
     , acceptedTos : Bool
@@ -31,48 +42,19 @@ type alias FormLoaded_ =
     , pressedSubmitCount : Int
     , debounceCounter : Int
     , windowSize : Size
-    , time : Time.Posix
-    }
-
-
-type alias Form =
-    { doYouUseElm : Set DoYouUseElm
-    , age : Maybe Age
-    , functionalProgrammingExperience : Maybe ExperienceLevel
-    , otherLanguages : MultiChoiceWithOther OtherLanguages
-    , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
-    , elmResources : MultiChoiceWithOther ElmResources
-    , countryLivingIn : String
-    , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
-    , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
-    , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForTheBackend
-    , howLong : Maybe HowLong
-    , elmVersion : MultiChoiceWithOther WhatElmVersion
-    , doYouUseElmFormat : Maybe DoYouUseElmFormat
-    , stylingTools : MultiChoiceWithOther StylingTools
-    , buildTools : MultiChoiceWithOther BuildTools
-    , frameworks : MultiChoiceWithOther Frameworks
-    , editors : MultiChoiceWithOther Editor
-    , doYouUseElmReview : Maybe DoYouUseElmReview
-    , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
-    , testTools : MultiChoiceWithOther TestTools
-    , testsWrittenFor : MultiChoiceWithOther TestsWrittenFor
-    , elmInitialInterest : String
-    , biggestPainPoint : String
-    , whatDoYouLikeMost : String
-    , emailAddress : String
+    , time : Effect.Time.Posix
     }
 
 
 type alias BackendModel =
-    { forms : Dict SessionId { form : Form, submitTime : Maybe Time.Posix }
+    { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
+    , formMapping : FormMapping
     , adminLogin : Maybe SessionId
     }
 
 
 type FrontendMsg
-    = UrlClicked UrlRequest
+    = UrlClicked Browser.UrlRequest
     | UrlChanged
     | FormChanged Form
     | PressedAcceptTosAnswer Bool
@@ -81,23 +63,21 @@ type FrontendMsg
     | TypedPassword String
     | PressedLogin
     | GotWindowSize Size
-    | TypedFormsData String
-    | PressedLogOut
-    | GotTime Time.Posix
+    | GotTime Effect.Time.Posix
+    | AdminPageMsg AdminPage.Msg
 
 
 type ToBackend
     = AutoSaveForm Form
     | SubmitForm Form
     | AdminLoginRequest String
-    | ReplaceFormsRequest (List Form)
-    | LogOutRequest
+    | AdminToBackend AdminPage.ToBackend
 
 
 type BackendMsg
     = UserConnected SessionId ClientId
-    | GotTimeWithLoadFormData SessionId ClientId Time.Posix
-    | GotTimeWithUpdate SessionId ClientId ToBackend Time.Posix
+    | GotTimeWithLoadFormData SessionId ClientId Effect.Time.Posix
+    | GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
 
 
 type LoadFormStatus
@@ -114,8 +94,3 @@ type ToFrontend
     | AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus
-
-
-type alias AdminLoginData =
-    { forms : List { form : Form, submitTime : Maybe Time.Posix }
-    }
