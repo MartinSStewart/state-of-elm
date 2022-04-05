@@ -593,7 +593,26 @@ migrateWhichElmReviewRulesDoYouUse old =
 
 migrateAdminLoginData : Old.AdminLoginData -> Evergreen.V20.AdminPage.AdminLoginData
 migrateAdminLoginData old =
-    Debug.todo ""
+    { forms = List.map (\a -> { form = migrateForm a.form, submitTime = a.submitTime }) old.forms
+    , formMapping =
+        { otherLanguages = Dict.empty
+        , newsAndDiscussions = Dict.empty
+        , elmResources = Dict.empty
+        , applicationDomains = Dict.empty
+        , whatLanguageDoYouUseForBackend = Dict.empty
+        , elmVersion = Dict.empty
+        , stylingTools = Dict.empty
+        , buildTools = Dict.empty
+        , frameworks = Dict.empty
+        , editors = Dict.empty
+        , whichElmReviewRulesDoYouUse = Dict.empty
+        , testTools = Dict.empty
+        , testsWrittenFor = Dict.empty
+        , elmInitialInterest = Dict.empty
+        , biggestPainPoint = Dict.empty
+        , whatDoYouLikeMost = Dict.empty
+        }
+    }
 
 
 migrateSessionId : Lamdera.SessionId -> Effect.Lamdera.SessionId
