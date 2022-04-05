@@ -1,4 +1,4 @@
-module AdminPage exposing (AdminLoginData, Msg, ToBackend(..), adminView, update)
+module AdminPage exposing (AdminLoginData, Msg(..), ToBackend(..), adminView, update)
 
 import AssocSet as Set exposing (Set)
 import Effect.Command as Command exposing (Command, FrontendOnly)
