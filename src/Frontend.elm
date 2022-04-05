@@ -2,13 +2,19 @@ module Frontend exposing (..)
 
 import AdminPage
 import AssocSet as Set exposing (Set)
-import Browser exposing (UrlRequest(..))
-import Browser.Dom
-import Browser.Events
-import Browser.Navigation as Nav
+import Browser
 import Countries exposing (Country)
 import Dict exposing (Dict)
 import Duration exposing (Duration)
+import Effect.Browser.Dom
+import Effect.Browser.Events
+import Effect.Browser.Navigation
+import Effect.Command as Command exposing (Command, FrontendOnly)
+import Effect.Lamdera
+import Effect.Process
+import Effect.Subscription as Subscription exposing (Subscription)
+import Effect.Task
+import Effect.Time
 import Element exposing (Element)
 import Element.Background
 import Element.Font
@@ -18,22 +24,20 @@ import Env
 import Form exposing (Form)
 import Lamdera
 import List.Extra as List
-import Process
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
 import Serialize
 import SurveyResults
 import Svg
 import Svg.Attributes
-import Task
-import Time
 import Types exposing (..)
 import Ui exposing (Size)
 import Url
 
 
 app =
-    Lamdera.frontend
+    Effect.Lamdera.frontend
+        Lamdera.sendToBackend
         { init = init
         , onUrlRequest = UrlClicked
         , onUrlChange = \_ -> UrlChanged
@@ -41,34 +45,34 @@ app =
         , updateFromBackend = updateFromBackend
         , subscriptions =
             \_ ->
-                Sub.batch
-                    [ Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
-                    , Time.every 1000 GotTime
+                Subscription.batch
+                    [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
+                    , Effect.Time.every Duration.second GotTime
                     ]
         , view = view
         }
 
 
-init : Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
+init : Url.Url -> Effect.Browser.Navigation.Key -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 init url _ =
     ( if url.path == "/admin" then
         AdminLogin { password = "", loginFailed = False }
 
       else
         Loading Nothing Nothing
-    , Cmd.batch
-        [ Task.perform
+    , Command.batch
+        [ Effect.Task.perform
             (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
-            Browser.Dom.getViewport
-        , Task.perform GotTime Time.now
+            Effect.Browser.Dom.getViewport
+        , Effect.Task.perform GotTime Effect.Time.now
         ]
     )
 
 
-update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+update : FrontendMsg -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 update msg model =
     let
-        updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Cmd FrontendMsg )) -> ( FrontendModel, Cmd FrontendMsg )
+        updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Command FrontendOnly ToBackend FrontendMsg )) -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
         updateFormLoaded func =
             case model of
                 FormLoaded formLoaded ->
@@ -79,33 +83,33 @@ update msg model =
                     ( FormLoaded newFormLoaded, cmd )
 
                 Loading _ _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 FormCompleted _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 Admin _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 AdminLogin _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 SurveyResultsLoaded _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
         updateAdminLogin func =
             case model of
                 FormLoaded _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 Loading _ _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 FormCompleted _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 Admin _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
                 AdminLogin adminLogin ->
                     let
@@ -115,49 +119,50 @@ update msg model =
                     ( AdminLogin newAdminLogin, cmd )
 
                 SurveyResultsLoaded _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
     in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
-                Internal url ->
+                Browser.Internal url ->
                     ( model
-                    , Nav.load (Url.toString url)
+                    , Effect.Browser.Navigation.load (Url.toString url)
                     )
 
-                External url ->
+                Browser.External url ->
                     ( model
-                    , Nav.load url
+                    , Effect.Browser.Navigation.load url
                     )
 
         UrlChanged ->
-            ( model, Cmd.none )
+            ( model, Command.none )
 
         FormChanged form ->
             updateFormLoaded
                 (\formLoaded ->
                     ( { formLoaded | form = form, debounceCounter = formLoaded.debounceCounter + 1 }
-                    , Process.sleep 1000 |> Task.perform (\() -> Debounce (formLoaded.debounceCounter + 1))
+                    , Effect.Process.sleep Duration.second
+                        |> Effect.Task.perform (\() -> Debounce (formLoaded.debounceCounter + 1))
                     )
                 )
 
         PressedAcceptTosAnswer acceptedTos ->
-            updateFormLoaded (\formLoaded -> ( { formLoaded | acceptedTos = acceptedTos }, Cmd.none ))
+            updateFormLoaded (\formLoaded -> ( { formLoaded | acceptedTos = acceptedTos }, Command.none ))
 
         PressedSubmitSurvey ->
             updateFormLoaded
                 (\formLoaded ->
                     if formLoaded.submitting then
-                        ( formLoaded, Cmd.none )
+                        ( formLoaded, Command.none )
 
                     else if formLoaded.acceptedTos then
                         ( { formLoaded | submitting = True }
-                        , Lamdera.sendToBackend (SubmitForm formLoaded.form)
+                        , Effect.Lamdera.sendToBackend (SubmitForm formLoaded.form)
                         )
 
                     else
                         ( { formLoaded | pressedSubmitCount = formLoaded.pressedSubmitCount + 1 }
-                        , Cmd.none
+                        , Command.none
                         )
                 )
 
@@ -166,19 +171,19 @@ update msg model =
                 (\formLoaded ->
                     ( formLoaded
                     , if counter == formLoaded.debounceCounter then
-                        Lamdera.sendToBackend (AutoSaveForm formLoaded.form)
+                        Effect.Lamdera.sendToBackend (AutoSaveForm formLoaded.form)
 
                       else
-                        Cmd.none
+                        Command.none
                     )
                 )
 
         TypedPassword password ->
-            updateAdminLogin (\adminLogin -> ( { adminLogin | password = password }, Cmd.none ))
+            updateAdminLogin (\adminLogin -> ( { adminLogin | password = password }, Command.none ))
 
         PressedLogin ->
             updateAdminLogin
-                (\adminLogin -> ( adminLogin, Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
+                (\adminLogin -> ( adminLogin, Effect.Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
 
         GotWindowSize windowSize ->
             ( case model of
@@ -199,36 +204,8 @@ update msg model =
 
                 SurveyResultsLoaded data ->
                     SurveyResultsLoaded data
-            , Cmd.none
+            , Command.none
             )
-
-        TypedFormsData text ->
-            if Env.isProduction then
-                ( model, Cmd.none )
-
-            else
-                case model of
-                    Admin admin ->
-                        case Serialize.decodeFromString (Serialize.list Form.formCodec) text of
-                            Ok forms ->
-                                ( Admin
-                                    { admin
-                                        | forms =
-                                            List.map
-                                                (\form -> { form = form, submitTime = Just (Time.millisToPosix 0) })
-                                                forms
-                                    }
-                                , ReplaceFormsRequest forms |> Lamdera.sendToBackend
-                                )
-
-                            Err _ ->
-                                ( Admin admin, Cmd.none )
-
-                    _ ->
-                        ( model, Cmd.none )
-
-        PressedLogOut ->
-            ( model, Lamdera.sendToBackend LogOutRequest )
 
         GotTime time ->
             ( case model of
@@ -249,7 +226,7 @@ update msg model =
 
                 SurveyResultsLoaded _ ->
                     model
-            , Cmd.none
+            , Command.none
             )
 
         AdminPageMsg adminMsg ->
@@ -259,13 +236,13 @@ update msg model =
                         ( newAdmin, cmd ) =
                             AdminPage.update adminMsg admin
                     in
-                    ( Admin newAdmin, Cmd.map AdminPageMsg cmd )
+                    ( Admin newAdmin, Command.map AdminToBackend AdminPageMsg cmd )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( model, Command.none )
 
 
-updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
     ( case msg of
         LoadForm formStatus ->
@@ -307,11 +284,11 @@ updateFromBackend msg model =
 
                 _ ->
                     model
-    , Cmd.none
+    , Command.none
     )
 
 
-loadForm : LoadFormStatus -> Maybe Size -> Maybe Time.Posix -> FrontendModel
+loadForm : LoadFormStatus -> Maybe Size -> Maybe Effect.Time.Posix -> FrontendModel
 loadForm formStatus maybeWindowSize maybeTime =
     case formStatus of
         NoFormFound ->
@@ -322,7 +299,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
                 , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
-                , time = Maybe.withDefault (Time.millisToPosix 0) maybeTime
+                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
         FormAutoSaved form ->
@@ -333,11 +310,11 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
                 , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
-                , time = Maybe.withDefault (Time.millisToPosix 0) maybeTime
+                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
         FormSubmitted ->
-            FormCompleted (Maybe.withDefault (Time.millisToPosix 0) maybeTime)
+            FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
             SurveyResultsLoaded data
@@ -354,7 +331,7 @@ view model =
             [ Element.Region.mainContent ]
             (case model of
                 FormLoaded formLoaded ->
-                    case Env.surveyStatus of
+                    case Types.surveyStatus of
                         SurveyOpen ->
                             if Env.surveyIsOpen formLoaded.time then
                                 answerSurveyView formLoaded
@@ -366,7 +343,7 @@ view model =
                             Element.none
 
                 Loading _ maybeTime ->
-                    case Env.surveyStatus of
+                    case Types.surveyStatus of
                         SurveyOpen ->
                             case maybeTime of
                                 Just time ->
@@ -383,7 +360,7 @@ view model =
                             Element.none
 
                 FormCompleted time ->
-                    case Env.surveyStatus of
+                    case Types.surveyStatus of
                         SurveyOpen ->
                             if Env.surveyIsOpen time then
                                 formCompletedView
@@ -522,7 +499,7 @@ answerSurveyView formLoaded =
         ]
 
 
-timeLeft : Time.Posix -> Time.Posix -> String
+timeLeft : Effect.Time.Posix -> Effect.Time.Posix -> String
 timeLeft closingTime time =
     let
         difference : Duration

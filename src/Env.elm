@@ -1,10 +1,9 @@
 module Env exposing (..)
 
 import Duration
+import Effect.Time
 import Quantity
 import Sha256
-import Time
-import Types exposing (SurveyStatus(..))
 
 
 adminPassword : String
@@ -17,22 +16,14 @@ adminPasswordHash =
     Sha256.sha256 adminPassword
 
 
-surveyStatus_ : String
-surveyStatus_ =
-    "SurveyOpen"
+presentSurveyResults_ : String
+presentSurveyResults_ =
+    "false"
 
 
-surveyStatus : SurveyStatus
-surveyStatus =
-    case surveyStatus_ of
-        "SurveyOpen" ->
-            SurveyOpen
-
-        "SurveyFinished" ->
-            SurveyFinished
-
-        _ ->
-            SurveyOpen
+presentSurveyResults : Bool
+presentSurveyResults =
+    String.toLower presentSurveyResults_ == "true"
 
 
 isProduction_ : String
@@ -45,11 +36,11 @@ isProduction =
     String.toLower isProduction_ == "true"
 
 
-surveyCloseTime : Time.Posix
+surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
-    Time.millisToPosix 1650286800000
+    Effect.Time.millisToPosix 1650286800000
 
 
-surveyIsOpen : Time.Posix -> Bool
+surveyIsOpen : Effect.Time.Posix -> Bool
 surveyIsOpen time =
     Duration.from time surveyCloseTime |> Quantity.greaterThanZero

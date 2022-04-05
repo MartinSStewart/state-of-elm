@@ -1,13 +1,16 @@
-module AdminPage exposing (AdminLoginData, Msg, adminView, update)
+module AdminPage exposing (AdminLoginData, Msg, ToBackend(..), adminView, update)
 
 import AssocSet as Set exposing (Set)
+import Effect.Command as Command exposing (Command, FrontendOnly)
+import Effect.Lamdera
+import Effect.Time
 import Element exposing (Element)
 import Element.Font
 import Element.Input
+import Env
 import Form exposing (Form, FormMapping)
 import Questions exposing (Question)
 import Serialize
-import Time
 import Ui
 
 
@@ -16,20 +19,41 @@ type Msg
     | TypedFormsData String
 
 
+type ToBackend
+    = ReplaceFormsRequest (List Form)
+    | LogOutRequest
+
+
 type alias AdminLoginData =
-    { forms : List { form : Form, submitTime : Maybe Time.Posix }
+    { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     }
 
 
-update : Msg -> AdminLoginData -> ( AdminLoginData, Cmd Msg )
-update msg adminLoginData =
+update : Msg -> AdminLoginData -> ( AdminLoginData, Command FrontendOnly ToBackend Msg )
+update msg admin =
     case msg of
-        PressedLogOut ->
-            ( adminLoginData, Cmd.none )
+        TypedFormsData text ->
+            if Env.isProduction then
+                ( admin, Command.none )
 
-        TypedFormsData _ ->
-            ( adminLoginData, Cmd.none )
+            else
+                case Serialize.decodeFromString (Serialize.list Form.formCodec) text of
+                    Ok forms ->
+                        ( { admin
+                            | forms =
+                                List.map
+                                    (\form -> { form = form, submitTime = Just (Effect.Time.millisToPosix 0) })
+                                    forms
+                          }
+                        , ReplaceFormsRequest forms |> Effect.Lamdera.sendToBackend
+                        )
+
+                    Err _ ->
+                        ( admin, Command.none )
+
+        PressedLogOut ->
+            ( admin, Effect.Lamdera.sendToBackend LogOutRequest )
 
 
 adminView : AdminLoginData -> Element Msg
@@ -64,13 +88,13 @@ adminView admin =
         ]
 
 
-adminFormView : { form : Form, submitTime : Maybe Time.Posix } -> Element msg
+adminFormView : { form : Form, submitTime : Maybe Effect.Time.Posix } -> Element msg
 adminFormView { form, submitTime } =
     Element.column
         [ Element.spacing 8 ]
         [ case submitTime of
             Just time ->
-                Element.text ("Submitted at " ++ String.fromInt (Time.posixToMillis time))
+                Element.text ("Submitted at " ++ String.fromInt (Effect.Time.posixToMillis time))
 
             Nothing ->
                 Element.text "Not submitted"
