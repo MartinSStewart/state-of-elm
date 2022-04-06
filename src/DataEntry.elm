@@ -11,7 +11,7 @@ type DataEntry a
 
 
 type DataEntryWithOther a
-    = DataEntryWithOther (Nonempty Int) (Dict String Int)
+    = DataEntryWithOther (Dict String Int)
 
 
 get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }

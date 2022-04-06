@@ -1,6 +1,5 @@
 module Form exposing (Form, FormMapping, emptyForm, formCodec, noMapping)
 
-import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
 import Questions
     exposing
@@ -60,23 +59,23 @@ type alias Form =
     }
 
 
-type alias FormMapping =
-    { otherLanguages : Dict String String
-    , newsAndDiscussions : Dict String String
-    , elmResources : Dict String String
-    , applicationDomains : Dict String String
-    , whatLanguageDoYouUseForBackend : Dict String String
-    , elmVersion : Dict String String
-    , stylingTools : Dict String String
-    , buildTools : Dict String String
-    , frameworks : Dict String String
-    , editors : Dict String String
-    , whichElmReviewRulesDoYouUse : Dict String String
-    , testTools : Dict String String
-    , testsWrittenFor : Dict String String
-    , elmInitialInterest : Dict String String
-    , biggestPainPoint : Dict String String
-    , whatDoYouLikeMost : Dict String String
+type alias FormMapping a =
+    { otherLanguages : a
+    , newsAndDiscussions : a
+    , elmResources : a
+    , applicationDomains : a
+    , whatLanguageDoYouUseForBackend : a
+    , elmVersion : a
+    , stylingTools : a
+    , buildTools : a
+    , frameworks : a
+    , editors : a
+    , whichElmReviewRulesDoYouUse : a
+    , testTools : a
+    , testsWrittenFor : a
+    , elmInitialInterest : a
+    , biggestPainPoint : a
+    , whatDoYouLikeMost : a
     }
 
 
@@ -111,24 +110,24 @@ emptyForm =
     }
 
 
-noMapping : FormMapping
-noMapping =
-    { otherLanguages = Dict.empty
-    , newsAndDiscussions = Dict.empty
-    , elmResources = Dict.empty
-    , applicationDomains = Dict.empty
-    , whatLanguageDoYouUseForBackend = Dict.empty
-    , elmVersion = Dict.empty
-    , stylingTools = Dict.empty
-    , buildTools = Dict.empty
-    , frameworks = Dict.empty
-    , editors = Dict.empty
-    , whichElmReviewRulesDoYouUse = Dict.empty
-    , testTools = Dict.empty
-    , testsWrittenFor = Dict.empty
-    , elmInitialInterest = Dict.empty
-    , biggestPainPoint = Dict.empty
-    , whatDoYouLikeMost = Dict.empty
+noMapping : a -> FormMapping a
+noMapping a =
+    { otherLanguages = a
+    , newsAndDiscussions = a
+    , elmResources = a
+    , applicationDomains = a
+    , whatLanguageDoYouUseForBackend = a
+    , elmVersion = a
+    , stylingTools = a
+    , buildTools = a
+    , frameworks = a
+    , editors = a
+    , whichElmReviewRulesDoYouUse = a
+    , testTools = a
+    , testsWrittenFor = a
+    , elmInitialInterest = a
+    , biggestPainPoint = a
+    , whatDoYouLikeMost = a
     }
 
 

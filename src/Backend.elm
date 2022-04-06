@@ -30,7 +30,7 @@ app =
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
     ( { forms = Dict.empty
-      , formMapping = Form.noMapping
+      , formMapping = Form.noMapping []
       , adminLogin = Nothing
       }
     , Command.none

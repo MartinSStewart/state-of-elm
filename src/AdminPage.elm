@@ -1,4 +1,4 @@
-module AdminPage exposing (AdminLoginData, Msg(..), ToBackend(..), adminView, update)
+module AdminPage exposing (AdminLoginData, FormMapData, Msg(..), ToBackend(..), adminView, update)
 
 import AssocSet as Set exposing (Set)
 import Effect.Command as Command exposing (Command, FrontendOnly)
@@ -9,6 +9,7 @@ import Element.Font
 import Element.Input
 import Env
 import Form exposing (Form, FormMapping)
+import List.Extra as List
 import Questions exposing (Question)
 import Serialize
 import Ui
@@ -17,6 +18,7 @@ import Ui
 type Msg
     = PressedLogOut
     | TypedFormsData String
+    | TypedMapTo (FormMapping FormMapData)
 
 
 type ToBackend
@@ -26,8 +28,12 @@ type ToBackend
 
 type alias AdminLoginData =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormMapping
+    , formMapping : FormMapping FormMapData
     }
+
+
+type alias FormMapData =
+    List { groupName : String, otherAnswers : Set String }
 
 
 update : Msg -> AdminLoginData -> ( AdminLoginData, Command FrontendOnly ToBackend Msg )
@@ -55,9 +61,16 @@ update msg admin =
         PressedLogOut ->
             ( admin, Effect.Lamdera.sendToBackend LogOutRequest )
 
+        TypedMapTo newFormMapping ->
+            ( { admin | formMapping = newFormMapping }, Command.none )
+
 
 adminView : AdminLoginData -> Element Msg
 adminView admin =
+    let
+        formMapping =
+            admin.formMapping
+    in
     Element.column
         [ Element.spacing 32, Element.padding 16 ]
         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
@@ -82,10 +95,93 @@ adminView admin =
             , placeholder = Nothing
             , label = Element.Input.labelHidden ""
             }
+        , answerMappingView
+            (\dict -> { formMapping | otherLanguages = dict })
+            (List.filterMap
+                (\{ form, submitTime } ->
+                    case submitTime of
+                        Just _ ->
+                            if form.otherLanguages.otherChecked then
+                                Just form.otherLanguages.otherText
+
+                            else
+                                Nothing
+
+                        Nothing ->
+                            Nothing
+                )
+                admin.forms
+            )
+            admin.formMapping.otherLanguages
         , Element.column
             [ Element.spacing 32 ]
             (List.map adminFormView admin.forms)
         ]
+
+
+answerMappingView : (FormMapData -> FormMapping FormMapData) -> List String -> FormMapData -> Element Msg
+answerMappingView updateFormMapping otherAnswers mapTo =
+    Element.column
+        [ Element.spacing 24 ]
+        [ Element.row
+            [ Element.spacing 8 ]
+            (List.indexedMap
+                (\index { groupName } ->
+                    Element.row []
+                        [ Element.el [ Element.Font.italic ] (Element.text ("(" ++ getHotkey index ++ ") "))
+                        , Element.Input.text
+                            [ Element.width (Element.px 100) ]
+                            { text = groupName
+                            , onChange =
+                                \text ->
+                                    List.updateAt
+                                        index
+                                        (\data -> { data | groupName = text })
+                                        mapTo
+                                        |> updateFormMapping
+                                        |> TypedMapTo
+                            , placeholder = Nothing
+                            , label = Element.Input.labelHidden "mapTo"
+                            }
+                        ]
+                )
+                mapTo
+                ++ [ Element.row []
+                        [ Element.el [ Element.Font.italic ] (Element.text "(new) ")
+                        , Element.Input.text
+                            [ Element.width (Element.px 100) ]
+                            { text = ""
+                            , onChange =
+                                \text ->
+                                    mapTo
+                                        ++ [ { groupName = text, otherAnswers = Set.empty } ]
+                                        |> updateFormMapping
+                                        |> TypedMapTo
+                            , placeholder = Nothing
+                            , label = Element.Input.labelHidden "mapTo"
+                            }
+                        ]
+                   ]
+            )
+        , List.take 10 otherAnswers
+            |> List.indexedMap
+                (\index other ->
+                    Element.el
+                        [ if index == 0 then
+                            Element.Font.bold
+
+                          else
+                            Element.Font.regular
+                        ]
+                        (Element.text other)
+                )
+            |> Element.column [ Element.spacing 8 ]
+        ]
+
+
+getHotkey : Int -> String
+getHotkey index =
+    String.fromChar (Char.fromCode (index + Char.toCode 'a'))
 
 
 adminFormView : { form : Form, submitTime : Maybe Effect.Time.Posix } -> Element msg
