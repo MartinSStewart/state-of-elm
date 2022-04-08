@@ -26,7 +26,6 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
-import Serialize
 import SurveyResults
 import Svg
 import Svg.Attributes
@@ -44,10 +43,28 @@ app =
         , update = update
         , updateFromBackend = updateFromBackend
         , subscriptions =
-            \_ ->
+            \model ->
                 Subscription.batch
                     [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
                     , Effect.Time.every Duration.second GotTime
+                    , case model of
+                        Admin _ ->
+                            AdminPage.subscription |> Subscription.map AdminPageMsg
+
+                        Loading maybeSize maybePosix ->
+                            Subscription.none
+
+                        FormLoaded formLoaded_ ->
+                            Subscription.none
+
+                        FormCompleted posix ->
+                            Subscription.none
+
+                        AdminLogin record ->
+                            Subscription.none
+
+                        SurveyResultsLoaded data ->
+                            Subscription.none
                     ]
         , view = view
         }
@@ -262,14 +279,14 @@ updateFromBackend msg model =
                     model
 
         LoadAdmin adminData ->
-            Admin adminData
+            AdminPage.init adminData |> Admin
 
         AdminLoginResponse result ->
             case model of
                 AdminLogin adminLogin ->
                     case result of
                         Ok adminLoginData ->
-                            Admin adminLoginData
+                            AdminPage.init adminLoginData |> Admin
 
                         Err () ->
                             AdminLogin { adminLogin | loginFailed = True }

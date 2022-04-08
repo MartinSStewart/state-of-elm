@@ -1,4 +1,4 @@
-module Form exposing (Form, FormMapping, emptyForm, formCodec, noMapping)
+module Form exposing (Form, FormOtherQuestions, QuestionWithOther(..), emptyForm, formCodec, formToOtherAnswers, noMapping)
 
 import AssocSet as Set exposing (Set)
 import Questions
@@ -59,7 +59,46 @@ type alias Form =
     }
 
 
-type alias FormMapping a =
+getOtherAnswer : MultiChoiceWithOther a -> Maybe String
+getOtherAnswer multiChoiceWithOther =
+    if multiChoiceWithOther.otherChecked && String.trim multiChoiceWithOther.otherText /= "" then
+        String.trim multiChoiceWithOther.otherText |> Just
+
+    else
+        Nothing
+
+
+getOtherAnswer_ : String -> Maybe String
+getOtherAnswer_ text =
+    if String.trim text /= "" then
+        String.trim text |> Just
+
+    else
+        Nothing
+
+
+formToOtherAnswers : Form -> FormOtherQuestions (Maybe String)
+formToOtherAnswers form =
+    { otherLanguages = getOtherAnswer form.otherLanguages
+    , newsAndDiscussions = getOtherAnswer form.newsAndDiscussions
+    , elmResources = getOtherAnswer form.elmResources
+    , applicationDomains = getOtherAnswer form.applicationDomains
+    , whatLanguageDoYouUseForBackend = getOtherAnswer form.whatLanguageDoYouUseForBackend
+    , elmVersion = getOtherAnswer form.elmVersion
+    , stylingTools = getOtherAnswer form.stylingTools
+    , buildTools = getOtherAnswer form.buildTools
+    , frameworks = getOtherAnswer form.frameworks
+    , editors = getOtherAnswer form.editors
+    , whichElmReviewRulesDoYouUse = getOtherAnswer form.whichElmReviewRulesDoYouUse
+    , testTools = getOtherAnswer form.testTools
+    , testsWrittenFor = getOtherAnswer form.testsWrittenFor
+    , elmInitialInterest = getOtherAnswer_ form.elmInitialInterest
+    , biggestPainPoint = getOtherAnswer_ form.biggestPainPoint
+    , whatDoYouLikeMost = getOtherAnswer_ form.whatDoYouLikeMost
+    }
+
+
+type alias FormOtherQuestions a =
     { otherLanguages : a
     , newsAndDiscussions : a
     , elmResources : a
@@ -110,7 +149,26 @@ emptyForm =
     }
 
 
-noMapping : a -> FormMapping a
+type QuestionWithOther
+    = OtherLanguagesQuestion
+    | NewsAndDiscussionsQuestion
+    | ElmResourcesQuestion
+    | ApplicationDomainsQuestion
+    | WhatLanguageDoYouUseForBackendQuestion
+    | ElmVersionQuestion
+    | StylingToolsQuestion
+    | BuildToolsQuestion
+    | FrameworksQuestion
+    | EditorsQuestion
+    | WhichElmReviewRulesDoYouUseQuestion
+    | TestToolsQuestion
+    | TestsWrittenForQuestion
+    | ElmInitialInterestQuestion
+    | BiggestPainPointQuestion
+    | WhatDoYouLikeMostQuestion
+
+
+noMapping : a -> FormOtherQuestions a
 noMapping a =
     { otherLanguages = a
     , newsAndDiscussions = a

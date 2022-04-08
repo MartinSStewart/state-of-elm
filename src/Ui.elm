@@ -2,7 +2,9 @@ module Ui exposing
     ( MultiChoiceWithOther
     , Size
     , acceptTosQuestion
+    , black
     , blue0
+    , blue1
     , button
     , disclaimer
     , emailAddressInput
@@ -321,6 +323,11 @@ black =
 blue0 : Element.Color
 blue0 =
     Element.rgb255 18 147 216
+
+
+blue1 : Element.Color
+blue1 =
+    Element.rgb255 38 167 246
 
 
 ifMobile : Size -> a -> a -> a
