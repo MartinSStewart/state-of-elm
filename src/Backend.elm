@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData)
+import AnswerMap exposing (AnswerMap)
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
@@ -9,7 +10,7 @@ import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Task
 import Effect.Time
 import Env
-import Form exposing (Form)
+import Form exposing (Form, FormOtherQuestions)
 import Lamdera
 import Questions
 import Sha256
@@ -29,8 +30,29 @@ app =
 
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
+    let
+        answerMap : FormOtherQuestions AnswerMap
+        answerMap =
+            { otherLanguages = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
+            , newsAndDiscussions = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
+            , elmResources = AnswerMap.fromMultiChoiceWithOther Questions.elmResources
+            , applicationDomains = AnswerMap.fromMultiChoiceWithOther Questions.applicationDomains
+            , whatLanguageDoYouUseForBackend = AnswerMap.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend
+            , elmVersion = AnswerMap.fromMultiChoiceWithOther Questions.elmVersion
+            , stylingTools = AnswerMap.fromMultiChoiceWithOther Questions.stylingTools
+            , buildTools = AnswerMap.fromMultiChoiceWithOther Questions.buildTools
+            , frameworks = AnswerMap.fromMultiChoiceWithOther Questions.frameworks
+            , editors = AnswerMap.fromMultiChoiceWithOther Questions.editors
+            , whichElmReviewRulesDoYouUse = AnswerMap.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse
+            , testTools = AnswerMap.fromMultiChoiceWithOther Questions.testTools
+            , testsWrittenFor = AnswerMap.fromMultiChoiceWithOther Questions.testsWrittenFor
+            , elmInitialInterest = AnswerMap.fromFreeText
+            , biggestPainPoint = AnswerMap.fromFreeText
+            , whatDoYouLikeMost = AnswerMap.fromFreeText
+            }
+    in
     ( { forms = Dict.empty
-      , formMapping = Form.noMapping []
+      , answerMap = answerMap
       , adminLogin = Nothing
       }
     , Command.none
@@ -39,7 +61,7 @@ init =
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms, formMapping = model.formMapping }
+    { forms = Dict.values model.forms, formMapping = model.answerMap }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -224,6 +246,15 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             if isAdmin sessionId model then
                 ( { model | adminLogin = Nothing }
                 , loadFormData sessionId time model |> LogOutResponse |> Effect.Lamdera.sendToFrontend clientId
+                )
+
+            else
+                ( model, Command.none )
+
+        AdminToBackend (AdminPage.SaveAnswerMap answerMap) ->
+            if isAdmin sessionId model then
+                ( { model | answerMap = answerMap }
+                , Command.none
                 )
 
             else

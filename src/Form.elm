@@ -1,4 +1,11 @@
-module Form exposing (Form, FormOtherQuestions, QuestionWithOther(..), emptyForm, formCodec, formToOtherAnswers, noMapping)
+module Form exposing
+    ( Form
+    , FormOtherQuestions
+    , QuestionWithOther(..)
+    , emptyForm
+    , formCodec
+    , formToOtherAnswers
+    )
 
 import AssocSet as Set exposing (Set)
 import Questions
@@ -166,27 +173,6 @@ type QuestionWithOther
     | ElmInitialInterestQuestion
     | BiggestPainPointQuestion
     | WhatDoYouLikeMostQuestion
-
-
-noMapping : a -> FormOtherQuestions a
-noMapping a =
-    { otherLanguages = a
-    , newsAndDiscussions = a
-    , elmResources = a
-    , applicationDomains = a
-    , whatLanguageDoYouUseForBackend = a
-    , elmVersion = a
-    , stylingTools = a
-    , buildTools = a
-    , frameworks = a
-    , editors = a
-    , whichElmReviewRulesDoYouUse = a
-    , testTools = a
-    , testsWrittenFor = a
-    , elmInitialInterest = a
-    , biggestPainPoint = a
-    , whatDoYouLikeMost = a
-    }
 
 
 formCodec : Codec e Form

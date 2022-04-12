@@ -22,6 +22,7 @@ module Questions exposing
     , WhereDoYouUseElm(..)
     , WhichElmReviewRulesDoYouUse(..)
     , age
+    , applicationDomains
     , biggestPainPointTitle
     , buildTools
     , countryLivingInTitle
@@ -29,8 +30,9 @@ module Questions exposing
     , doYouUseElmAtWork
     , doYouUseElmFormat
     , doYouUseElmReview
-    , editor
+    , editors
     , elmResources
+    , elmVersion
     , experienceLevel
     , frameworks
     , howLargeIsTheCompany
@@ -42,9 +44,7 @@ module Questions exposing
     , testTools
     , testsWrittenFor
     , whatDoYouLikeMostTitle
-    , whatElmVersion
-    , whatLanguageDoYouUseForTheBackend
-    , whereDoYouUseElm
+    , whatLanguageDoYouUseForBackend
     , whichElmReviewRulesDoYouUse
     )
 
@@ -597,8 +597,8 @@ countryLivingInTitle =
     "Which country do you live in?"
 
 
-whereDoYouUseElm : Question WhereDoYouUseElm
-whereDoYouUseElm =
+applicationDomains : Question WhereDoYouUseElm
+applicationDomains =
     { title = "In which application domains, if any, have you used Elm?"
     , choices =
         Nonempty
@@ -704,8 +704,8 @@ howLargeIsTheCompany =
     }
 
 
-whatLanguageDoYouUseForTheBackend : Question WhatLanguageDoYouUseForTheBackend
-whatLanguageDoYouUseForTheBackend =
+whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForTheBackend
+whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
     , choices =
         Nonempty JavaScript_
@@ -833,8 +833,8 @@ howLong =
     }
 
 
-whatElmVersion : Question WhatElmVersion
-whatElmVersion =
+elmVersion : Question WhatElmVersion
+elmVersion =
     { title = "What versions of Elm are you using?"
     , choices = Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
     , choiceToString =
@@ -993,8 +993,8 @@ frameworks =
     }
 
 
-editor : Question Editor
-editor =
+editors : Question Editor
+editors =
     { title = "What editor(s) do you use to write your Elm applications?"
     , choices =
         Nonempty Atom

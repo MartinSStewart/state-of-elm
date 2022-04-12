@@ -43,28 +43,10 @@ app =
         , update = update
         , updateFromBackend = updateFromBackend
         , subscriptions =
-            \model ->
+            \_ ->
                 Subscription.batch
                     [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
                     , Effect.Time.every Duration.second GotTime
-                    , case model of
-                        Admin _ ->
-                            AdminPage.subscription |> Subscription.map AdminPageMsg
-
-                        Loading maybeSize maybePosix ->
-                            Subscription.none
-
-                        FormLoaded formLoaded_ ->
-                            Subscription.none
-
-                        FormCompleted posix ->
-                            Subscription.none
-
-                        AdminLogin record ->
-                            Subscription.none
-
-                        SurveyResultsLoaded data ->
-                            Subscription.none
                     ]
         , view = view
         }
@@ -802,7 +784,7 @@ formView windowSize form =
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.whereDoYouUseElm
+                    Questions.applicationDomains
                     (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
@@ -828,7 +810,7 @@ formView windowSize form =
                   else
                     Ui.multiChoiceQuestionWithOther
                         windowSize
-                        Questions.whatLanguageDoYouUseForTheBackend
+                        Questions.whatLanguageDoYouUseForBackend
                         Nothing
                         form.whatLanguageDoYouUseForBackend
                         (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
@@ -840,7 +822,7 @@ formView windowSize form =
                     (\a -> FormChanged { form | howLong = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.whatElmVersion
+                    Questions.elmVersion
                     Nothing
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
@@ -877,7 +859,7 @@ formView windowSize form =
                     (\a -> FormChanged { form | frameworks = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.editor
+                    Questions.editors
                     Nothing
                     form.editors
                     (\a -> FormChanged { form | editors = a })

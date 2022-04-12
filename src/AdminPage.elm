@@ -1,20 +1,20 @@
 module AdminPage exposing
     ( AdminLoginData
-    , FormMapData
     , Model
     , Msg(..)
     , ToBackend(..)
     , adminView
     , init
-    , subscription
     , update
     )
 
+import AnswerMap exposing (AnswerMap, Hotkey, OtherAnswer)
 import AssocSet as Set exposing (Set)
-import Effect.Browser.Events
+import Duration
 import Effect.Command as Command exposing (Command, FrontendOnly)
-import Effect.Lamdera
-import Effect.Subscription exposing (Subscription)
+import Effect.Lamdera as Lamdera
+import Effect.Process as Process
+import Effect.Task as Task
 import Effect.Time
 import Element exposing (Element)
 import Element.Background
@@ -23,8 +23,8 @@ import Element.Font
 import Element.Input
 import Env
 import Form exposing (Form, FormOtherQuestions, QuestionWithOther(..))
-import Json.Decode
-import List.Extra as List
+import Html.Events
+import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
 import Serialize
 import Ui
@@ -33,38 +33,34 @@ import Ui
 type Msg
     = PressedLogOut
     | TypedFormsData String
-    | TypedMapTo (FormOtherQuestions FormMapData)
+    | TypedGroupName Hotkey String
+    | TypedNewGroupName String
+    | TypedOtherAnswerGroups OtherAnswer String
+    | AnswerMapChanged (FormOtherQuestions AnswerMap)
     | PressedQuestionWithOther QuestionWithOther
-    | PressedKey String
+    | PressedToggleShowEncodedState
+    | DebounceSaveAnswerMap Int
 
 
 type ToBackend
     = ReplaceFormsRequest (List Form)
+    | SaveAnswerMap (FormOtherQuestions AnswerMap)
     | LogOutRequest
 
 
 type alias AdminLoginData =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormOtherQuestions FormMapData
+    , formMapping : FormOtherQuestions AnswerMap
     }
 
 
 type alias Model =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormOtherQuestions FormMapData
+    , formMapping : FormOtherQuestions AnswerMap
     , selectedMapping : QuestionWithOther
+    , showEncodedState : Bool
+    , debounceCount : Int
     }
-
-
-subscription : Subscription FrontendOnly Msg
-subscription =
-    Effect.Browser.Events.onKeyPress
-        (Json.Decode.field "key" Json.Decode.string
-            |> Json.Decode.andThen
-                (\key ->
-                    Debug.log "key" key |> PressedKey |> Json.Decode.succeed
-                )
-        )
 
 
 init : AdminLoginData -> Model
@@ -72,6 +68,8 @@ init loginData =
     { forms = loginData.forms
     , formMapping = loginData.formMapping
     , selectedMapping = OtherLanguagesQuestion
+    , showEncodedState = False
+    , debounceCount = 0
     }
 
 
@@ -96,110 +94,217 @@ questionsWithOther =
     ]
 
 
+otherLanguages =
+    { getter = .otherLanguages
+    , setter = \form value -> { form | otherLanguages = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.otherLanguages.choices
+            |> List.map Questions.otherLanguages.choiceToString
+    , text = "OtherLanguages"
+    }
+
+
+newsAndDiscussions =
+    { getter = .newsAndDiscussions
+    , setter = \form value -> { form | newsAndDiscussions = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.newsAndDiscussions.choices
+            |> List.map Questions.newsAndDiscussions.choiceToString
+    , text = "NewsAndDiscussions"
+    }
+
+
+elmResources =
+    { getter = .elmResources
+    , setter = \form value -> { form | elmResources = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.elmResources.choices
+            |> List.map Questions.elmResources.choiceToString
+    , text = "ElmResources"
+    }
+
+
+applicationDomains =
+    { getter = .applicationDomains
+    , setter = \form value -> { form | applicationDomains = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.applicationDomains.choices
+            |> List.map Questions.applicationDomains.choiceToString
+    , text = "ApplicationDomains"
+    }
+
+
+whatLanguageDoYouUseForBackend =
+    { getter = .whatLanguageDoYouUseForBackend
+    , setter = \form value -> { form | whatLanguageDoYouUseForBackend = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.whatLanguageDoYouUseForBackend.choices
+            |> List.map Questions.whatLanguageDoYouUseForBackend.choiceToString
+    , text = "WhatLanguageDoYouUseForBackend"
+    }
+
+
+elmVersion =
+    { getter = .elmVersion
+    , setter = \form value -> { form | elmVersion = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.elmVersion.choices
+            |> List.map Questions.elmVersion.choiceToString
+    , text = "ElmVersion"
+    }
+
+
+stylingTools =
+    { getter = .stylingTools
+    , setter = \form value -> { form | stylingTools = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.stylingTools.choices
+            |> List.map Questions.stylingTools.choiceToString
+    , text = "StylingTools"
+    }
+
+
+buildTools =
+    { getter = .buildTools
+    , setter = \form value -> { form | buildTools = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.buildTools.choices
+            |> List.map Questions.buildTools.choiceToString
+    , text = "BuildTools"
+    }
+
+
+frameworks =
+    { getter = .frameworks
+    , setter = \form value -> { form | frameworks = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.frameworks.choices
+            |> List.map Questions.frameworks.choiceToString
+    , text = "Frameworks"
+    }
+
+
+editors =
+    { getter = .editors
+    , setter = \form value -> { form | editors = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.editors.choices
+            |> List.map Questions.editors.choiceToString
+    , text = "Editors"
+    }
+
+
+whichElmReviewRulesDoYouUse =
+    { getter = .whichElmReviewRulesDoYouUse
+    , setter = \form value -> { form | whichElmReviewRulesDoYouUse = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.whichElmReviewRulesDoYouUse.choices
+            |> List.map Questions.whichElmReviewRulesDoYouUse.choiceToString
+    , text = "WhichElmReviewRulesDoYouUse"
+    }
+
+
+testTools =
+    { getter = .testTools
+    , setter = \form value -> { form | testTools = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.testTools.choices
+            |> List.map Questions.testTools.choiceToString
+    , text = "TestTools"
+    }
+
+
+testsWrittenFor =
+    { getter = .testsWrittenFor
+    , setter = \form value -> { form | testsWrittenFor = value }
+    , existingChoices =
+        List.Nonempty.toList Questions.testsWrittenFor.choices
+            |> List.map Questions.testsWrittenFor.choiceToString
+    , text = "TestsWrittenFor"
+    }
+
+
+elmInitialInterest =
+    { getter = .elmInitialInterest
+    , setter = \form value -> { form | elmInitialInterest = value }
+    , existingChoices = []
+    , text = "ElmInitialInterest"
+    }
+
+
+biggestPainPoint =
+    { getter = .biggestPainPoint
+    , setter = \form value -> { form | biggestPainPoint = value }
+    , existingChoices = []
+    , text = "BiggestPainPoint"
+    }
+
+
+whatDoYouLikeMost =
+    { getter = .whatDoYouLikeMost
+    , setter = \form value -> { form | whatDoYouLikeMost = value }
+    , existingChoices = []
+    , text = "WhatDoYouLikeMost"
+    }
+
+
 questionWithOtherData :
     QuestionWithOther
     ->
         { getter : FormOtherQuestions a -> a
-        , setter : a -> FormOtherQuestions a -> FormOtherQuestions a
+        , setter : FormOtherQuestions a -> a -> FormOtherQuestions a
+        , existingChoices : List String
         , text : String
         }
 questionWithOtherData a =
     case a of
         OtherLanguagesQuestion ->
-            { getter = .otherLanguages
-            , setter = \value form -> { form | otherLanguages = value }
-            , text = "OtherLanguages"
-            }
+            otherLanguages
 
         NewsAndDiscussionsQuestion ->
-            { getter = .newsAndDiscussions
-            , setter = \value form -> { form | newsAndDiscussions = value }
-            , text = "NewsAndDiscussions"
-            }
+            newsAndDiscussions
 
         ElmResourcesQuestion ->
-            { getter = .elmResources
-            , setter = \value form -> { form | elmResources = value }
-            , text = "ElmResources"
-            }
+            elmResources
 
         ApplicationDomainsQuestion ->
-            { getter = .applicationDomains
-            , setter = \value form -> { form | applicationDomains = value }
-            , text = "ApplicationDomains"
-            }
+            applicationDomains
 
         WhatLanguageDoYouUseForBackendQuestion ->
-            { getter = .whatLanguageDoYouUseForBackend
-            , setter = \value form -> { form | whatLanguageDoYouUseForBackend = value }
-            , text = "WhatLanguageDoYouUseForBackend"
-            }
+            whatLanguageDoYouUseForBackend
 
         ElmVersionQuestion ->
-            { getter = .elmVersion
-            , setter = \value form -> { form | elmVersion = value }
-            , text = "ElmVersion"
-            }
+            elmVersion
 
         StylingToolsQuestion ->
-            { getter = .stylingTools
-            , setter = \value form -> { form | stylingTools = value }
-            , text = "StylingTools"
-            }
+            stylingTools
 
         BuildToolsQuestion ->
-            { getter = .buildTools
-            , setter = \value form -> { form | buildTools = value }
-            , text = "BuildTools"
-            }
+            buildTools
 
         FrameworksQuestion ->
-            { getter = .frameworks
-            , setter = \value form -> { form | frameworks = value }
-            , text = "Frameworks"
-            }
+            frameworks
 
         EditorsQuestion ->
-            { getter = .editors
-            , setter = \value form -> { form | editors = value }
-            , text = "Editors"
-            }
+            editors
 
         WhichElmReviewRulesDoYouUseQuestion ->
-            { getter = .whichElmReviewRulesDoYouUse
-            , setter = \value form -> { form | whichElmReviewRulesDoYouUse = value }
-            , text = "WhichElmReviewRulesDoYouUse"
-            }
+            whichElmReviewRulesDoYouUse
 
         TestToolsQuestion ->
-            { getter = .testTools
-            , setter = \value form -> { form | testTools = value }
-            , text = "TestTools"
-            }
+            testTools
 
         TestsWrittenForQuestion ->
-            { getter = .testsWrittenFor
-            , setter = \value form -> { form | testsWrittenFor = value }
-            , text = "TestsWrittenFor"
-            }
+            testsWrittenFor
 
         ElmInitialInterestQuestion ->
-            { getter = .elmInitialInterest
-            , setter = \value form -> { form | elmInitialInterest = value }
-            , text = "ElmInitialInterest"
-            }
+            elmInitialInterest
 
         BiggestPainPointQuestion ->
-            { getter = .biggestPainPoint
-            , setter = \value form -> { form | biggestPainPoint = value }
-            , text = "BiggestPainPoint"
-            }
+            biggestPainPoint
 
         WhatDoYouLikeMostQuestion ->
-            { getter = .whatDoYouLikeMost
-            , setter = \value form -> { form | whatDoYouLikeMost = value }
-            , text = "WhatDoYouLikeMost"
-            }
+            whatDoYouLikeMost
 
 
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -218,67 +323,90 @@ update msg model =
                                     (\form -> { form = form, submitTime = Just (Effect.Time.millisToPosix 0) })
                                     forms
                           }
-                        , ReplaceFormsRequest forms |> Effect.Lamdera.sendToBackend
+                        , ReplaceFormsRequest forms |> Lamdera.sendToBackend
                         )
 
                     Err _ ->
                         ( model, Command.none )
 
         PressedLogOut ->
-            ( model, Effect.Lamdera.sendToBackend LogOutRequest )
+            ( model, Lamdera.sendToBackend LogOutRequest )
 
-        TypedMapTo newFormMapping ->
-            ( { model | formMapping = newFormMapping }, Command.none )
+        AnswerMapChanged newFormMapping ->
+            { model | formMapping = newFormMapping } |> debounce
 
         PressedQuestionWithOther questionWithOther ->
             ( { model | selectedMapping = questionWithOther }, Command.none )
 
-        PressedKey key ->
+        PressedToggleShowEncodedState ->
+            ( { model | showEncodedState = not model.showEncodedState }, Command.none )
+
+        TypedGroupName hotkey groupName ->
             let
-                { getter, setter, text } =
+                mappingData =
                     questionWithOtherData model.selectedMapping
 
-                mapping : FormMapData
+                mapping : AnswerMap
                 mapping =
-                    getter model.formMapping
+                    mappingData.getter model.formMapping
             in
-            case ( hotkeyToIndex key, currentOtherAnswer model ) of
-                ( Just index, Just otherAnswer ) ->
-                    ( { model
-                        | formMapping =
-                            List.updateAt index
-                                (\{ groupName, otherAnswers } ->
-                                    { groupName = groupName, otherAnswers = toggleSet otherAnswer otherAnswers }
-                                )
-                                mapping
-                                |> (\a -> setter a model.formMapping)
-                      }
-                    , Command.none
-                    )
+            { model
+                | formMapping =
+                    AnswerMap.renameGroup hotkey groupName mapping
+                        |> mappingData.setter model.formMapping
+            }
+                |> debounce
 
-                _ ->
-                    ( model, Command.none )
+        TypedNewGroupName groupName ->
+            let
+                mappingData =
+                    questionWithOtherData model.selectedMapping
+
+                mapping : AnswerMap
+                mapping =
+                    mappingData.getter model.formMapping
+            in
+            { model
+                | formMapping =
+                    AnswerMap.addGroup groupName mapping
+                        |> mappingData.setter model.formMapping
+            }
+                |> debounce
+
+        TypedOtherAnswerGroups otherAnswer text ->
+            let
+                mappingData =
+                    questionWithOtherData model.selectedMapping
+
+                mapping : AnswerMap
+                mapping =
+                    mappingData.getter model.formMapping
+            in
+            { model
+                | formMapping =
+                    AnswerMap.updateOtherAnswer
+                        (String.toList text |> List.map AnswerMap.hotkey)
+                        otherAnswer
+                        mapping
+                        |> mappingData.setter model.formMapping
+            }
+                |> debounce
+
+        DebounceSaveAnswerMap debounceCount ->
+            ( model
+            , if debounceCount == model.debounceCount then
+                Lamdera.sendToBackend (SaveAnswerMap model.formMapping)
+
+              else
+                Command.none
+            )
 
 
-currentOtherAnswer : Model -> Maybe String
-currentOtherAnswer model =
-    let
-        { getter, setter, text } =
-            questionWithOtherData model.selectedMapping
-    in
-    submittedForms model
-        |> List.map Form.formToOtherAnswers
-        |> List.filterMap getter
-        |> List.head
-
-
-toggleSet : a -> Set a -> Set a
-toggleSet a set =
-    if Set.member a set then
-        Set.remove a set
-
-    else
-        Set.insert a set
+debounce : Model -> ( Model, Command FrontendOnly ToBackend Msg )
+debounce model =
+    ( { model | debounceCount = model.debounceCount + 1 }
+    , Process.sleep Duration.second |> Task.perform (\() -> DebounceSaveAnswerMap (model.debounceCount + 1))
+    )
 
 
 button : Bool -> msg -> String -> Element msg
@@ -301,30 +429,48 @@ button isSelected onPress text =
         }
 
 
+deleteButton : msg -> Element msg
+deleteButton onPress =
+    Element.Input.button
+        [ Element.Font.color Ui.black
+        , Element.Font.bold
+        , Element.paddingXY 6 4
+        , Element.Border.width 1
+        ]
+        { onPress = Just onPress
+        , label = Element.text "X"
+        }
+
+
 adminView : Model -> Element Msg
 adminView model =
     Element.column
         [ Element.spacing 32, Element.padding 16 ]
         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
         , button False PressedLogOut "Log out"
-        , Element.Input.text
-            []
-            { onChange = TypedFormsData
-            , text =
-                List.filterMap
-                    (\{ form, submitTime } ->
-                        case submitTime of
-                            Just _ ->
-                                Just form
+        , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
+        , if model.showEncodedState then
+            Element.Input.text
+                []
+                { onChange = TypedFormsData
+                , text =
+                    List.filterMap
+                        (\{ form, submitTime } ->
+                            case submitTime of
+                                Just _ ->
+                                    Just form
 
-                            Nothing ->
-                                Nothing
-                    )
-                    model.forms
-                    |> Serialize.encodeToString (Serialize.list Form.formCodec)
-            , placeholder = Nothing
-            , label = Element.Input.labelHidden ""
-            }
+                                Nothing ->
+                                    Nothing
+                        )
+                        model.forms
+                        |> Serialize.encodeToString (Serialize.list Form.formCodec)
+                , placeholder = Nothing
+                , label = Element.Input.labelHidden ""
+                }
+
+          else
+            Element.none
         , List.map
             (\question ->
                 button
@@ -348,72 +494,123 @@ answerMappingView model =
         mappingData =
             questionWithOtherData model.selectedMapping
 
-        mapping : FormMapData
+        mapping : AnswerMap
         mapping =
             mappingData.getter model.formMapping
     in
-    Element.column
-        [ Element.spacing 24 ]
-        [ Element.text mappingData.text
-        , Element.row
-            [ Element.spacing 8 ]
-            (List.indexedMap
-                (\index { groupName } ->
-                    Element.row []
-                        [ Element.el [ Element.Font.italic ] (Element.text ("(" ++ indexToHotkey index ++ ") "))
-                        , Element.Input.text
-                            [ Element.width (Element.px 100) ]
-                            { text = groupName
-                            , onChange =
-                                \a ->
-                                    mappingData.setter
-                                        (List.updateAt index (\data -> { data | groupName = a }) mapping)
-                                        model.formMapping
-                                        |> TypedMapTo
-                            , placeholder = Nothing
-                            , label = Element.Input.labelHidden "mapTo"
-                            }
-                        ]
+    Element.row
+        [ Element.spacing 24, Element.width Element.fill ]
+        [ Element.column
+            [ Element.alignTop, Element.spacing 16 ]
+            [ Element.text mappingData.text
+            , Element.column
+                [ Element.spacing 8 ]
+                (List.map
+                    (\{ groupName, hotkey, editable } ->
+                        Element.row [ Element.spacing 8 ]
+                            [ Element.el
+                                [ Element.Font.italic ]
+                                (Element.text ("(" ++ AnswerMap.hotkeyToString hotkey ++ ")"))
+                            , if editable then
+                                Element.Input.text
+                                    [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                    { text = groupName
+                                    , onChange = TypedGroupName hotkey
+                                    , placeholder = Nothing
+                                    , label = Element.Input.labelHidden "mapTo"
+                                    }
+
+                              else
+                                Element.text groupName
+                            , if editable then
+                                deleteButton
+                                    (AnswerMap.removeGroup hotkey mapping
+                                        |> mappingData.setter model.formMapping
+                                        |> AnswerMapChanged
+                                    )
+
+                              else
+                                Element.none
+                            ]
+                    )
+                    (AnswerMap.allGroups mappingData.existingChoices mapping)
+                    ++ [ Element.row []
+                            [ Element.el [ Element.Font.italic ] (Element.text "( ) ")
+                            , Element.Input.text
+                                [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                { text = ""
+                                , onChange = TypedNewGroupName
+                                , placeholder = Nothing
+                                , label = Element.Input.labelHidden "mapTo"
+                                }
+                            ]
+                       ]
                 )
-                mapping
-                ++ [ Element.row []
-                        [ Element.el [ Element.Font.italic ] (Element.text "(new) ")
-                        , Element.Input.text
-                            [ Element.width (Element.px 100) ]
-                            { text = ""
-                            , onChange =
-                                \a ->
-                                    mappingData.setter
-                                        (mapping ++ [ { groupName = a, otherAnswers = Set.empty } ])
-                                        model.formMapping
-                                        |> TypedMapTo
-                            , placeholder = Nothing
-                            , label = Element.Input.labelHidden "mapTo"
-                            }
-                        ]
-                   ]
-            )
-        , submittedForms model
+            ]
+        , submittedForms model.forms
             |> List.map Form.formToOtherAnswers
             |> List.filterMap mappingData.getter
-            |> List.indexedMap
-                (\index other ->
-                    Element.paragraph
-                        [ if index == 0 then
-                            Element.Font.bold
-
-                          else
-                            Element.Font.regular
-                        , Element.spacing 2
+            |> List.sortBy (String.trim >> String.toLower)
+            |> List.map
+                (\other ->
+                    let
+                        otherAnswer : OtherAnswer
+                        otherAnswer =
+                            AnswerMap.otherAnswer other
+                    in
+                    Element.row
+                        [ Element.spacing 4 ]
+                        [ Element.Input.text
+                            [ Element.width (Element.px 80), Element.paddingXY 4 6 ]
+                            { text =
+                                AnswerMap.otherAnswerMapsTo otherAnswer mapping
+                                    |> List.map AnswerMap.hotkeyToString
+                                    |> String.concat
+                            , onChange = TypedOtherAnswerGroups otherAnswer
+                            , placeholder = Nothing
+                            , label = Element.Input.labelHidden "mapTo"
+                            }
+                        , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]
                         ]
-                        [ Element.text other ]
                 )
-            |> Element.column [ Element.spacing 16 ]
+            |> Element.column
+                [ Element.spacing 8
+                , Element.width Element.fill
+                , Element.scrollbars
+                , Element.height (Element.px 600)
+                , Element.alignTop
+                , Element.Border.width 1
+                , Element.padding 16
+                ]
         ]
 
 
-submittedForms : Model -> List Form
-submittedForms model =
+textInput :
+    List (Element.Attribute msg)
+    ->
+        { text : String
+        , onChange : String -> msg
+        , onFocus : msg
+        , onBlur : msg
+        , placeholder : Maybe (Element.Input.Placeholder msg)
+        , label : Element.Input.Label msg
+        }
+    -> Element msg
+textInput attributes { text, onChange, onFocus, onBlur, placeholder, label } =
+    Element.Input.text
+        (Element.htmlAttribute (Html.Events.onFocus onFocus)
+            :: Element.htmlAttribute (Html.Events.onBlur onBlur)
+            :: attributes
+        )
+        { text = text
+        , onChange = onChange
+        , placeholder = placeholder
+        , label = label
+        }
+
+
+submittedForms : List { form : Form, submitTime : Maybe Effect.Time.Posix } -> List Form
+submittedForms forms =
     List.filterMap
         (\{ form, submitTime } ->
             case submitTime of
@@ -423,7 +620,7 @@ submittedForms model =
                 Nothing ->
                     Nothing
         )
-        model.forms
+        forms
 
 
 adminFormView : { form : Form, submitTime : Maybe Effect.Time.Posix } -> Element msg
@@ -443,17 +640,17 @@ adminFormView { form, submitTime } =
         , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussions form.newsAndDiscussions)
         , infoRow "elmResources" (multichoiceToString Questions.elmResources form.elmResources)
         , infoRow "countryLivingIn" form.countryLivingIn
-        , infoRow "applicationDomains" (multichoiceToString Questions.whereDoYouUseElm form.applicationDomains)
+        , infoRow "applicationDomains" (multichoiceToString Questions.applicationDomains form.applicationDomains)
         , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWork form.doYouUseElmAtWork)
         , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompany form.howLargeIsTheCompany)
-        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForTheBackend form.whatLanguageDoYouUseForBackend)
+        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForBackend form.whatLanguageDoYouUseForBackend)
         , infoRow "howLong" (maybeToString Questions.howLong form.howLong)
-        , infoRow "elmVersion" (multichoiceToString Questions.whatElmVersion form.elmVersion)
+        , infoRow "elmVersion" (multichoiceToString Questions.elmVersion form.elmVersion)
         , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormat form.doYouUseElmFormat)
         , infoRow "stylingTools" (multichoiceToString Questions.stylingTools form.stylingTools)
         , infoRow "buildTools" (multichoiceToString Questions.buildTools form.buildTools)
         , infoRow "frameworks" (multichoiceToString Questions.frameworks form.frameworks)
-        , infoRow "editors" (multichoiceToString Questions.editor form.editors)
+        , infoRow "editors" (multichoiceToString Questions.editors form.editors)
         , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReview form.doYouUseElmReview)
         , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUse form.whichElmReviewRulesDoYouUse)
         , infoRow "testTools" (multichoiceToString Questions.testTools form.testTools)

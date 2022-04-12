@@ -1,6 +1,7 @@
 module Types exposing (..)
 
-import AdminPage exposing (AdminLoginData, FormMapData)
+import AdminPage exposing (AdminLoginData)
+import AnswerMap exposing (AnswerMap)
 import AssocList exposing (Dict)
 import Browser exposing (UrlRequest)
 import Effect.Lamdera exposing (ClientId, SessionId)
@@ -47,7 +48,7 @@ type alias FormLoaded_ =
 
 type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormOtherQuestions FormMapData
+    , answerMap : FormOtherQuestions AnswerMap
     , adminLogin : Maybe SessionId
     }
 
