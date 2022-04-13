@@ -12,6 +12,7 @@ module Ui exposing
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
+    , multipleChoiceIndicator
     , searchableTextInput
     , singleChoiceQuestion
     , textInput
@@ -365,6 +366,11 @@ container windowSize content =
         )
 
 
+multipleChoiceIndicator : Element msg
+multipleChoiceIndicator =
+    Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple choice" ]
+
+
 multiChoiceQuestionWithOther :
     Size
     -> Question a
@@ -377,7 +383,7 @@ multiChoiceQuestionWithOther windowSize { title, choices, choiceToString } maybe
         [ titleAndSubtitle title maybeSubtitle
         , Element.column
             [ Element.width Element.fill, Element.spacing 8 ]
-            [ Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple choice" ]
+            [ multipleChoiceIndicator
             , List.Nonempty.toList choices
                 |> List.map
                     (\choice ->

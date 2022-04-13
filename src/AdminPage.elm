@@ -558,8 +558,9 @@ button isSelected onPress text =
             )
         , Element.Font.color Ui.black
         , Element.Font.bold
-        , Element.padding 16
+        , Element.padding 8
         , Element.Border.width 1
+        , Element.Font.size 16
         ]
         { onPress = Just onPress
         , label = Element.text text
@@ -613,7 +614,7 @@ adminView model =
                 button
                     (model.selectedMapping == question)
                     (PressedQuestionWithOther question)
-                    (questionName model.selectedMapping)
+                    (questionName question)
             )
             questionsWithOther
             |> Element.wrappedRow []
