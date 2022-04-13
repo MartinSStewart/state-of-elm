@@ -5,19 +5,23 @@ module Form exposing
     , emptyForm
     , formCodec
     , formToOtherAnswers
+    , getOtherAnswer
     )
 
+import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Questions
     exposing
         ( Age(..)
+        , ApplicationDomains(..)
         , BuildTools(..)
         , DoYouUseElm(..)
         , DoYouUseElmAtWork(..)
         , DoYouUseElmFormat(..)
         , DoYouUseElmReview(..)
-        , Editor(..)
+        , Editors(..)
         , ElmResources(..)
+        , ElmVersion(..)
         , ExperienceLevel(..)
         , Frameworks(..)
         , HowLargeIsTheCompany(..)
@@ -27,9 +31,7 @@ import Questions
         , StylingTools(..)
         , TestTools(..)
         , TestsWrittenFor(..)
-        , WhatElmVersion(..)
-        , WhatLanguageDoYouUseForTheBackend(..)
-        , WhereDoYouUseElm(..)
+        , WhatLanguageDoYouUseForBackend(..)
         , WhichElmReviewRulesDoYouUse(..)
         )
 import Serialize exposing (Codec)
@@ -44,17 +46,17 @@ type alias Form =
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
     , elmResources : MultiChoiceWithOther ElmResources
     , countryLivingIn : String
-    , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
+    , applicationDomains : MultiChoiceWithOther ApplicationDomains
     , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
     , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForTheBackend
+    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForBackend
     , howLong : Maybe HowLong
-    , elmVersion : MultiChoiceWithOther WhatElmVersion
+    , elmVersion : MultiChoiceWithOther ElmVersion
     , doYouUseElmFormat : Maybe DoYouUseElmFormat
     , stylingTools : MultiChoiceWithOther StylingTools
     , buildTools : MultiChoiceWithOther BuildTools
     , frameworks : MultiChoiceWithOther Frameworks
-    , editors : MultiChoiceWithOther Editor
+    , editors : MultiChoiceWithOther Editors
     , doYouUseElmReview : Maybe DoYouUseElmReview
     , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
     , testTools : MultiChoiceWithOther TestTools
@@ -84,7 +86,6 @@ getOtherAnswer_ text =
         Nothing
 
 
-formToOtherAnswers : Form -> FormOtherQuestions (Maybe String)
 formToOtherAnswers form =
     { otherLanguages = getOtherAnswer form.otherLanguages
     , newsAndDiscussions = getOtherAnswer form.newsAndDiscussions
@@ -105,23 +106,23 @@ formToOtherAnswers form =
     }
 
 
-type alias FormOtherQuestions a =
-    { otherLanguages : a
-    , newsAndDiscussions : a
-    , elmResources : a
-    , applicationDomains : a
-    , whatLanguageDoYouUseForBackend : a
-    , elmVersion : a
-    , stylingTools : a
-    , buildTools : a
-    , frameworks : a
-    , editors : a
-    , whichElmReviewRulesDoYouUse : a
-    , testTools : a
-    , testsWrittenFor : a
-    , elmInitialInterest : a
-    , biggestPainPoint : a
-    , whatDoYouLikeMost : a
+type alias FormOtherQuestions =
+    { otherLanguages : AnswerMap OtherLanguages
+    , newsAndDiscussions : AnswerMap NewsAndDiscussions
+    , elmResources : AnswerMap ElmResources
+    , applicationDomains : AnswerMap ApplicationDomains
+    , whatLanguageDoYouUseForBackend : AnswerMap WhatLanguageDoYouUseForBackend
+    , elmVersion : AnswerMap ElmVersion
+    , stylingTools : AnswerMap StylingTools
+    , buildTools : AnswerMap BuildTools
+    , frameworks : AnswerMap Frameworks
+    , editors : AnswerMap Editors
+    , whichElmReviewRulesDoYouUse : AnswerMap WhichElmReviewRulesDoYouUse
+    , testTools : AnswerMap TestTools
+    , testsWrittenFor : AnswerMap TestsWrittenFor
+    , elmInitialInterest : AnswerMap ()
+    , biggestPainPoint : AnswerMap ()
+    , whatDoYouLikeMost : AnswerMap ()
     }
 
 
@@ -325,7 +326,7 @@ doYouUseElmReviewCodec =
         |> Serialize.finishCustomType
 
 
-editorCodec : Codec e Editor
+editorCodec : Codec e Editors
 editorCodec =
     Serialize.customType
         (\a b c d e f value ->
@@ -493,7 +494,7 @@ doYouUseElmFormatCodec =
         |> Serialize.finishCustomType
 
 
-whatElmVersionCodec : Codec e WhatElmVersion
+whatElmVersionCodec : Codec e ElmVersion
 whatElmVersionCodec =
     Serialize.customType
         (\a b c d value ->
@@ -569,7 +570,7 @@ howLongCodec =
         |> Serialize.finishCustomType
 
 
-whatLanguageDoYouUseForTheBackendCodec : Codec e WhatLanguageDoYouUseForTheBackend
+whatLanguageDoYouUseForTheBackendCodec : Codec e WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForTheBackendCodec =
     Serialize.customType
         (\a b c d e f g h i j k l m n o p value ->
@@ -693,7 +694,7 @@ doYouUseElmAtWorkCodec =
         |> Serialize.finishCustomType
 
 
-whereDoYouUseElmCodec : Codec e WhereDoYouUseElm
+whereDoYouUseElmCodec : Codec e ApplicationDomains
 whereDoYouUseElmCodec =
     Serialize.customType
         (\a b c d e f g h i j value ->

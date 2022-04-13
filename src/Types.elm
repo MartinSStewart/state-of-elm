@@ -48,7 +48,7 @@ type alias FormLoaded_ =
 
 type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , answerMap : FormOtherQuestions AnswerMap
+    , answerMap : FormOtherQuestions
     , adminLogin : Maybe SessionId
     }
 

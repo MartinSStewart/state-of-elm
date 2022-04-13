@@ -10,6 +10,7 @@ module AnswerMap exposing
     , hotkeyToIndex
     , hotkeyToString
     , indexToHotkey
+    , normalizeOtherAnswer
     , otherAnswer
     , otherAnswerMapsTo
     , removeGroup
@@ -24,7 +25,7 @@ import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
 
 
-type AnswerMap
+type AnswerMap a
     = AnswerMap
         { otherMapping : List { groupName : String, otherAnswers : Set OtherAnswer }
         , existingMapping : List (Set OtherAnswer)
@@ -37,10 +38,15 @@ type OtherAnswer
 
 otherAnswer : String -> OtherAnswer
 otherAnswer =
-    String.trim >> String.toLower >> OtherAnswer
+    normalizeOtherAnswer >> OtherAnswer
 
 
-fromMultiChoiceWithOther : Question a -> AnswerMap
+normalizeOtherAnswer : String -> String
+normalizeOtherAnswer =
+    String.trim >> String.toLower
+
+
+fromMultiChoiceWithOther : Question a -> AnswerMap a
 fromMultiChoiceWithOther question =
     { otherMapping = []
     , existingMapping =
@@ -51,7 +57,7 @@ fromMultiChoiceWithOther question =
         |> AnswerMap
 
 
-fromFreeText : AnswerMap
+fromFreeText : AnswerMap a
 fromFreeText =
     { otherMapping = []
     , existingMapping = []
@@ -59,20 +65,20 @@ fromFreeText =
         |> AnswerMap
 
 
-allGroups : List String -> AnswerMap -> List { hotkey : Hotkey, editable : Bool, groupName : String }
-allGroups existingChoices (AnswerMap formMapData) =
+allGroups : Question a -> AnswerMap a -> List { hotkey : Hotkey, editable : Bool, groupName : String }
+allGroups question (AnswerMap formMapData) =
     let
         existingChoicesCount =
-            List.length existingChoices
+            List.Nonempty.length question.choices
     in
     List.indexedMap
         (\index choice ->
             { hotkey = indexToHotkey index
-            , groupName = choice
+            , groupName = question.choiceToString choice
             , editable = False
             }
         )
-        existingChoices
+        (List.Nonempty.toList question.choices)
         ++ List.indexedMap
             (\index other ->
                 { hotkey = indexToHotkey (index + existingChoicesCount)
@@ -83,8 +89,8 @@ allGroups existingChoices (AnswerMap formMapData) =
             formMapData.otherMapping
 
 
-otherAnswerMapsTo : OtherAnswer -> AnswerMap -> List Hotkey
-otherAnswerMapsTo otherAnswer_ (AnswerMap formMapData) =
+otherAnswerMapsTo : Question a -> OtherAnswer -> AnswerMap a -> List { hotkey : Hotkey, groupName : String }
+otherAnswerMapsTo question otherAnswer_ (AnswerMap formMapData) =
     let
         existingCount =
             List.length formMapData.existingMapping
@@ -92,16 +98,21 @@ otherAnswerMapsTo otherAnswer_ (AnswerMap formMapData) =
     List.filterMap
         (\( index, set ) ->
             if Set.member otherAnswer_ set then
-                indexToHotkey index |> Just
+                { hotkey = indexToHotkey index
+                , groupName =
+                    List.Nonempty.get index question.choices
+                        |> question.choiceToString
+                }
+                    |> Just
 
             else
                 Nothing
         )
         (List.indexedMap Tuple.pair formMapData.existingMapping)
         ++ List.filterMap
-            (\( index, { otherAnswers } ) ->
+            (\( index, { groupName, otherAnswers } ) ->
                 if Set.member otherAnswer_ otherAnswers then
-                    indexToHotkey (index + existingCount) |> Just
+                    { hotkey = indexToHotkey (index + existingCount), groupName = groupName } |> Just
 
                 else
                     Nothing
@@ -109,7 +120,7 @@ otherAnswerMapsTo otherAnswer_ (AnswerMap formMapData) =
             (List.indexedMap Tuple.pair formMapData.otherMapping)
 
 
-updateOtherAnswer : List Hotkey -> OtherAnswer -> AnswerMap -> AnswerMap
+updateOtherAnswer : List Hotkey -> OtherAnswer -> AnswerMap a -> AnswerMap a
 updateOtherAnswer hotkeys otherAnswer_ (AnswerMap formMapData) =
     let
         indices : Set Int
@@ -172,7 +183,7 @@ hotkeyChars =
     [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ]
 
 
-renameGroup : Hotkey -> String -> AnswerMap -> AnswerMap
+renameGroup : Hotkey -> String -> AnswerMap a -> AnswerMap a
 renameGroup hotkey_ newGroupName (AnswerMap formMapData) =
     (case hotkeyToIndex hotkey_ of
         Just index ->
@@ -198,7 +209,7 @@ renameGroup hotkey_ newGroupName (AnswerMap formMapData) =
         |> AnswerMap
 
 
-removeGroup : Hotkey -> AnswerMap -> AnswerMap
+removeGroup : Hotkey -> AnswerMap a -> AnswerMap a
 removeGroup hotkey_ (AnswerMap formMapData) =
     (case hotkeyToIndex hotkey_ of
         Just index ->
@@ -220,7 +231,7 @@ removeGroup hotkey_ (AnswerMap formMapData) =
         |> AnswerMap
 
 
-toggleMapping : Hotkey -> OtherAnswer -> AnswerMap -> AnswerMap
+toggleMapping : Hotkey -> OtherAnswer -> AnswerMap a -> AnswerMap a
 toggleMapping hotkey_ otherAnswer_ (AnswerMap formMapData) =
     (case hotkeyToIndex hotkey_ of
         Just index ->
@@ -248,7 +259,7 @@ toggleMapping hotkey_ otherAnswer_ (AnswerMap formMapData) =
         |> AnswerMap
 
 
-addGroup : String -> AnswerMap -> AnswerMap
+addGroup : String -> AnswerMap a -> AnswerMap a
 addGroup groupName (AnswerMap formMapData) =
     { otherMapping = formMapData.otherMapping ++ [ { groupName = groupName, otherAnswers = Set.empty } ]
     , existingMapping = formMapData.existingMapping

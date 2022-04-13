@@ -31,10 +31,10 @@ app =
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
     let
-        answerMap : FormOtherQuestions AnswerMap
+        answerMap : FormOtherQuestions
         answerMap =
             { otherLanguages = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
-            , newsAndDiscussions = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
+            , newsAndDiscussions = AnswerMap.fromMultiChoiceWithOther Questions.newsAndDiscussions
             , elmResources = AnswerMap.fromMultiChoiceWithOther Questions.elmResources
             , applicationDomains = AnswerMap.fromMultiChoiceWithOther Questions.applicationDomains
             , whatLanguageDoYouUseForBackend = AnswerMap.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend
@@ -125,19 +125,62 @@ loadFormData sessionId time model =
             , functionalProgrammingExperience =
                 List.filterMap .functionalProgrammingExperience forms
                     |> DataEntry.fromForms Questions.experienceLevel.choices
+            , otherLanguages =
+                List.map .otherLanguages forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.otherLanguages model.answerMap.otherLanguages
+            , newsAndDiscussions =
+                List.map .newsAndDiscussions forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.newsAndDiscussions model.answerMap.newsAndDiscussions
+            , elmResources =
+                List.map .elmResources forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.answerMap.elmResources
+            , countryLivingIn = ""
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork forms
                     |> DataEntry.fromForms Questions.doYouUseElmAtWork.choices
+            , applicationDomains =
+                List.map .applicationDomains forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.answerMap.applicationDomains
             , howLargeIsTheCompany =
                 List.filterMap .howLargeIsTheCompany forms
                     |> DataEntry.fromForms Questions.howLargeIsTheCompany.choices
+            , whatLanguageDoYouUseForBackend =
+                List.map .whatLanguageDoYouUseForBackend forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.answerMap.whatLanguageDoYouUseForBackend
             , howLong = List.filterMap .howLong forms |> DataEntry.fromForms Questions.howLong.choices
+            , elmVersion =
+                List.map .elmVersion forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmVersion model.answerMap.elmVersion
             , doYouUseElmFormat =
                 List.filterMap .doYouUseElmFormat forms
                     |> DataEntry.fromForms Questions.doYouUseElmFormat.choices
+            , stylingTools =
+                List.map .stylingTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.stylingTools model.answerMap.stylingTools
+            , buildTools =
+                List.map .buildTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.buildTools model.answerMap.buildTools
+            , frameworks =
+                List.map .frameworks forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.frameworks model.answerMap.frameworks
+            , editors =
+                List.map .editors forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.editors model.answerMap.editors
             , doYouUseElmReview =
                 List.filterMap .doYouUseElmReview forms
                     |> DataEntry.fromForms Questions.doYouUseElmReview.choices
+            , whichElmReviewRulesDoYouUse =
+                List.map .whichElmReviewRulesDoYouUse forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.answerMap.whichElmReviewRulesDoYouUse
+            , testTools =
+                List.map .testTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testTools model.answerMap.testTools
+            , testsWrittenFor =
+                List.map .testsWrittenFor forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.answerMap.testsWrittenFor
+            , elmInitialInterest = ""
+            , biggestPainPoint = ""
+            , whatDoYouLikeMost = ""
             }
                 |> SurveyResults
 

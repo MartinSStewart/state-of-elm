@@ -36,7 +36,7 @@ type Msg
     | TypedGroupName Hotkey String
     | TypedNewGroupName String
     | TypedOtherAnswerGroups OtherAnswer String
-    | AnswerMapChanged (FormOtherQuestions AnswerMap)
+    | RemoveGroup Hotkey
     | PressedQuestionWithOther QuestionWithOther
     | PressedToggleShowEncodedState
     | DebounceSaveAnswerMap Int
@@ -44,19 +44,19 @@ type Msg
 
 type ToBackend
     = ReplaceFormsRequest (List Form)
-    | SaveAnswerMap (FormOtherQuestions AnswerMap)
+    | SaveAnswerMap FormOtherQuestions
     | LogOutRequest
 
 
 type alias AdminLoginData =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormOtherQuestions AnswerMap
+    , formMapping : FormOtherQuestions
     }
 
 
 type alias Model =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormOtherQuestions AnswerMap
+    , formMapping : FormOtherQuestions
     , selectedMapping : QuestionWithOther
     , showEncodedState : Bool
     , debounceCount : Int
@@ -248,65 +248,6 @@ whatDoYouLikeMost =
     }
 
 
-questionWithOtherData :
-    QuestionWithOther
-    ->
-        { getter : FormOtherQuestions a -> a
-        , setter : FormOtherQuestions a -> a -> FormOtherQuestions a
-        , existingChoices : List String
-        , text : String
-        }
-questionWithOtherData a =
-    case a of
-        OtherLanguagesQuestion ->
-            otherLanguages
-
-        NewsAndDiscussionsQuestion ->
-            newsAndDiscussions
-
-        ElmResourcesQuestion ->
-            elmResources
-
-        ApplicationDomainsQuestion ->
-            applicationDomains
-
-        WhatLanguageDoYouUseForBackendQuestion ->
-            whatLanguageDoYouUseForBackend
-
-        ElmVersionQuestion ->
-            elmVersion
-
-        StylingToolsQuestion ->
-            stylingTools
-
-        BuildToolsQuestion ->
-            buildTools
-
-        FrameworksQuestion ->
-            frameworks
-
-        EditorsQuestion ->
-            editors
-
-        WhichElmReviewRulesDoYouUseQuestion ->
-            whichElmReviewRulesDoYouUse
-
-        TestToolsQuestion ->
-            testTools
-
-        TestsWrittenForQuestion ->
-            testsWrittenFor
-
-        ElmInitialInterestQuestion ->
-            elmInitialInterest
-
-        BiggestPainPointQuestion ->
-            biggestPainPoint
-
-        WhatDoYouLikeMostQuestion ->
-            whatDoYouLikeMost
-
-
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
 update msg model =
     case msg of
@@ -332,8 +273,67 @@ update msg model =
         PressedLogOut ->
             ( model, Lamdera.sendToBackend LogOutRequest )
 
-        AnswerMapChanged newFormMapping ->
-            { model | formMapping = newFormMapping } |> debounce
+        RemoveGroup hotkey ->
+            let
+                removeGroup : AnswerMap a -> AnswerMap a
+                removeGroup =
+                    AnswerMap.removeGroup hotkey
+
+                answerMap =
+                    model.formMapping
+            in
+            { model
+                | formMapping =
+                    case model.selectedMapping of
+                        OtherLanguagesQuestion ->
+                            { answerMap | otherLanguages = removeGroup answerMap.otherLanguages }
+
+                        NewsAndDiscussionsQuestion ->
+                            { answerMap | newsAndDiscussions = removeGroup answerMap.newsAndDiscussions }
+
+                        ElmResourcesQuestion ->
+                            { answerMap | elmResources = removeGroup answerMap.elmResources }
+
+                        ApplicationDomainsQuestion ->
+                            { answerMap | applicationDomains = removeGroup answerMap.applicationDomains }
+
+                        WhatLanguageDoYouUseForBackendQuestion ->
+                            { answerMap | whatLanguageDoYouUseForBackend = removeGroup answerMap.whatLanguageDoYouUseForBackend }
+
+                        ElmVersionQuestion ->
+                            { answerMap | elmVersion = removeGroup answerMap.elmVersion }
+
+                        StylingToolsQuestion ->
+                            { answerMap | stylingTools = removeGroup answerMap.stylingTools }
+
+                        BuildToolsQuestion ->
+                            { answerMap | buildTools = removeGroup answerMap.buildTools }
+
+                        FrameworksQuestion ->
+                            { answerMap | frameworks = removeGroup answerMap.frameworks }
+
+                        EditorsQuestion ->
+                            { answerMap | editors = removeGroup answerMap.editors }
+
+                        WhichElmReviewRulesDoYouUseQuestion ->
+                            { answerMap | whichElmReviewRulesDoYouUse = removeGroup answerMap.whichElmReviewRulesDoYouUse }
+
+                        TestToolsQuestion ->
+                            { answerMap | testTools = removeGroup answerMap.testTools }
+
+                        TestsWrittenForQuestion ->
+                            { answerMap | testsWrittenFor = removeGroup answerMap.testsWrittenFor }
+
+                        ElmInitialInterestQuestion ->
+                            { answerMap | elmInitialInterest = removeGroup answerMap.elmInitialInterest }
+
+                        BiggestPainPointQuestion ->
+                            { answerMap | biggestPainPoint = removeGroup answerMap.biggestPainPoint }
+
+                        WhatDoYouLikeMostQuestion ->
+                            { answerMap | whatDoYouLikeMost = removeGroup answerMap.whatDoYouLikeMost }
+            }
+                |> debounce
 
         PressedQuestionWithOther questionWithOther ->
             ( { model | selectedMapping = questionWithOther }, Command.none )
@@ -343,52 +343,189 @@ update msg model =
 
         TypedGroupName hotkey groupName ->
             let
-                mappingData =
-                    questionWithOtherData model.selectedMapping
+                renameGroup : AnswerMap a -> AnswerMap a
+                renameGroup =
+                    AnswerMap.renameGroup hotkey groupName
 
-                mapping : AnswerMap
-                mapping =
-                    mappingData.getter model.formMapping
+                answerMap =
+                    model.formMapping
             in
             { model
                 | formMapping =
-                    AnswerMap.renameGroup hotkey groupName mapping
-                        |> mappingData.setter model.formMapping
+                    case model.selectedMapping of
+                        OtherLanguagesQuestion ->
+                            { answerMap | otherLanguages = renameGroup answerMap.otherLanguages }
+
+                        NewsAndDiscussionsQuestion ->
+                            { answerMap | newsAndDiscussions = renameGroup answerMap.newsAndDiscussions }
+
+                        ElmResourcesQuestion ->
+                            { answerMap | elmResources = renameGroup answerMap.elmResources }
+
+                        ApplicationDomainsQuestion ->
+                            { answerMap | applicationDomains = renameGroup answerMap.applicationDomains }
+
+                        WhatLanguageDoYouUseForBackendQuestion ->
+                            { answerMap | whatLanguageDoYouUseForBackend = renameGroup answerMap.whatLanguageDoYouUseForBackend }
+
+                        ElmVersionQuestion ->
+                            { answerMap | elmVersion = renameGroup answerMap.elmVersion }
+
+                        StylingToolsQuestion ->
+                            { answerMap | stylingTools = renameGroup answerMap.stylingTools }
+
+                        BuildToolsQuestion ->
+                            { answerMap | buildTools = renameGroup answerMap.buildTools }
+
+                        FrameworksQuestion ->
+                            { answerMap | frameworks = renameGroup answerMap.frameworks }
+
+                        EditorsQuestion ->
+                            { answerMap | editors = renameGroup answerMap.editors }
+
+                        WhichElmReviewRulesDoYouUseQuestion ->
+                            { answerMap | whichElmReviewRulesDoYouUse = renameGroup answerMap.whichElmReviewRulesDoYouUse }
+
+                        TestToolsQuestion ->
+                            { answerMap | testTools = renameGroup answerMap.testTools }
+
+                        TestsWrittenForQuestion ->
+                            { answerMap | testsWrittenFor = renameGroup answerMap.testsWrittenFor }
+
+                        ElmInitialInterestQuestion ->
+                            { answerMap | elmInitialInterest = renameGroup answerMap.elmInitialInterest }
+
+                        BiggestPainPointQuestion ->
+                            { answerMap | biggestPainPoint = renameGroup answerMap.biggestPainPoint }
+
+                        WhatDoYouLikeMostQuestion ->
+                            { answerMap | whatDoYouLikeMost = renameGroup answerMap.whatDoYouLikeMost }
             }
                 |> debounce
 
         TypedNewGroupName groupName ->
             let
-                mappingData =
-                    questionWithOtherData model.selectedMapping
+                addGroup : AnswerMap a -> AnswerMap a
+                addGroup =
+                    AnswerMap.addGroup groupName
 
-                mapping : AnswerMap
-                mapping =
-                    mappingData.getter model.formMapping
+                answerMap =
+                    model.formMapping
             in
             { model
                 | formMapping =
-                    AnswerMap.addGroup groupName mapping
-                        |> mappingData.setter model.formMapping
+                    case model.selectedMapping of
+                        OtherLanguagesQuestion ->
+                            { answerMap | otherLanguages = addGroup answerMap.otherLanguages }
+
+                        NewsAndDiscussionsQuestion ->
+                            { answerMap | newsAndDiscussions = addGroup answerMap.newsAndDiscussions }
+
+                        ElmResourcesQuestion ->
+                            { answerMap | elmResources = addGroup answerMap.elmResources }
+
+                        ApplicationDomainsQuestion ->
+                            { answerMap | applicationDomains = addGroup answerMap.applicationDomains }
+
+                        WhatLanguageDoYouUseForBackendQuestion ->
+                            { answerMap | whatLanguageDoYouUseForBackend = addGroup answerMap.whatLanguageDoYouUseForBackend }
+
+                        ElmVersionQuestion ->
+                            { answerMap | elmVersion = addGroup answerMap.elmVersion }
+
+                        StylingToolsQuestion ->
+                            { answerMap | stylingTools = addGroup answerMap.stylingTools }
+
+                        BuildToolsQuestion ->
+                            { answerMap | buildTools = addGroup answerMap.buildTools }
+
+                        FrameworksQuestion ->
+                            { answerMap | frameworks = addGroup answerMap.frameworks }
+
+                        EditorsQuestion ->
+                            { answerMap | editors = addGroup answerMap.editors }
+
+                        WhichElmReviewRulesDoYouUseQuestion ->
+                            { answerMap | whichElmReviewRulesDoYouUse = addGroup answerMap.whichElmReviewRulesDoYouUse }
+
+                        TestToolsQuestion ->
+                            { answerMap | testTools = addGroup answerMap.testTools }
+
+                        TestsWrittenForQuestion ->
+                            { answerMap | testsWrittenFor = addGroup answerMap.testsWrittenFor }
+
+                        ElmInitialInterestQuestion ->
+                            { answerMap | elmInitialInterest = addGroup answerMap.elmInitialInterest }
+
+                        BiggestPainPointQuestion ->
+                            { answerMap | biggestPainPoint = addGroup answerMap.biggestPainPoint }
+
+                        WhatDoYouLikeMostQuestion ->
+                            { answerMap | whatDoYouLikeMost = addGroup answerMap.whatDoYouLikeMost }
             }
                 |> debounce
 
         TypedOtherAnswerGroups otherAnswer text ->
             let
-                mappingData =
-                    questionWithOtherData model.selectedMapping
-
-                mapping : AnswerMap
-                mapping =
-                    mappingData.getter model.formMapping
-            in
-            { model
-                | formMapping =
+                updateOtherAnswer : AnswerMap a -> AnswerMap a
+                updateOtherAnswer =
                     AnswerMap.updateOtherAnswer
                         (String.toList text |> List.map AnswerMap.hotkey)
                         otherAnswer
-                        mapping
-                        |> mappingData.setter model.formMapping
+
+                answerMap =
+                    model.formMapping
+            in
+            { model
+                | formMapping =
+                    case model.selectedMapping of
+                        OtherLanguagesQuestion ->
+                            { answerMap | otherLanguages = updateOtherAnswer answerMap.otherLanguages }
+
+                        NewsAndDiscussionsQuestion ->
+                            { answerMap | newsAndDiscussions = updateOtherAnswer answerMap.newsAndDiscussions }
+
+                        ElmResourcesQuestion ->
+                            { answerMap | elmResources = updateOtherAnswer answerMap.elmResources }
+
+                        ApplicationDomainsQuestion ->
+                            { answerMap | applicationDomains = updateOtherAnswer answerMap.applicationDomains }
+
+                        WhatLanguageDoYouUseForBackendQuestion ->
+                            { answerMap | whatLanguageDoYouUseForBackend = updateOtherAnswer answerMap.whatLanguageDoYouUseForBackend }
+
+                        ElmVersionQuestion ->
+                            { answerMap | elmVersion = updateOtherAnswer answerMap.elmVersion }
+
+                        StylingToolsQuestion ->
+                            { answerMap | stylingTools = updateOtherAnswer answerMap.stylingTools }
+
+                        BuildToolsQuestion ->
+                            { answerMap | buildTools = updateOtherAnswer answerMap.buildTools }
+
+                        FrameworksQuestion ->
+                            { answerMap | frameworks = updateOtherAnswer answerMap.frameworks }
+
+                        EditorsQuestion ->
+                            { answerMap | editors = updateOtherAnswer answerMap.editors }
+
+                        WhichElmReviewRulesDoYouUseQuestion ->
+                            { answerMap | whichElmReviewRulesDoYouUse = updateOtherAnswer answerMap.whichElmReviewRulesDoYouUse }
+
+                        TestToolsQuestion ->
+                            { answerMap | testTools = updateOtherAnswer answerMap.testTools }
+
+                        TestsWrittenForQuestion ->
+                            { answerMap | testsWrittenFor = updateOtherAnswer answerMap.testsWrittenFor }
+
+                        ElmInitialInterestQuestion ->
+                            { answerMap | elmInitialInterest = updateOtherAnswer answerMap.elmInitialInterest }
+
+                        BiggestPainPointQuestion ->
+                            { answerMap | biggestPainPoint = updateOtherAnswer answerMap.biggestPainPoint }
+
+                        WhatDoYouLikeMostQuestion ->
+                            { answerMap | whatDoYouLikeMost = updateOtherAnswer answerMap.whatDoYouLikeMost }
             }
                 |> debounce
 
@@ -476,11 +613,11 @@ adminView model =
                 button
                     (model.selectedMapping == question)
                     (PressedQuestionWithOther question)
-                    (questionWithOtherData question).text
+                    (questionName model.selectedMapping)
             )
             questionsWithOther
             |> Element.wrappedRow []
-        , answerMappingView model
+        , answerMapView model
 
         --, Element.column
         --    [ Element.spacing 32 ]
@@ -488,21 +625,175 @@ adminView model =
         ]
 
 
-answerMappingView : Model -> Element Msg
-answerMappingView model =
+answerMapView : Model -> Element Msg
+answerMapView model =
     let
-        mappingData =
-            questionWithOtherData model.selectedMapping
-
-        mapping : AnswerMap
-        mapping =
-            mappingData.getter model.formMapping
+        formMapping =
+            model.formMapping
     in
+    case model.selectedMapping of
+        OtherLanguagesQuestion ->
+            answerMappingView
+                Questions.otherLanguages
+                (.otherLanguages >> Form.getOtherAnswer)
+                formMapping.otherLanguages
+                model
+
+        NewsAndDiscussionsQuestion ->
+            answerMappingView
+                Questions.newsAndDiscussions
+                (.newsAndDiscussions >> Form.getOtherAnswer)
+                formMapping.newsAndDiscussions
+                model
+
+        ElmResourcesQuestion ->
+            answerMappingView
+                Questions.elmResources
+                (.elmResources >> Form.getOtherAnswer)
+                formMapping.elmResources
+                model
+
+        ApplicationDomainsQuestion ->
+            answerMappingView
+                Questions.applicationDomains
+                (.applicationDomains >> Form.getOtherAnswer)
+                formMapping.applicationDomains
+                model
+
+        WhatLanguageDoYouUseForBackendQuestion ->
+            answerMappingView
+                Questions.whatLanguageDoYouUseForBackend
+                (.whatLanguageDoYouUseForBackend >> Form.getOtherAnswer)
+                formMapping.whatLanguageDoYouUseForBackend
+                model
+
+        ElmVersionQuestion ->
+            answerMappingView
+                Questions.elmVersion
+                (.elmVersion >> Form.getOtherAnswer)
+                formMapping.elmVersion
+                model
+
+        StylingToolsQuestion ->
+            answerMappingView
+                Questions.stylingTools
+                (.stylingTools >> Form.getOtherAnswer)
+                formMapping.stylingTools
+                model
+
+        BuildToolsQuestion ->
+            answerMappingView
+                Questions.buildTools
+                (.buildTools >> Form.getOtherAnswer)
+                formMapping.buildTools
+                model
+
+        FrameworksQuestion ->
+            answerMappingView
+                Questions.frameworks
+                (.frameworks >> Form.getOtherAnswer)
+                formMapping.frameworks
+                model
+
+        EditorsQuestion ->
+            answerMappingView
+                Questions.editors
+                (.editors >> Form.getOtherAnswer)
+                formMapping.editors
+                model
+
+        WhichElmReviewRulesDoYouUseQuestion ->
+            answerMappingView
+                Questions.whichElmReviewRulesDoYouUse
+                (.whichElmReviewRulesDoYouUse >> Form.getOtherAnswer)
+                formMapping.whichElmReviewRulesDoYouUse
+                model
+
+        TestToolsQuestion ->
+            answerMappingView
+                Questions.testTools
+                (.testTools >> Form.getOtherAnswer)
+                formMapping.testTools
+                model
+
+        TestsWrittenForQuestion ->
+            answerMappingView
+                Questions.testsWrittenFor
+                (.testsWrittenFor >> Form.getOtherAnswer)
+                formMapping.testsWrittenFor
+                model
+
+        ElmInitialInterestQuestion ->
+            Debug.todo ""
+
+        --answerMappingView Questions.elmInitialInterest
+        BiggestPainPointQuestion ->
+            Debug.todo ""
+
+        --answerMappingView Questions.biggestPainPoint
+        WhatDoYouLikeMostQuestion ->
+            Debug.todo ""
+
+
+questionName : QuestionWithOther -> String
+questionName selectedMapping =
+    case selectedMapping of
+        OtherLanguagesQuestion ->
+            "OtherLanguagesQuestion"
+
+        NewsAndDiscussionsQuestion ->
+            "NewsAndDiscussionsQuestion"
+
+        ElmResourcesQuestion ->
+            "ElmResourcesQuestion"
+
+        ApplicationDomainsQuestion ->
+            "ApplicationDomainsQuestion"
+
+        WhatLanguageDoYouUseForBackendQuestion ->
+            "WhatLanguageDoYouUseForBackendQuestion"
+
+        ElmVersionQuestion ->
+            "ElmVersionQuestion"
+
+        StylingToolsQuestion ->
+            "StylingToolsQuestion"
+
+        BuildToolsQuestion ->
+            "BuildToolsQuestion"
+
+        FrameworksQuestion ->
+            "FrameworksQuestion"
+
+        EditorsQuestion ->
+            "EditorsQuestion"
+
+        WhichElmReviewRulesDoYouUseQuestion ->
+            "WhichElmReviewRulesDoYouUseQuestion"
+
+        TestToolsQuestion ->
+            "TestToolsQuestion"
+
+        TestsWrittenForQuestion ->
+            "TestsWrittenForQuestion"
+
+        ElmInitialInterestQuestion ->
+            "ElmInitialInterestQuestion"
+
+        BiggestPainPointQuestion ->
+            "BiggestPainPointQuestion"
+
+        WhatDoYouLikeMostQuestion ->
+            "WhatDoYouLikeMostQuestion"
+
+
+answerMappingView : Question a -> (Form -> Maybe String) -> AnswerMap a -> Model -> Element Msg
+answerMappingView question getAnswer answerMap model =
     Element.row
         [ Element.spacing 24, Element.width Element.fill ]
         [ Element.column
             [ Element.alignTop, Element.spacing 16 ]
-            [ Element.text mappingData.text
+            [ Element.text (questionName model.selectedMapping)
             , Element.column
                 [ Element.spacing 8 ]
                 (List.map
@@ -523,17 +814,13 @@ answerMappingView model =
                               else
                                 Element.text groupName
                             , if editable then
-                                deleteButton
-                                    (AnswerMap.removeGroup hotkey mapping
-                                        |> mappingData.setter model.formMapping
-                                        |> AnswerMapChanged
-                                    )
+                                deleteButton (RemoveGroup hotkey)
 
                               else
                                 Element.none
                             ]
                     )
-                    (AnswerMap.allGroups mappingData.existingChoices mapping)
+                    (AnswerMap.allGroups question answerMap)
                     ++ [ Element.row []
                             [ Element.el [ Element.Font.italic ] (Element.text "( ) ")
                             , Element.Input.text
@@ -541,15 +828,14 @@ answerMappingView model =
                                 { text = ""
                                 , onChange = TypedNewGroupName
                                 , placeholder = Nothing
-                                , label = Element.Input.labelHidden "mapTo"
+                                , label = Element.Input.labelHidden "Group"
                                 }
                             ]
                        ]
                 )
             ]
         , submittedForms model.forms
-            |> List.map Form.formToOtherAnswers
-            |> List.filterMap mappingData.getter
+            |> List.filterMap getAnswer
             |> List.sortBy (String.trim >> String.toLower)
             |> List.map
                 (\other ->
@@ -563,12 +849,12 @@ answerMappingView model =
                         [ Element.Input.text
                             [ Element.width (Element.px 80), Element.paddingXY 4 6 ]
                             { text =
-                                AnswerMap.otherAnswerMapsTo otherAnswer mapping
-                                    |> List.map AnswerMap.hotkeyToString
+                                AnswerMap.otherAnswerMapsTo question otherAnswer answerMap
+                                    |> List.map (.hotkey >> AnswerMap.hotkeyToString)
                                     |> String.concat
                             , onChange = TypedOtherAnswerGroups otherAnswer
                             , placeholder = Nothing
-                            , label = Element.Input.labelHidden "mapTo"
+                            , label = Element.Input.labelHidden "New group"
                             }
                         , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]
                         ]

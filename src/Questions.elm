@@ -1,12 +1,14 @@
 module Questions exposing
     ( Age(..)
+    , ApplicationDomains(..)
     , BuildTools(..)
     , DoYouUseElm(..)
     , DoYouUseElmAtWork(..)
     , DoYouUseElmFormat(..)
     , DoYouUseElmReview(..)
-    , Editor(..)
+    , Editors(..)
     , ElmResources(..)
+    , ElmVersion(..)
     , ExperienceLevel(..)
     , Frameworks(..)
     , HowLargeIsTheCompany(..)
@@ -17,9 +19,7 @@ module Questions exposing
     , StylingTools(..)
     , TestTools(..)
     , TestsWrittenFor(..)
-    , WhatElmVersion(..)
-    , WhatLanguageDoYouUseForTheBackend(..)
-    , WhereDoYouUseElm(..)
+    , WhatLanguageDoYouUseForBackend(..)
     , WhichElmReviewRulesDoYouUse(..)
     , age
     , applicationDomains
@@ -129,7 +129,7 @@ type ElmResources
     | ElmOnline
 
 
-type WhereDoYouUseElm
+type ApplicationDomains
     = Education
     | Gaming
     | ECommerce
@@ -187,7 +187,7 @@ type HowLargeIsTheCompany
     | Size100OrMore
 
 
-type WhatLanguageDoYouUseForTheBackend
+type WhatLanguageDoYouUseForBackend
     = JavaScript_
     | TypeScript_
     | Go_
@@ -206,7 +206,7 @@ type WhatLanguageDoYouUseForTheBackend
     | NotApplicable
 
 
-type WhatElmVersion
+type ElmVersion
     = Version0_19
     | Version0_18
     | Version0_17
@@ -251,7 +251,7 @@ type Frameworks
     | ElmPlayground
 
 
-type Editor
+type Editors
     = SublimeText
     | Vim
     | Atom
@@ -597,7 +597,7 @@ countryLivingInTitle =
     "Which country do you live in?"
 
 
-applicationDomains : Question WhereDoYouUseElm
+applicationDomains : Question ApplicationDomains
 applicationDomains =
     { title = "In which application domains, if any, have you used Elm?"
     , choices =
@@ -704,7 +704,7 @@ howLargeIsTheCompany =
     }
 
 
-whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForTheBackend
+whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
     , choices =
@@ -833,7 +833,7 @@ howLong =
     }
 
 
-elmVersion : Question WhatElmVersion
+elmVersion : Question ElmVersion
 elmVersion =
     { title = "What versions of Elm are you using?"
     , choices = Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
@@ -993,7 +993,7 @@ frameworks =
     }
 
 
-editors : Question Editor
+editors : Question Editors
 editors =
     { title = "What editor(s) do you use to write your Elm applications?"
     , choices =
