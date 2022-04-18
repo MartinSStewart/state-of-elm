@@ -1,10 +1,9 @@
 module Form exposing
     ( Form
     , FormOtherQuestions
-    , QuestionWithOther(..)
+    , SpecificQuestion(..)
     , emptyForm
     , formCodec
-    , formToOtherAnswers
     , getOtherAnswer
     )
 
@@ -86,37 +85,26 @@ getOtherAnswer_ text =
         Nothing
 
 
-formToOtherAnswers form =
-    { otherLanguages = getOtherAnswer form.otherLanguages
-    , newsAndDiscussions = getOtherAnswer form.newsAndDiscussions
-    , elmResources = getOtherAnswer form.elmResources
-    , applicationDomains = getOtherAnswer form.applicationDomains
-    , whatLanguageDoYouUseForBackend = getOtherAnswer form.whatLanguageDoYouUseForBackend
-    , elmVersion = getOtherAnswer form.elmVersion
-    , stylingTools = getOtherAnswer form.stylingTools
-    , buildTools = getOtherAnswer form.buildTools
-    , frameworks = getOtherAnswer form.frameworks
-    , editors = getOtherAnswer form.editors
-    , whichElmReviewRulesDoYouUse = getOtherAnswer form.whichElmReviewRulesDoYouUse
-    , testTools = getOtherAnswer form.testTools
-    , testsWrittenFor = getOtherAnswer form.testsWrittenFor
-    , elmInitialInterest = getOtherAnswer_ form.elmInitialInterest
-    , biggestPainPoint = getOtherAnswer_ form.biggestPainPoint
-    , whatDoYouLikeMost = getOtherAnswer_ form.whatDoYouLikeMost
-    }
-
-
 type alias FormOtherQuestions =
-    { otherLanguages : AnswerMap OtherLanguages
+    { doYouUseElm : String
+    , age : String
+    , functionalProgrammingExperience : String
+    , otherLanguages : AnswerMap OtherLanguages
     , newsAndDiscussions : AnswerMap NewsAndDiscussions
     , elmResources : AnswerMap ElmResources
+    , countryLivingIn : String
     , applicationDomains : AnswerMap ApplicationDomains
+    , doYouUseElmAtWork : String
+    , howLargeIsTheCompany : String
     , whatLanguageDoYouUseForBackend : AnswerMap WhatLanguageDoYouUseForBackend
+    , howLong : String
     , elmVersion : AnswerMap ElmVersion
+    , doYouUseElmFormat : String
     , stylingTools : AnswerMap StylingTools
     , buildTools : AnswerMap BuildTools
     , frameworks : AnswerMap Frameworks
     , editors : AnswerMap Editors
+    , doYouUseElmReview : String
     , whichElmReviewRulesDoYouUse : AnswerMap WhichElmReviewRulesDoYouUse
     , testTools : AnswerMap TestTools
     , testsWrittenFor : AnswerMap TestsWrittenFor
@@ -157,17 +145,26 @@ emptyForm =
     }
 
 
-type QuestionWithOther
-    = OtherLanguagesQuestion
+type SpecificQuestion
+    = DoYouUseElmQuestion
+    | AgeQuestion
+    | FunctionalProgrammingExperienceQuestion
+    | OtherLanguagesQuestion
     | NewsAndDiscussionsQuestion
     | ElmResourcesQuestion
+    | CountryLivingInQuestion
     | ApplicationDomainsQuestion
+    | DoYouUseElmAtWorkQuestion
+    | HowLargeIsTheCompanyQuestion
     | WhatLanguageDoYouUseForBackendQuestion
+    | HowLongQuestion
     | ElmVersionQuestion
+    | DoYouUseElmFormatQuestion
     | StylingToolsQuestion
     | BuildToolsQuestion
     | FrameworksQuestion
     | EditorsQuestion
+    | DoYouUseElmReviewQuestion
     | WhichElmReviewRulesDoYouUseQuestion
     | TestToolsQuestion
     | TestsWrittenForQuestion

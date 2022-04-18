@@ -33,16 +33,25 @@ init =
     let
         answerMap : FormOtherQuestions
         answerMap =
-            { otherLanguages = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
+            { doYouUseElm = ""
+            , age = ""
+            , functionalProgrammingExperience = ""
+            , otherLanguages = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
             , newsAndDiscussions = AnswerMap.fromMultiChoiceWithOther Questions.newsAndDiscussions
             , elmResources = AnswerMap.fromMultiChoiceWithOther Questions.elmResources
+            , countryLivingIn = ""
             , applicationDomains = AnswerMap.fromMultiChoiceWithOther Questions.applicationDomains
+            , doYouUseElmAtWork = ""
+            , howLargeIsTheCompany = ""
             , whatLanguageDoYouUseForBackend = AnswerMap.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend
+            , howLong = ""
             , elmVersion = AnswerMap.fromMultiChoiceWithOther Questions.elmVersion
+            , doYouUseElmFormat = ""
             , stylingTools = AnswerMap.fromMultiChoiceWithOther Questions.stylingTools
             , buildTools = AnswerMap.fromMultiChoiceWithOther Questions.buildTools
             , frameworks = AnswerMap.fromMultiChoiceWithOther Questions.frameworks
             , editors = AnswerMap.fromMultiChoiceWithOther Questions.editors
+            , doYouUseElmReview = ""
             , whichElmReviewRulesDoYouUse = AnswerMap.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse
             , testTools = AnswerMap.fromMultiChoiceWithOther Questions.testTools
             , testsWrittenFor = AnswerMap.fromMultiChoiceWithOther Questions.testsWrittenFor

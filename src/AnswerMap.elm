@@ -18,6 +18,7 @@ module AnswerMap exposing
     , renameGroup
     , toggleMapping
     , updateOtherAnswer
+    , withComment
     )
 
 import AssocSet as Set exposing (Set)
@@ -96,6 +97,11 @@ allGroups question (AnswerMap formMapData) =
 comment : AnswerMap a -> String
 comment (AnswerMap answerMap) =
     answerMap.comment
+
+
+withComment : String -> AnswerMap a -> AnswerMap a
+withComment text (AnswerMap answerMap) =
+    { answerMap | comment = text } |> AnswerMap
 
 
 otherAnswerMapsTo : Question a -> OtherAnswer -> AnswerMap a -> List { hotkey : Hotkey, groupName : String }

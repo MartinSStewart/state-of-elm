@@ -23,7 +23,7 @@ import Element.Border
 import Element.Font
 import Element.Input
 import Env
-import Form exposing (Form, FormOtherQuestions, QuestionWithOther(..))
+import Form exposing (Form, FormOtherQuestions, SpecificQuestion(..))
 import Html.Events
 import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
@@ -39,9 +39,10 @@ type Msg
     | TypedNewGroupName String
     | TypedOtherAnswerGroups OtherAnswer String
     | RemoveGroup Hotkey
-    | PressedQuestionWithOther QuestionWithOther
+    | PressedQuestionWithOther SpecificQuestion
     | PressedToggleShowEncodedState
     | DebounceSaveAnswerMap Int
+    | TypedComment String
 
 
 type ToBackend
@@ -59,7 +60,7 @@ type alias AdminLoginData =
 type alias Model =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormOtherQuestions
-    , selectedMapping : QuestionWithOther
+    , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
     , debounceCount : Int
     }
@@ -75,18 +76,27 @@ init loginData =
     }
 
 
-questionsWithOther : List QuestionWithOther
+questionsWithOther : List SpecificQuestion
 questionsWithOther =
-    [ OtherLanguagesQuestion
+    [ DoYouUseElmQuestion
+    , AgeQuestion
+    , FunctionalProgrammingExperienceQuestion
+    , OtherLanguagesQuestion
     , NewsAndDiscussionsQuestion
     , ElmResourcesQuestion
+    , CountryLivingInQuestion
     , ApplicationDomainsQuestion
+    , DoYouUseElmAtWorkQuestion
+    , HowLargeIsTheCompanyQuestion
     , WhatLanguageDoYouUseForBackendQuestion
+    , HowLongQuestion
     , ElmVersionQuestion
+    , DoYouUseElmFormatQuestion
     , StylingToolsQuestion
     , BuildToolsQuestion
     , FrameworksQuestion
     , EditorsQuestion
+    , DoYouUseElmReviewQuestion
     , WhichElmReviewRulesDoYouUseQuestion
     , TestToolsQuestion
     , TestsWrittenForQuestion
@@ -334,6 +344,33 @@ update msg model =
 
                         WhatDoYouLikeMostQuestion ->
                             { answerMap | whatDoYouLikeMost = removeGroup answerMap.whatDoYouLikeMost }
+
+                        DoYouUseElmQuestion ->
+                            answerMap
+
+                        AgeQuestion ->
+                            answerMap
+
+                        FunctionalProgrammingExperienceQuestion ->
+                            answerMap
+
+                        CountryLivingInQuestion ->
+                            answerMap
+
+                        DoYouUseElmAtWorkQuestion ->
+                            answerMap
+
+                        HowLargeIsTheCompanyQuestion ->
+                            answerMap
+
+                        HowLongQuestion ->
+                            answerMap
+
+                        DoYouUseElmFormatQuestion ->
+                            answerMap
+
+                        DoYouUseElmReviewQuestion ->
+                            answerMap
             }
                 |> debounce
 
@@ -402,6 +439,33 @@ update msg model =
 
                         WhatDoYouLikeMostQuestion ->
                             { answerMap | whatDoYouLikeMost = renameGroup answerMap.whatDoYouLikeMost }
+
+                        DoYouUseElmQuestion ->
+                            answerMap
+
+                        AgeQuestion ->
+                            answerMap
+
+                        FunctionalProgrammingExperienceQuestion ->
+                            answerMap
+
+                        CountryLivingInQuestion ->
+                            answerMap
+
+                        DoYouUseElmAtWorkQuestion ->
+                            answerMap
+
+                        HowLargeIsTheCompanyQuestion ->
+                            answerMap
+
+                        HowLongQuestion ->
+                            answerMap
+
+                        DoYouUseElmFormatQuestion ->
+                            answerMap
+
+                        DoYouUseElmReviewQuestion ->
+                            answerMap
             }
                 |> debounce
 
@@ -464,6 +528,33 @@ update msg model =
 
                         WhatDoYouLikeMostQuestion ->
                             { answerMap | whatDoYouLikeMost = addGroup answerMap.whatDoYouLikeMost }
+
+                        DoYouUseElmQuestion ->
+                            answerMap
+
+                        AgeQuestion ->
+                            answerMap
+
+                        FunctionalProgrammingExperienceQuestion ->
+                            answerMap
+
+                        CountryLivingInQuestion ->
+                            answerMap
+
+                        DoYouUseElmAtWorkQuestion ->
+                            answerMap
+
+                        HowLargeIsTheCompanyQuestion ->
+                            answerMap
+
+                        HowLongQuestion ->
+                            answerMap
+
+                        DoYouUseElmFormatQuestion ->
+                            answerMap
+
+                        DoYouUseElmReviewQuestion ->
+                            answerMap
             }
                 |> debounce
 
@@ -528,6 +619,33 @@ update msg model =
 
                         WhatDoYouLikeMostQuestion ->
                             { answerMap | whatDoYouLikeMost = updateOtherAnswer answerMap.whatDoYouLikeMost }
+
+                        DoYouUseElmQuestion ->
+                            answerMap
+
+                        AgeQuestion ->
+                            answerMap
+
+                        FunctionalProgrammingExperienceQuestion ->
+                            answerMap
+
+                        CountryLivingInQuestion ->
+                            answerMap
+
+                        DoYouUseElmAtWorkQuestion ->
+                            answerMap
+
+                        HowLargeIsTheCompanyQuestion ->
+                            answerMap
+
+                        HowLongQuestion ->
+                            answerMap
+
+                        DoYouUseElmFormatQuestion ->
+                            answerMap
+
+                        DoYouUseElmReviewQuestion ->
+                            answerMap
             }
                 |> debounce
 
@@ -539,6 +657,95 @@ update msg model =
               else
                 Command.none
             )
+
+        TypedComment text ->
+            let
+                withComment : AnswerMap a -> AnswerMap a
+                withComment =
+                    AnswerMap.withComment text
+
+                answerMap =
+                    model.formMapping
+            in
+            { model
+                | formMapping =
+                    case model.selectedMapping of
+                        OtherLanguagesQuestion ->
+                            { answerMap | otherLanguages = withComment answerMap.otherLanguages }
+
+                        NewsAndDiscussionsQuestion ->
+                            { answerMap | newsAndDiscussions = withComment answerMap.newsAndDiscussions }
+
+                        ElmResourcesQuestion ->
+                            { answerMap | elmResources = withComment answerMap.elmResources }
+
+                        ApplicationDomainsQuestion ->
+                            { answerMap | applicationDomains = withComment answerMap.applicationDomains }
+
+                        WhatLanguageDoYouUseForBackendQuestion ->
+                            { answerMap | whatLanguageDoYouUseForBackend = withComment answerMap.whatLanguageDoYouUseForBackend }
+
+                        ElmVersionQuestion ->
+                            { answerMap | elmVersion = withComment answerMap.elmVersion }
+
+                        StylingToolsQuestion ->
+                            { answerMap | stylingTools = withComment answerMap.stylingTools }
+
+                        BuildToolsQuestion ->
+                            { answerMap | buildTools = withComment answerMap.buildTools }
+
+                        FrameworksQuestion ->
+                            { answerMap | frameworks = withComment answerMap.frameworks }
+
+                        EditorsQuestion ->
+                            { answerMap | editors = withComment answerMap.editors }
+
+                        WhichElmReviewRulesDoYouUseQuestion ->
+                            { answerMap | whichElmReviewRulesDoYouUse = withComment answerMap.whichElmReviewRulesDoYouUse }
+
+                        TestToolsQuestion ->
+                            { answerMap | testTools = withComment answerMap.testTools }
+
+                        TestsWrittenForQuestion ->
+                            { answerMap | testsWrittenFor = withComment answerMap.testsWrittenFor }
+
+                        ElmInitialInterestQuestion ->
+                            { answerMap | elmInitialInterest = withComment answerMap.elmInitialInterest }
+
+                        BiggestPainPointQuestion ->
+                            { answerMap | biggestPainPoint = withComment answerMap.biggestPainPoint }
+
+                        WhatDoYouLikeMostQuestion ->
+                            { answerMap | whatDoYouLikeMost = withComment answerMap.whatDoYouLikeMost }
+
+                        DoYouUseElmQuestion ->
+                            { answerMap | doYouUseElm = text }
+
+                        AgeQuestion ->
+                            { answerMap | age = text }
+
+                        FunctionalProgrammingExperienceQuestion ->
+                            { answerMap | functionalProgrammingExperience = text }
+
+                        CountryLivingInQuestion ->
+                            { answerMap | countryLivingIn = text }
+
+                        DoYouUseElmAtWorkQuestion ->
+                            { answerMap | doYouUseElmAtWork = text }
+
+                        HowLargeIsTheCompanyQuestion ->
+                            { answerMap | howLargeIsTheCompany = text }
+
+                        HowLongQuestion ->
+                            { answerMap | howLong = text }
+
+                        DoYouUseElmFormatQuestion ->
+                            { answerMap | doYouUseElmFormat = text }
+
+                        DoYouUseElmReviewQuestion ->
+                            { answerMap | doYouUseElmReview = text }
+            }
+                |> debounce
 
 
 debounce : Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -752,57 +959,135 @@ answerMapView model =
         WhatDoYouLikeMostQuestion ->
             Debug.todo ""
 
+        DoYouUseElmQuestion ->
+            Debug.todo ""
 
-questionName : QuestionWithOther -> String
+        --commentEditor Questions.doYouUseElm .doYouUseElm formMapping.doYouUseElm model
+        AgeQuestion ->
+            commentEditor Questions.age .age formMapping.age model
+
+        FunctionalProgrammingExperienceQuestion ->
+            commentEditor Questions.experienceLevel .functionalProgrammingExperience formMapping.functionalProgrammingExperience model
+
+        CountryLivingInQuestion ->
+            Debug.todo ""
+
+        DoYouUseElmAtWorkQuestion ->
+            commentEditor Questions.doYouUseElmAtWork .doYouUseElmAtWork formMapping.doYouUseElmAtWork model
+
+        HowLargeIsTheCompanyQuestion ->
+            commentEditor Questions.howLargeIsTheCompany .howLargeIsTheCompany formMapping.howLargeIsTheCompany model
+
+        HowLongQuestion ->
+            commentEditor Questions.howLong .howLong formMapping.howLong model
+
+        DoYouUseElmFormatQuestion ->
+            commentEditor Questions.doYouUseElmFormat .doYouUseElmFormat formMapping.doYouUseElmFormat model
+
+        DoYouUseElmReviewQuestion ->
+            commentEditor Questions.doYouUseElmReview .doYouUseElmReview formMapping.doYouUseElmReview model
+
+
+questionName : SpecificQuestion -> String
 questionName selectedMapping =
     case selectedMapping of
         OtherLanguagesQuestion ->
-            "OtherLanguagesQuestion"
+            "OtherLanguages"
 
         NewsAndDiscussionsQuestion ->
-            "NewsAndDiscussionsQuestion"
+            "NewsAndDiscussions"
 
         ElmResourcesQuestion ->
-            "ElmResourcesQuestion"
+            "ElmResources"
 
         ApplicationDomainsQuestion ->
-            "ApplicationDomainsQuestion"
+            "ApplicationDomains"
 
         WhatLanguageDoYouUseForBackendQuestion ->
-            "WhatLanguageDoYouUseForBackendQuestion"
+            "WhatLanguageDoYouUseForBackend"
 
         ElmVersionQuestion ->
-            "ElmVersionQuestion"
+            "ElmVersion"
 
         StylingToolsQuestion ->
-            "StylingToolsQuestion"
+            "StylingTools"
 
         BuildToolsQuestion ->
-            "BuildToolsQuestion"
+            "BuildTools"
 
         FrameworksQuestion ->
-            "FrameworksQuestion"
+            "Frameworks"
 
         EditorsQuestion ->
-            "EditorsQuestion"
+            "Editors"
 
         WhichElmReviewRulesDoYouUseQuestion ->
-            "WhichElmReviewRulesDoYouUseQuestion"
+            "WhichElmReviewRulesDoYouUse"
 
         TestToolsQuestion ->
-            "TestToolsQuestion"
+            "TestTools"
 
         TestsWrittenForQuestion ->
-            "TestsWrittenForQuestion"
+            "TestsWrittenFor"
 
         ElmInitialInterestQuestion ->
-            "ElmInitialInterestQuestion"
+            "ElmInitialInterest"
 
         BiggestPainPointQuestion ->
-            "BiggestPainPointQuestion"
+            "BiggestPainPoint"
 
         WhatDoYouLikeMostQuestion ->
-            "WhatDoYouLikeMostQuestion"
+            "WhatDoYouLikeMost"
+
+        DoYouUseElmQuestion ->
+            "DoYouUseElm"
+
+        AgeQuestion ->
+            "Age"
+
+        FunctionalProgrammingExperienceQuestion ->
+            "FunctionalProgrammingExperience"
+
+        CountryLivingInQuestion ->
+            "CountryLivingIn"
+
+        DoYouUseElmAtWorkQuestion ->
+            "DoYouUseElmAtWork"
+
+        HowLargeIsTheCompanyQuestion ->
+            "HowLargeIsTheCompany"
+
+        HowLongQuestion ->
+            "HowLong"
+
+        DoYouUseElmFormatQuestion ->
+            "DoYouUseElmFormat"
+
+        DoYouUseElmReviewQuestion ->
+            "DoYouUseElmReview"
+
+
+commentEditor : Question a -> (Form -> Maybe a) -> String -> Model -> Element Msg
+commentEditor question getAnswer comment model =
+    let
+        answers : List a
+        answers =
+            submittedForms model.forms |> List.map getAnswer |> List.filterMap identity
+    in
+    Element.row []
+        [ Element.Input.multiline
+            [ Element.width Element.fill ]
+            { onChange = TypedComment
+            , text = comment
+            , placeholder = Nothing
+            , label = Element.Input.labelAbove [] (Element.text "Comment")
+            , spellcheck = True
+            }
+        , SurveyResults.singleChoiceGraph
+            True
+            (DataEntry.fromForms comment question.choices answers)
+            question
+        ]
 
 
 answerMappingView : Maybe Int -> Question a -> (Form -> MultiChoiceWithOther a) -> AnswerMap a -> Model -> Element Msg
@@ -857,39 +1142,50 @@ answerMappingView singleLineWidth question getAnswer answerMap model =
                        ]
                 )
             ]
-        , List.filterMap Form.getOtherAnswer answers
-            |> List.sortBy (String.trim >> String.toLower)
-            |> List.map
-                (\other ->
-                    let
-                        otherAnswer : OtherAnswer
-                        otherAnswer =
-                            AnswerMap.otherAnswer other
-                    in
-                    Element.row
-                        [ Element.spacing 4 ]
-                        [ Element.Input.text
-                            [ Element.width (Element.px 80), Element.paddingXY 4 6 ]
-                            { text =
-                                AnswerMap.otherAnswerMapsTo question otherAnswer answerMap
-                                    |> List.map (.hotkey >> AnswerMap.hotkeyToString)
-                                    |> String.concat
-                            , onChange = TypedOtherAnswerGroups otherAnswer
-                            , placeholder = Nothing
-                            , label = Element.Input.labelHidden "New group"
-                            }
-                        , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]
-                        ]
-                )
-            |> Element.column
-                [ Element.spacing 8
-                , Element.width Element.fill
-                , Element.scrollbars
-                , Element.height (Element.px 600)
-                , Element.alignTop
-                , Element.Border.width 1
-                , Element.padding 16
-                ]
+        , Element.column
+            [ Element.width Element.fill, Element.spacing 16 ]
+            [ List.filterMap Form.getOtherAnswer answers
+                |> List.sortBy (String.trim >> String.toLower)
+                |> List.map
+                    (\other ->
+                        let
+                            otherAnswer : OtherAnswer
+                            otherAnswer =
+                                AnswerMap.otherAnswer other
+                        in
+                        Element.row
+                            [ Element.spacing 4 ]
+                            [ Element.Input.text
+                                [ Element.width (Element.px 80), Element.paddingXY 4 6 ]
+                                { text =
+                                    AnswerMap.otherAnswerMapsTo question otherAnswer answerMap
+                                        |> List.map (.hotkey >> AnswerMap.hotkeyToString)
+                                        |> String.concat
+                                , onChange = TypedOtherAnswerGroups otherAnswer
+                                , placeholder = Nothing
+                                , label = Element.Input.labelHidden "New group"
+                                }
+                            , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]
+                            ]
+                    )
+                |> Element.column
+                    [ Element.spacing 8
+                    , Element.width Element.fill
+                    , Element.scrollbars
+                    , Element.height (Element.px 600)
+                    , Element.alignTop
+                    , Element.Border.width 1
+                    , Element.padding 16
+                    ]
+            , Element.Input.multiline
+                [ Element.width Element.fill ]
+                { onChange = TypedComment
+                , text = AnswerMap.comment answerMap
+                , placeholder = Nothing
+                , label = Element.Input.labelAbove [] (Element.text "Comment")
+                , spellcheck = True
+                }
+            ]
         , SurveyResults.multiChoiceWithOther
             singleLineWidth
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)

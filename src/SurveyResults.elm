@@ -1,4 +1,4 @@
-module SurveyResults exposing (Data, multiChoiceWithOther, view)
+module SurveyResults exposing (Data, multiChoiceWithOther, singleChoiceGraph, view)
 
 import AssocList as Dict
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
@@ -110,6 +110,7 @@ multiChoiceWithOther singleLineWidth (DataEntryWithOther dataEntryWithOther) { t
             (\{ choice, count } -> barAndName singleLineWidth choice count total)
             data
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
+        , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]
         ]
 
 
