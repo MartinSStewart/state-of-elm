@@ -10,6 +10,7 @@ module AdminPage exposing
 
 import AnswerMap exposing (AnswerMap, Hotkey, OtherAnswer)
 import AssocSet as Set exposing (Set)
+import DataEntry exposing (DataEntryWithOther)
 import Duration
 import Effect.Command as Command exposing (Command, FrontendOnly)
 import Effect.Lamdera as Lamdera
@@ -27,7 +28,8 @@ import Html.Events
 import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
 import Serialize
-import Ui
+import SurveyResults
+import Ui exposing (MultiChoiceWithOther)
 
 
 type Msg
@@ -585,8 +587,10 @@ adminView model =
     Element.column
         [ Element.spacing 32, Element.padding 16 ]
         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
-        , button False PressedLogOut "Log out"
-        , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
+        , Element.row [ Element.spacing 16 ]
+            [ button False PressedLogOut "Log out"
+            , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
+            ]
         , if model.showEncodedState then
             Element.Input.text
                 []
@@ -635,92 +639,105 @@ answerMapView model =
     case model.selectedMapping of
         OtherLanguagesQuestion ->
             answerMappingView
+                (Just 90)
                 Questions.otherLanguages
-                (.otherLanguages >> Form.getOtherAnswer)
+                .otherLanguages
                 formMapping.otherLanguages
                 model
 
         NewsAndDiscussionsQuestion ->
             answerMappingView
+                Nothing
                 Questions.newsAndDiscussions
-                (.newsAndDiscussions >> Form.getOtherAnswer)
+                .newsAndDiscussions
                 formMapping.newsAndDiscussions
                 model
 
         ElmResourcesQuestion ->
             answerMappingView
+                Nothing
                 Questions.elmResources
-                (.elmResources >> Form.getOtherAnswer)
+                .elmResources
                 formMapping.elmResources
                 model
 
         ApplicationDomainsQuestion ->
             answerMappingView
+                Nothing
                 Questions.applicationDomains
-                (.applicationDomains >> Form.getOtherAnswer)
+                .applicationDomains
                 formMapping.applicationDomains
                 model
 
         WhatLanguageDoYouUseForBackendQuestion ->
             answerMappingView
+                (Just 110)
                 Questions.whatLanguageDoYouUseForBackend
-                (.whatLanguageDoYouUseForBackend >> Form.getOtherAnswer)
+                .whatLanguageDoYouUseForBackend
                 formMapping.whatLanguageDoYouUseForBackend
                 model
 
         ElmVersionQuestion ->
             answerMappingView
+                Nothing
                 Questions.elmVersion
-                (.elmVersion >> Form.getOtherAnswer)
+                .elmVersion
                 formMapping.elmVersion
                 model
 
         StylingToolsQuestion ->
             answerMappingView
+                Nothing
                 Questions.stylingTools
-                (.stylingTools >> Form.getOtherAnswer)
+                .stylingTools
                 formMapping.stylingTools
                 model
 
         BuildToolsQuestion ->
             answerMappingView
+                Nothing
                 Questions.buildTools
-                (.buildTools >> Form.getOtherAnswer)
+                .buildTools
                 formMapping.buildTools
                 model
 
         FrameworksQuestion ->
             answerMappingView
+                Nothing
                 Questions.frameworks
-                (.frameworks >> Form.getOtherAnswer)
+                .frameworks
                 formMapping.frameworks
                 model
 
         EditorsQuestion ->
             answerMappingView
+                Nothing
                 Questions.editors
-                (.editors >> Form.getOtherAnswer)
+                .editors
                 formMapping.editors
                 model
 
         WhichElmReviewRulesDoYouUseQuestion ->
             answerMappingView
+                Nothing
                 Questions.whichElmReviewRulesDoYouUse
-                (.whichElmReviewRulesDoYouUse >> Form.getOtherAnswer)
+                .whichElmReviewRulesDoYouUse
                 formMapping.whichElmReviewRulesDoYouUse
                 model
 
         TestToolsQuestion ->
             answerMappingView
+                Nothing
                 Questions.testTools
-                (.testTools >> Form.getOtherAnswer)
+                .testTools
                 formMapping.testTools
                 model
 
         TestsWrittenForQuestion ->
             answerMappingView
+                Nothing
                 Questions.testsWrittenFor
-                (.testsWrittenFor >> Form.getOtherAnswer)
+                .testsWrittenFor
                 formMapping.testsWrittenFor
                 model
 
@@ -788,8 +805,13 @@ questionName selectedMapping =
             "WhatDoYouLikeMostQuestion"
 
 
-answerMappingView : Question a -> (Form -> Maybe String) -> AnswerMap a -> Model -> Element Msg
-answerMappingView question getAnswer answerMap model =
+answerMappingView : Maybe Int -> Question a -> (Form -> MultiChoiceWithOther a) -> AnswerMap a -> Model -> Element Msg
+answerMappingView singleLineWidth question getAnswer answerMap model =
+    let
+        answers : List (MultiChoiceWithOther a)
+        answers =
+            submittedForms model.forms |> List.map getAnswer
+    in
     Element.row
         [ Element.spacing 24, Element.width Element.fill ]
         [ Element.column
@@ -835,8 +857,7 @@ answerMappingView question getAnswer answerMap model =
                        ]
                 )
             ]
-        , submittedForms model.forms
-            |> List.filterMap getAnswer
+        , List.filterMap Form.getOtherAnswer answers
             |> List.sortBy (String.trim >> String.toLower)
             |> List.map
                 (\other ->
@@ -869,6 +890,10 @@ answerMappingView question getAnswer answerMap model =
                 , Element.Border.width 1
                 , Element.padding 16
                 ]
+        , SurveyResults.multiChoiceWithOther
+            singleLineWidth
+            (DataEntry.fromMultiChoiceWithOther question answerMap answers)
+            question
         ]
 
 

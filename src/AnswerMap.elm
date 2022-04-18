@@ -4,6 +4,7 @@ module AnswerMap exposing
     , OtherAnswer
     , addGroup
     , allGroups
+    , comment
     , fromFreeText
     , fromMultiChoiceWithOther
     , hotkey
@@ -29,6 +30,7 @@ type AnswerMap a
     = AnswerMap
         { otherMapping : List { groupName : String, otherAnswers : Set OtherAnswer }
         , existingMapping : List (Set OtherAnswer)
+        , comment : String
         }
 
 
@@ -53,6 +55,7 @@ fromMultiChoiceWithOther question =
         (List.Nonempty.length question.choices - 1)
             |> List.range 0
             |> List.map (\_ -> Set.empty)
+    , comment = ""
     }
         |> AnswerMap
 
@@ -61,6 +64,7 @@ fromFreeText : AnswerMap a
 fromFreeText =
     { otherMapping = []
     , existingMapping = []
+    , comment = ""
     }
         |> AnswerMap
 
@@ -87,6 +91,11 @@ allGroups question (AnswerMap formMapData) =
                 }
             )
             formMapData.otherMapping
+
+
+comment : AnswerMap a -> String
+comment (AnswerMap answerMap) =
+    answerMap.comment
 
 
 otherAnswerMapsTo : Question a -> OtherAnswer -> AnswerMap a -> List { hotkey : Hotkey, groupName : String }
@@ -150,6 +159,7 @@ updateOtherAnswer hotkeys otherAnswer_ (AnswerMap formMapData) =
                     Set.remove otherAnswer_ set
             )
             formMapData.existingMapping
+    , comment = formMapData.comment
     }
         |> AnswerMap
 
@@ -195,12 +205,12 @@ renameGroup hotkey_ newGroupName (AnswerMap formMapData) =
                 formMapData
 
             else
-                { otherMapping =
-                    List.updateAt
-                        (index - existingMapping)
-                        (\a -> { a | groupName = newGroupName })
-                        formMapData.otherMapping
-                , existingMapping = formMapData.existingMapping
+                { formMapData
+                    | otherMapping =
+                        List.updateAt
+                            (index - existingMapping)
+                            (\a -> { a | groupName = newGroupName })
+                            formMapData.otherMapping
                 }
 
         Nothing ->
@@ -221,8 +231,8 @@ removeGroup hotkey_ (AnswerMap formMapData) =
                 formMapData
 
             else
-                { otherMapping = List.removeAt (index - existingMapping) formMapData.otherMapping
-                , existingMapping = formMapData.existingMapping
+                { formMapData
+                    | otherMapping = List.removeAt (index - existingMapping) formMapData.otherMapping
                 }
 
         Nothing ->
@@ -240,17 +250,17 @@ toggleMapping hotkey_ otherAnswer_ (AnswerMap formMapData) =
                     List.length formMapData.existingMapping
             in
             if index < existingMapping then
-                { otherMapping = formMapData.otherMapping
-                , existingMapping = List.updateAt index (toggleSet otherAnswer_) formMapData.existingMapping
+                { formMapData
+                    | existingMapping = List.updateAt index (toggleSet otherAnswer_) formMapData.existingMapping
                 }
 
             else
-                { otherMapping =
-                    List.updateAt
-                        (index - existingMapping)
-                        (\a -> { a | otherAnswers = toggleSet otherAnswer_ a.otherAnswers })
-                        formMapData.otherMapping
-                , existingMapping = formMapData.existingMapping
+                { formMapData
+                    | otherMapping =
+                        List.updateAt
+                            (index - existingMapping)
+                            (\a -> { a | otherAnswers = toggleSet otherAnswer_ a.otherAnswers })
+                            formMapData.otherMapping
                 }
 
         Nothing ->
@@ -261,8 +271,8 @@ toggleMapping hotkey_ otherAnswer_ (AnswerMap formMapData) =
 
 addGroup : String -> AnswerMap a -> AnswerMap a
 addGroup groupName (AnswerMap formMapData) =
-    { otherMapping = formMapData.otherMapping ++ [ { groupName = groupName, otherAnswers = Set.empty } ]
-    , existingMapping = formMapData.existingMapping
+    { formMapData
+        | otherMapping = formMapData.otherMapping ++ [ { groupName = groupName, otherAnswers = Set.empty } ]
     }
         |> AnswerMap
 

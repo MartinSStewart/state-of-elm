@@ -1,4 +1,4 @@
-module SurveyResults exposing (Data, view)
+module SurveyResults exposing (Data, multiChoiceWithOther, view)
 
 import AssocList as Dict
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
@@ -53,31 +53,48 @@ view data =
         [ singleChoiceGraph True data.doYouUseElm Questions.doYouUseElm
         , singleChoiceGraph False data.age Questions.age
         , singleChoiceGraph False data.functionalProgrammingExperience Questions.experienceLevel
-        , multiChoiceWithOther data.otherLanguages Questions.otherLanguages
-        , multiChoiceWithOther data.newsAndDiscussions Questions.newsAndDiscussions
-        , multiChoiceWithOther data.elmResources Questions.elmResources
+        , multiChoiceWithOther (Just 90) data.otherLanguages Questions.otherLanguages
+        , multiChoiceWithOther Nothing data.newsAndDiscussions Questions.newsAndDiscussions
+        , multiChoiceWithOther Nothing data.elmResources Questions.elmResources
         , singleChoiceGraph True data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-        , multiChoiceWithOther data.applicationDomains Questions.applicationDomains
+        , multiChoiceWithOther Nothing data.applicationDomains Questions.applicationDomains
         , singleChoiceGraph False data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-        , multiChoiceWithOther data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+        , multiChoiceWithOther (Just 110) data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
         , singleChoiceGraph False data.howLong Questions.howLong
-        , multiChoiceWithOther data.elmVersion Questions.elmVersion
+        , multiChoiceWithOther Nothing data.elmVersion Questions.elmVersion
         , singleChoiceGraph True data.doYouUseElmFormat Questions.doYouUseElmFormat
-        , multiChoiceWithOther data.stylingTools Questions.stylingTools
-        , multiChoiceWithOther data.buildTools Questions.buildTools
-        , multiChoiceWithOther data.frameworks Questions.frameworks
-        , multiChoiceWithOther data.editors Questions.editors
+        , multiChoiceWithOther Nothing data.stylingTools Questions.stylingTools
+        , multiChoiceWithOther Nothing data.buildTools Questions.buildTools
+        , multiChoiceWithOther Nothing data.frameworks Questions.frameworks
+        , multiChoiceWithOther Nothing data.editors Questions.editors
         , singleChoiceGraph True data.doYouUseElmReview Questions.doYouUseElmReview
         ]
 
 
-multiChoiceWithOther : DataEntryWithOther a -> Question a -> Element msg
-multiChoiceWithOther (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
+multiChoiceWithOther : Maybe Int -> DataEntryWithOther a -> Question a -> Element msg
+multiChoiceWithOther singleLineWidth (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
     let
+        otherKey =
+            "Other"
+
+        dataEntry =
+            Dict.remove otherKey dataEntryWithOther.data
+
+        maybeOther =
+            Dict.get otherKey dataEntryWithOther.data
+
         data =
-            Dict.toList dataEntryWithOther
+            Dict.toList dataEntry
                 |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
                 |> List.sortBy (\{ count } -> -count)
+                |> (\a ->
+                        case maybeOther of
+                            Just count ->
+                                a ++ [ { choice = otherKey, count = count } ]
+
+                            Nothing ->
+                                a
+                   )
 
         maxCount =
             List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
@@ -90,7 +107,7 @@ multiChoiceWithOther (DataEntryWithOther dataEntryWithOther) { title, choices, c
         [ Element.paragraph [] [ Element.text title ]
         , Ui.multipleChoiceIndicator
         , List.map
-            (\{ choice, count } -> barAndName choice count total)
+            (\{ choice, count } -> barAndName singleLineWidth choice count total)
             data
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
         ]
@@ -121,13 +138,24 @@ multiChoiceWithOther (DataEntryWithOther dataEntryWithOther) { title, choices, c
 --    ]
 
 
-barAndName : String -> Int -> Int -> Element msg
-barAndName name count total =
-    Element.column
-        [ Element.width Element.fill, Element.spacing 1 ]
-        [ Element.paragraph [ Element.Font.size 16 ] [ Element.text name ]
-        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total)
-        ]
+barAndName : Maybe Int -> String -> Int -> Int -> Element msg
+barAndName singleLineWidth name count total =
+    case singleLineWidth of
+        Just width ->
+            Element.row
+                [ Element.width Element.fill, Element.spacing 8 ]
+                [ Element.paragraph
+                    [ Element.Font.size 16, Element.width (Element.px width), Element.Font.alignRight ]
+                    [ Element.text name ]
+                , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total)
+                ]
+
+        Nothing ->
+            Element.column
+                [ Element.width Element.fill, Element.spacing 1 ]
+                [ Element.paragraph [ Element.Font.size 16 ] [ Element.text name ]
+                , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total)
+                ]
 
 
 bar : Int -> Int -> Element msg
@@ -192,6 +220,6 @@ singleChoiceGraph sortValues dataEntry { title, choices, choiceToString } =
                 else
                     identity
                )
-            |> List.map (\{ choice, count } -> barAndName (choiceToString choice) count total)
+            |> List.map (\{ choice, count } -> barAndName Nothing (choiceToString choice) count total)
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
         ]

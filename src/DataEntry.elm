@@ -17,36 +17,39 @@ import Ui exposing (MultiChoiceWithOther)
 
 
 type DataEntry a
-    = DataEntry (Nonempty Int)
+    = DataEntry { data : Nonempty Int, comment : String }
 
 
 type DataEntryWithOther a
-    = DataEntryWithOther (Dict String Int)
+    = DataEntryWithOther { data : Dict String Int, comment : String }
 
 
 get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }
 get choices (DataEntry dataEntry) =
-    Nonempty.zip choices dataEntry
+    Nonempty.zip choices dataEntry.data
         |> Nonempty.map (\( choice, count ) -> { choice = choice, count = count })
 
 
-fromForms : Nonempty a -> List a -> DataEntry a
-fromForms choices answers =
+fromForms : String -> Nonempty a -> List a -> DataEntry a
+fromForms comment choices answers =
     let
         list =
             Nonempty.toList choices
     in
-    List.foldl
-        (\answer state ->
-            case List.elemIndex answer list of
-                Just index ->
-                    Nonempty.updateAt index (\count -> count + 1) state
+    { data =
+        List.foldl
+            (\answer state ->
+                case List.elemIndex answer list of
+                    Just index ->
+                        Nonempty.updateAt index (\count -> count + 1) state
 
-                Nothing ->
-                    state
-        )
-        (Nonempty.map (always 0) choices)
-        answers
+                    Nothing ->
+                        state
+            )
+            (Nonempty.map (always 0) choices)
+            answers
+    , comment = comment
+    }
         |> DataEntry
 
 
@@ -64,35 +67,38 @@ fromMultiChoiceWithOther question answerMap multiChoiceWithOther =
                     )
                 |> Dict.fromList
     in
-    List.foldl
-        (\{ otherText, otherChecked, choices } dict ->
-            let
-                normalizedOther =
-                    AnswerMap.otherAnswer otherText
-            in
-            (if otherChecked then
-                AnswerMap.otherAnswerMapsTo question normalizedOther answerMap
-                    |> List.foldl
-                        (\{ groupName } dict2 ->
-                            Dict.update groupName (Maybe.map (\count -> count + 1)) dict2
-                        )
-                        dict
-
-             else
-                dict
-            )
-                |> (\dict2 ->
-                        List.foldl
-                            (\answer dict3 ->
-                                Dict.update
-                                    (question.choiceToString answer)
-                                    (Maybe.map (\count -> count + 1))
-                                    dict3
+    { data =
+        List.foldl
+            (\{ otherText, otherChecked, choices } dict ->
+                let
+                    normalizedOther =
+                        AnswerMap.otherAnswer otherText
+                in
+                (if otherChecked then
+                    AnswerMap.otherAnswerMapsTo question normalizedOther answerMap
+                        |> List.foldl
+                            (\{ groupName } dict2 ->
+                                Dict.update groupName (Maybe.map (\count -> count + 1)) dict2
                             )
-                            dict2
-                            (Set.toList choices)
-                   )
-        )
-        initDict
-        multiChoiceWithOther
+                            dict
+
+                 else
+                    dict
+                )
+                    |> (\dict2 ->
+                            List.foldl
+                                (\answer dict3 ->
+                                    Dict.update
+                                        (question.choiceToString answer)
+                                        (Maybe.map (\count -> count + 1))
+                                        dict3
+                                )
+                                dict2
+                                (Set.toList choices)
+                       )
+            )
+            initDict
+            multiChoiceWithOther
+    , comment = AnswerMap.comment answerMap
+    }
         |> DataEntryWithOther
