@@ -18,6 +18,7 @@ import Evergreen.V21.SurveyResults
 import Evergreen.V21.Types as New
 import Lamdera
 import Lamdera.Migrations exposing (..)
+import List.Extra as List
 import Time
 
 
@@ -703,9 +704,320 @@ migrateForm old =
 
 migrateCountry : String -> Maybe Country
 migrateCountry old =
-    case old of
-        "" ->
-            Nothing
+    (case old of
+        "America" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "Argentina" ->
+            ( "Argentina", "AR", "🇦🇷" )
+
+        "Argentina 🇦🇷" ->
+            ( "Argentina", "AR", "🇦🇷" )
+
+        "Armenia 🇦🇲" ->
+            ( "Armenia", "AM", "🇦🇲" )
+
+        "Australia" ->
+            ( "Australia", "AU", "🇦🇺" )
+
+        "Australia 🇦🇺" ->
+            ( "Australia", "AU", "🇦🇺" )
+
+        "Austria" ->
+            ( "Austria", "AT", "🇦🇹" )
+
+        "Austria 🇦🇹" ->
+            ( "Austria", "AT", "🇦🇹" )
+
+        "Bangladesh 🇧🇩" ->
+            ( "Bangladesh", "BD", "🇧🇩" )
+
+        "Belarus 🇧🇾" ->
+            ( "Belarus", "BY", "🇧🇾" )
+
+        "Belgium" ->
+            ( "Belgium", "BE", "🇧🇪" )
+
+        "Belgium 🇧🇪" ->
+            ( "Belgium", "BE", "🇧🇪" )
+
+        "Bosnia and Herzegovina 🇧🇦" ->
+            ( "Bosnia and Herzegovina", "BA", "🇧🇦" )
+
+        "Brazil" ->
+            ( "Brazil", "BR", "🇧🇷" )
+
+        "Brazil 🇧🇷" ->
+            ( "Brazil", "BR", "🇧🇷" )
+
+        "Canada" ->
+            ( "Canada", "CA", "🇨🇦" )
+
+        "Canada 🇨🇦" ->
+            ( "Canada", "CA", "🇨🇦" )
+
+        "Chile 🇨🇱" ->
+            ( "Chile", "CL", "🇨🇱" )
+
+        "China 🇨🇳" ->
+            ( "China", "CN", "🇨🇳" )
+
+        "Colombia 🇨🇴" ->
+            ( "Colombia", "CO", "🇨🇴" )
+
+        "Cyprus 🇨🇾" ->
+            ( "Cyprus", "CY", "🇨🇾" )
+
+        "Czech Republic" ->
+            ( "Czechia", "CZ", "🇨🇿" )
+
+        "Czechia 🇨🇿" ->
+            ( "Czechia", "CZ", "🇨🇿" )
+
+        "Denmark" ->
+            ( "Denmark", "DK", "🇩🇰" )
+
+        "Denmark 🇩🇰" ->
+            ( "Denmark", "DK", "🇩🇰" )
+
+        "Dominica" ->
+            ( "Dominica", "DM", "🇩🇲" )
+
+        "Ecuador 🇪🇨" ->
+            ( "Ecuador", "EC", "🇪🇨" )
+
+        "England" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
+        "Estonia 🇪🇪" ->
+            ( "Estonia", "EE", "🇪🇪" )
+
+        "Finland" ->
+            ( "Finland", "FI", "🇫🇮" )
+
+        "Finland 🇫🇮" ->
+            ( "Finland", "FI", "🇫🇮" )
+
+        "france" ->
+            ( "France", "FR", "🇫🇷" )
+
+        "France 🇫🇷" ->
+            ( "France", "FR", "🇫🇷" )
+
+        "Germany" ->
+            ( "Germany", "DE", "🇩🇪" )
+
+        "Germany 🇩🇪" ->
+            ( "Germany", "DE", "🇩🇪" )
+
+        "ghana" ->
+            ( "Ghana", "GH", "🇬🇭" )
+
+        "Greece" ->
+            ( "Greece", "GR", "🇬🇷" )
+
+        "Hungary" ->
+            ( "Hungary", "HU", "🇭🇺" )
+
+        "Hungary 🇭🇺" ->
+            ( "Hungary", "HU", "🇭🇺" )
+
+        "India" ->
+            ( "India", "IN", "🇮🇳" )
+
+        "India 🇮🇳" ->
+            ( "India", "IN", "🇮🇳" )
+
+        "Indonesia" ->
+            ( "Indonesia", "ID", "🇮🇩" )
+
+        "Indonesia 🇮🇩" ->
+            ( "Indonesia", "ID", "🇮🇩" )
+
+        "Iran (Islamic Republic of) 🇮🇷" ->
+            ( "Iran (Islamic Republic of)", "IR", "🇮🇷" )
+
+        "Ireland 🇮🇪" ->
+            ( "Ireland", "IE", "🇮🇪" )
+
+        "Israel" ->
+            ( "Israel", "IL", "🇮🇱" )
+
+        "Israel 🇮🇱" ->
+            ( "Israel", "IL", "🇮🇱" )
+
+        "Italy" ->
+            ( "Italy", "IT", "🇮🇹" )
+
+        "Italy 🇮🇹" ->
+            ( "Italy", "IT", "🇮🇹" )
+
+        "Japan" ->
+            ( "Japan", "JP", "🇯🇵" )
+
+        "Japan 🇯🇵" ->
+            ( "Japan", "JP", "🇯🇵" )
+
+        "Kenya 🇰🇪" ->
+            ( "Kenya", "KE", "🇰🇪" )
+
+        "Lithuania" ->
+            ( "Lithuania", "LT", "🇱🇹" )
+
+        "Malaysia 🇲🇾" ->
+            ( "Malaysia", "MY", "🇲🇾" )
+
+        "Mexico 🇲🇽" ->
+            ( "Mexico", "MX", "🇲🇽" )
+
+        "Netherlands" ->
+            ( "Netherlands", "NL", "🇳🇱" )
+
+        "Netherlands 🇳🇱" ->
+            ( "Netherlands", "NL", "🇳🇱" )
+
+        "New Zealand 🇳🇿" ->
+            ( "New Zealand", "NZ", "🇳🇿" )
+
+        "Norway" ->
+            ( "Norway", "NO", "🇳🇴" )
+
+        "Norway 🇳🇴" ->
+            ( "Norway", "NO", "🇳🇴" )
+
+        "Philippines 🇵🇭" ->
+            ( "Philippines", "PH", "🇵🇭" )
+
+        "Poland" ->
+            ( "Poland", "PL", "🇵🇱" )
+
+        "Poland 🇵🇱" ->
+            ( "Poland", "PL", "🇵🇱" )
+
+        "Portugal" ->
+            ( "Portugal", "PT", "🇵🇹" )
+
+        "Portugal 🇵🇹" ->
+            ( "Portugal", "PT", "🇵🇹" )
+
+        "Puerto Rico 🇵🇷" ->
+            ( "Puerto Rico", "PR", "🇵🇷" )
+
+        "Romania" ->
+            ( "Romania", "RO", "🇷🇴" )
+
+        "Romania 🇷🇴" ->
+            ( "Romania", "RO", "🇷🇴" )
+
+        "Russian Federation 🇷🇺" ->
+            ( "Russian Federation", "RU", "🇷🇺" )
+
+        "Scotland" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
+        "Serbia" ->
+            ( "Serbia", "RS", "🇷🇸" )
+
+        "Singapore" ->
+            ( "Singapore", "SG", "🇸🇬" )
+
+        "Slovakia" ->
+            ( "Slovakia", "SK", "🇸🇰" )
+
+        "Slovenia 🇸🇮" ->
+            ( "Slovenia", "SI", "🇸🇮" )
+
+        "South Africa 🇿🇦" ->
+            ( "South Africa", "ZA", "🇿🇦" )
+
+        "Spain" ->
+            ( "Spain", "ES", "🇪🇸" )
+
+        "Spain 🇪🇸" ->
+            ( "Spain", "ES", "🇪🇸" )
+
+        "Sweden" ->
+            ( "Sweden", "SE", "🇸🇪" )
+
+        "Sweden 🇸🇪" ->
+            ( "Sweden", "SE", "🇸🇪" )
+
+        "Switzerland" ->
+            ( "Switzerland", "CH", "🇨🇭" )
+
+        "Switzerland 🇨🇭" ->
+            ( "Switzerland", "CH", "🇨🇭" )
+
+        "Thailand 🇹🇭" ->
+            ( "Thailand", "TH", "🇹🇭" )
+
+        "The Netherlands" ->
+            ( "Netherlands", "NL", "🇳🇱" )
+
+        "Tokyo" ->
+            ( "Japan", "JP", "🇯🇵" )
+
+        "Trinidad and Tobago 🇹🇹" ->
+            ( "Trinidad and Tobago", "TT", "🇹🇹" )
+
+        "Turkey 🇹🇷" ->
+            ( "Turkey", "TR", "🇹🇷" )
+
+        "UK" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
+        "Ukraine" ->
+            ( "Ukraine", "UA", "🇺🇦" )
+
+        "Ukraine 🇺🇦" ->
+            ( "Ukraine", "UA", "🇺🇦" )
+
+        "United Kingdom" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
+        "United Kingdom of Great Britain and Northern Ireland 🇬🇧" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
+        "United States" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "United States 🇺🇲" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "United States of America" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "United States of America 🇺🇸" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "United statrd of america" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "Uruguay 🇺🇾" ->
+            ( "Uruguay", "UY", "🇺🇾" )
+
+        "US" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "USA" ->
+            ( "United States of America", "US", "🇺🇸" )
+
+        "Venezuela (Bolivarian Republic of) 🇻🇪" ->
+            ( "Venezuela (Bolivarian Republic of)", "VE", "🇻🇪" )
+
+        "Viet Nam 🇻🇳" ->
+            ( "Viet Nam", "VN", "🇻🇳" )
+
+        _ ->
+            ( "", "", "" )
+    )
+        |> (\( name, code, flag ) ->
+                if name == "" then
+                    Nothing
+
+                else
+                    Just { name = name, code = code, flag = flag }
+           )
 
 
 migrateMultiChoiceWithOther migrateFunc old =
