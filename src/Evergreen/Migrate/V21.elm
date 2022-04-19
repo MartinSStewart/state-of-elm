@@ -798,6 +798,12 @@ migrateCountry old =
         "Finland 🇫🇮" ->
             ( "Finland", "FI", "🇫🇮" )
 
+        "FRANCE" ->
+            ( "France", "FR", "🇫🇷" )
+
+        "France" ->
+            ( "France", "FR", "🇫🇷" )
+
         "france" ->
             ( "France", "FR", "🇫🇷" )
 
@@ -821,6 +827,9 @@ migrateCountry old =
 
         "Hungary 🇭🇺" ->
             ( "Hungary", "HU", "🇭🇺" )
+
+        "india" ->
+            ( "India", "IN", "🇮🇳" )
 
         "India" ->
             ( "India", "IN", "🇮🇳" )
@@ -912,6 +921,9 @@ migrateCountry old =
         "Russian Federation 🇷🇺" ->
             ( "Russian Federation", "RU", "🇷🇺" )
 
+        "scotland" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+
         "Scotland" ->
             ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
 
@@ -962,6 +974,9 @@ migrateCountry old =
 
         "Turkey 🇹🇷" ->
             ( "Turkey", "TR", "🇹🇷" )
+
+        "Uk" ->
+            ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
 
         "UK" ->
             ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
