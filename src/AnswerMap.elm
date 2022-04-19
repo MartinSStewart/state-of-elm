@@ -5,18 +5,17 @@ module AnswerMap exposing
     , addGroup
     , allGroups
     , comment
-    , fromFreeText
-    , fromMultiChoiceWithOther
     , hotkey
     , hotkeyToIndex
     , hotkeyToString
     , indexToHotkey
+    , init
     , normalizeOtherAnswer
     , otherAnswer
     , otherAnswerMapsTo
+    , otherAnswerToString
     , removeGroup
     , renameGroup
-    , toggleMapping
     , updateOtherAnswer
     , withComment
     )
@@ -25,6 +24,7 @@ import AssocSet as Set exposing (Set)
 import List.Extra as List
 import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
+import Ui
 
 
 type AnswerMap a
@@ -44,27 +44,30 @@ otherAnswer =
     normalizeOtherAnswer >> OtherAnswer
 
 
+otherAnswerToString : OtherAnswer -> String
+otherAnswerToString (OtherAnswer a) =
+    a
+
+
 normalizeOtherAnswer : String -> String
 normalizeOtherAnswer =
     String.trim >> String.toLower
 
 
-fromMultiChoiceWithOther : Question a -> AnswerMap a
-fromMultiChoiceWithOther question =
+init : Question a -> AnswerMap a
+init question =
     { otherMapping = []
     , existingMapping =
         (List.Nonempty.length question.choices - 1)
             |> List.range 0
-            |> List.map (\_ -> Set.empty)
-    , comment = ""
-    }
-        |> AnswerMap
-
-
-fromFreeText : AnswerMap a
-fromFreeText =
-    { otherMapping = []
-    , existingMapping = []
+            |> List.map
+                (\index ->
+                    List.Nonempty.get index question.choices
+                        |> question.choiceToString
+                        |> otherAnswer
+                        |> List.singleton
+                        |> Set.fromList
+                )
     , comment = ""
     }
         |> AnswerMap
@@ -239,34 +242,6 @@ removeGroup hotkey_ (AnswerMap formMapData) =
             else
                 { formMapData
                     | otherMapping = List.removeAt (index - existingMapping) formMapData.otherMapping
-                }
-
-        Nothing ->
-            formMapData
-    )
-        |> AnswerMap
-
-
-toggleMapping : Hotkey -> OtherAnswer -> AnswerMap a -> AnswerMap a
-toggleMapping hotkey_ otherAnswer_ (AnswerMap formMapData) =
-    (case hotkeyToIndex hotkey_ of
-        Just index ->
-            let
-                existingMapping =
-                    List.length formMapData.existingMapping
-            in
-            if index < existingMapping then
-                { formMapData
-                    | existingMapping = List.updateAt index (toggleSet otherAnswer_) formMapData.existingMapping
-                }
-
-            else
-                { formMapData
-                    | otherMapping =
-                        List.updateAt
-                            (index - existingMapping)
-                            (\a -> { a | otherAnswers = toggleSet otherAnswer_ a.otherAnswers })
-                            formMapData.otherMapping
                 }
 
         Nothing ->

@@ -24,6 +24,7 @@ import Element.Font
 import Element.Input
 import Env
 import Form exposing (Form, FormOtherQuestions, SpecificQuestion(..))
+import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Html.Events
 import List.Nonempty exposing (Nonempty)
 import Questions exposing (Question)
@@ -291,6 +292,10 @@ update msg model =
                 removeGroup =
                     AnswerMap.removeGroup hotkey
 
+                removeGroup_ : FreeTextAnswerMap -> FreeTextAnswerMap
+                removeGroup_ =
+                    FreeTextAnswerMap.removeGroup hotkey
+
                 answerMap =
                     model.formMapping
             in
@@ -337,13 +342,13 @@ update msg model =
                             { answerMap | testsWrittenFor = removeGroup answerMap.testsWrittenFor }
 
                         ElmInitialInterestQuestion ->
-                            { answerMap | elmInitialInterest = removeGroup answerMap.elmInitialInterest }
+                            { answerMap | elmInitialInterest = removeGroup_ answerMap.elmInitialInterest }
 
                         BiggestPainPointQuestion ->
-                            { answerMap | biggestPainPoint = removeGroup answerMap.biggestPainPoint }
+                            { answerMap | biggestPainPoint = removeGroup_ answerMap.biggestPainPoint }
 
                         WhatDoYouLikeMostQuestion ->
-                            { answerMap | whatDoYouLikeMost = removeGroup answerMap.whatDoYouLikeMost }
+                            { answerMap | whatDoYouLikeMost = removeGroup_ answerMap.whatDoYouLikeMost }
 
                         DoYouUseElmQuestion ->
                             answerMap
@@ -355,7 +360,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            answerMap
+                            { answerMap | countryLivingIn = removeGroup answerMap.countryLivingIn }
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -385,6 +390,10 @@ update msg model =
                 renameGroup : AnswerMap a -> AnswerMap a
                 renameGroup =
                     AnswerMap.renameGroup hotkey groupName
+
+                renameGroup_ : FreeTextAnswerMap -> FreeTextAnswerMap
+                renameGroup_ =
+                    FreeTextAnswerMap.renameGroup hotkey groupName
 
                 answerMap =
                     model.formMapping
@@ -432,13 +441,13 @@ update msg model =
                             { answerMap | testsWrittenFor = renameGroup answerMap.testsWrittenFor }
 
                         ElmInitialInterestQuestion ->
-                            { answerMap | elmInitialInterest = renameGroup answerMap.elmInitialInterest }
+                            { answerMap | elmInitialInterest = renameGroup_ answerMap.elmInitialInterest }
 
                         BiggestPainPointQuestion ->
-                            { answerMap | biggestPainPoint = renameGroup answerMap.biggestPainPoint }
+                            { answerMap | biggestPainPoint = renameGroup_ answerMap.biggestPainPoint }
 
                         WhatDoYouLikeMostQuestion ->
-                            { answerMap | whatDoYouLikeMost = renameGroup answerMap.whatDoYouLikeMost }
+                            { answerMap | whatDoYouLikeMost = renameGroup_ answerMap.whatDoYouLikeMost }
 
                         DoYouUseElmQuestion ->
                             answerMap
@@ -450,7 +459,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            answerMap
+                            { answerMap | countryLivingIn = renameGroup answerMap.countryLivingIn }
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -474,6 +483,10 @@ update msg model =
                 addGroup : AnswerMap a -> AnswerMap a
                 addGroup =
                     AnswerMap.addGroup groupName
+
+                addGroup_ : FreeTextAnswerMap -> FreeTextAnswerMap
+                addGroup_ =
+                    FreeTextAnswerMap.addGroup groupName
 
                 answerMap =
                     model.formMapping
@@ -521,13 +534,13 @@ update msg model =
                             { answerMap | testsWrittenFor = addGroup answerMap.testsWrittenFor }
 
                         ElmInitialInterestQuestion ->
-                            { answerMap | elmInitialInterest = addGroup answerMap.elmInitialInterest }
+                            { answerMap | elmInitialInterest = addGroup_ answerMap.elmInitialInterest }
 
                         BiggestPainPointQuestion ->
-                            { answerMap | biggestPainPoint = addGroup answerMap.biggestPainPoint }
+                            { answerMap | biggestPainPoint = addGroup_ answerMap.biggestPainPoint }
 
                         WhatDoYouLikeMostQuestion ->
-                            { answerMap | whatDoYouLikeMost = addGroup answerMap.whatDoYouLikeMost }
+                            { answerMap | whatDoYouLikeMost = addGroup_ answerMap.whatDoYouLikeMost }
 
                         DoYouUseElmQuestion ->
                             answerMap
@@ -539,7 +552,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            answerMap
+                            { answerMap | countryLivingIn = addGroup answerMap.countryLivingIn }
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -563,6 +576,12 @@ update msg model =
                 updateOtherAnswer : AnswerMap a -> AnswerMap a
                 updateOtherAnswer =
                     AnswerMap.updateOtherAnswer
+                        (String.toList text |> List.map AnswerMap.hotkey)
+                        otherAnswer
+
+                updateOtherAnswer_ : FreeTextAnswerMap -> FreeTextAnswerMap
+                updateOtherAnswer_ =
+                    FreeTextAnswerMap.updateOtherAnswer
                         (String.toList text |> List.map AnswerMap.hotkey)
                         otherAnswer
 
@@ -612,13 +631,13 @@ update msg model =
                             { answerMap | testsWrittenFor = updateOtherAnswer answerMap.testsWrittenFor }
 
                         ElmInitialInterestQuestion ->
-                            { answerMap | elmInitialInterest = updateOtherAnswer answerMap.elmInitialInterest }
+                            { answerMap | elmInitialInterest = updateOtherAnswer_ answerMap.elmInitialInterest }
 
                         BiggestPainPointQuestion ->
-                            { answerMap | biggestPainPoint = updateOtherAnswer answerMap.biggestPainPoint }
+                            { answerMap | biggestPainPoint = updateOtherAnswer_ answerMap.biggestPainPoint }
 
                         WhatDoYouLikeMostQuestion ->
-                            { answerMap | whatDoYouLikeMost = updateOtherAnswer answerMap.whatDoYouLikeMost }
+                            { answerMap | whatDoYouLikeMost = updateOtherAnswer_ answerMap.whatDoYouLikeMost }
 
                         DoYouUseElmQuestion ->
                             answerMap
@@ -630,7 +649,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            answerMap
+                            { answerMap | countryLivingIn = updateOtherAnswer answerMap.countryLivingIn }
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -663,6 +682,10 @@ update msg model =
                 withComment : AnswerMap a -> AnswerMap a
                 withComment =
                     AnswerMap.withComment text
+
+                withComment_ : FreeTextAnswerMap -> FreeTextAnswerMap
+                withComment_ =
+                    FreeTextAnswerMap.withComment text
 
                 answerMap =
                     model.formMapping
@@ -710,13 +733,13 @@ update msg model =
                             { answerMap | testsWrittenFor = withComment answerMap.testsWrittenFor }
 
                         ElmInitialInterestQuestion ->
-                            { answerMap | elmInitialInterest = withComment answerMap.elmInitialInterest }
+                            { answerMap | elmInitialInterest = withComment_ answerMap.elmInitialInterest }
 
                         BiggestPainPointQuestion ->
-                            { answerMap | biggestPainPoint = withComment answerMap.biggestPainPoint }
+                            { answerMap | biggestPainPoint = withComment_ answerMap.biggestPainPoint }
 
                         WhatDoYouLikeMostQuestion ->
-                            { answerMap | whatDoYouLikeMost = withComment answerMap.whatDoYouLikeMost }
+                            { answerMap | whatDoYouLikeMost = withComment_ answerMap.whatDoYouLikeMost }
 
                         DoYouUseElmQuestion ->
                             { answerMap | doYouUseElm = text }
@@ -728,7 +751,7 @@ update msg model =
                             { answerMap | functionalProgrammingExperience = text }
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = text }
+                            { answerMap | countryLivingIn = withComment answerMap.countryLivingIn }
 
                         DoYouUseElmAtWorkQuestion ->
                             { answerMap | doYouUseElmAtWork = text }
@@ -949,20 +972,35 @@ answerMapView model =
                 model
 
         ElmInitialInterestQuestion ->
-            Debug.todo ""
+            freeTextMappingView
+                Questions.initialInterestTitle
+                .elmInitialInterest
+                formMapping.elmInitialInterest
+                model
 
-        --answerMappingView Questions.elmInitialInterest
         BiggestPainPointQuestion ->
-            Debug.todo ""
+            freeTextMappingView
+                Questions.biggestPainPointTitle
+                .biggestPainPoint
+                formMapping.biggestPainPoint
+                model
 
-        --answerMappingView Questions.biggestPainPoint
         WhatDoYouLikeMostQuestion ->
-            Debug.todo ""
+            freeTextMappingView
+                Questions.whatDoYouLikeMostTitle
+                .whatDoYouLikeMost
+                formMapping.whatDoYouLikeMost
+                model
 
         DoYouUseElmQuestion ->
             Debug.todo ""
 
-        --commentEditor Questions.doYouUseElm .doYouUseElm formMapping.doYouUseElm model
+        --answerMappingView
+        --    Nothing
+        --    Questions.doYouUseElm
+        --    (\a -> { choices = a.doYouUseElm, otherChecked = False, otherText = "" })
+        --    formMapping.doYouUseElm
+        --    model
         AgeQuestion ->
             commentEditor Questions.age .age formMapping.age model
 
@@ -970,7 +1008,17 @@ answerMapView model =
             commentEditor Questions.experienceLevel .functionalProgrammingExperience formMapping.functionalProgrammingExperience model
 
         CountryLivingInQuestion ->
-            Debug.todo ""
+            answerMappingView
+                Nothing
+                Questions.countryLivingIn
+                (\a ->
+                    { choices = Set.empty
+                    , otherChecked = True
+                    , otherText = a.countryLivingIn
+                    }
+                )
+                formMapping.countryLivingIn
+                model
 
         DoYouUseElmAtWorkQuestion ->
             commentEditor Questions.doYouUseElmAtWork .doYouUseElmAtWork formMapping.doYouUseElmAtWork model
@@ -1090,7 +1138,118 @@ commentEditor question getAnswer comment model =
         ]
 
 
-answerMappingView : Maybe Int -> Question a -> (Form -> MultiChoiceWithOther a) -> AnswerMap a -> Model -> Element Msg
+freeTextMappingView :
+    String
+    -> (Form -> String)
+    -> FreeTextAnswerMap
+    -> Model
+    -> Element Msg
+freeTextMappingView title getAnswer answerMap model =
+    let
+        answers : List String
+        answers =
+            submittedForms model.forms |> List.map getAnswer
+    in
+    Element.row
+        [ Element.spacing 24, Element.width Element.fill ]
+        [ Element.column
+            [ Element.alignTop, Element.spacing 16 ]
+            [ Element.text (questionName model.selectedMapping)
+            , Element.column
+                [ Element.spacing 8 ]
+                (List.map
+                    (\{ groupName, hotkey, editable } ->
+                        Element.row [ Element.spacing 8 ]
+                            [ Element.el
+                                [ Element.Font.italic ]
+                                (Element.text ("(" ++ AnswerMap.hotkeyToString hotkey ++ ")"))
+                            , if editable then
+                                Element.Input.text
+                                    [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                    { text = groupName
+                                    , onChange = TypedGroupName hotkey
+                                    , placeholder = Nothing
+                                    , label = Element.Input.labelHidden "mapTo"
+                                    }
+
+                              else
+                                Element.text groupName
+                            , if editable then
+                                deleteButton (RemoveGroup hotkey)
+
+                              else
+                                Element.none
+                            ]
+                    )
+                    (FreeTextAnswerMap.allGroups answerMap)
+                    ++ [ Element.row []
+                            [ Element.el [ Element.Font.italic ] (Element.text "( ) ")
+                            , Element.Input.text
+                                [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                { text = ""
+                                , onChange = TypedNewGroupName
+                                , placeholder = Nothing
+                                , label = Element.Input.labelHidden "Group"
+                                }
+                            ]
+                       ]
+                )
+            ]
+        , Element.column
+            [ Element.width Element.fill, Element.spacing 16 ]
+            [ List.filterMap Form.getOtherAnswer_ answers
+                |> List.sortBy (String.trim >> String.toLower)
+                |> List.map
+                    (\other ->
+                        let
+                            otherAnswer : OtherAnswer
+                            otherAnswer =
+                                AnswerMap.otherAnswer other
+                        in
+                        Element.row
+                            [ Element.spacing 4 ]
+                            [ Element.Input.text
+                                [ Element.width (Element.px 80), Element.paddingXY 4 6 ]
+                                { text =
+                                    FreeTextAnswerMap.otherAnswerMapsTo otherAnswer answerMap
+                                        |> List.map (.hotkey >> AnswerMap.hotkeyToString)
+                                        |> String.concat
+                                , onChange = TypedOtherAnswerGroups otherAnswer
+                                , placeholder = Nothing
+                                , label = Element.Input.labelHidden "New group"
+                                }
+                            , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]
+                            ]
+                    )
+                |> Element.column
+                    [ Element.spacing 8
+                    , Element.width Element.fill
+                    , Element.scrollbars
+                    , Element.height (Element.px 600)
+                    , Element.alignTop
+                    , Element.Border.width 1
+                    , Element.padding 16
+                    ]
+            , Element.Input.multiline
+                [ Element.width Element.fill ]
+                { onChange = TypedComment
+                , text = FreeTextAnswerMap.comment answerMap
+                , placeholder = Nothing
+                , label = Element.Input.labelAbove [] (Element.text "Comment")
+                , spellcheck = True
+                }
+            ]
+        , SurveyResults.freeText (DataEntry.fromFreeText answerMap answers) title
+        ]
+
+
+answerMappingView :
+    Maybe Int
+    -> Question a
+    -> (Form -> MultiChoiceWithOther a)
+    -> AnswerMap a
+    -> Model
+    -> Element Msg
 answerMappingView singleLineWidth question getAnswer answerMap model =
     let
         answers : List (MultiChoiceWithOther a)
@@ -1143,7 +1302,7 @@ answerMappingView singleLineWidth question getAnswer answerMap model =
                 )
             ]
         , Element.column
-            [ Element.width Element.fill, Element.spacing 16 ]
+            [ Element.width Element.fill, Element.spacing 16, Element.alignTop ]
             [ List.filterMap Form.getOtherAnswer answers
                 |> List.sortBy (String.trim >> String.toLower)
                 |> List.map

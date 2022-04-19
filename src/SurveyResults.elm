@@ -1,4 +1,4 @@
-module SurveyResults exposing (Data, multiChoiceWithOther, singleChoiceGraph, view)
+module SurveyResults exposing (Data, freeText, multiChoiceWithOther, singleChoiceGraph, view)
 
 import AssocList as Dict
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
@@ -108,6 +108,32 @@ multiChoiceWithOther singleLineWidth (DataEntryWithOther dataEntryWithOther) { t
         , Ui.multipleChoiceIndicator
         , List.map
             (\{ choice, count } -> barAndName singleLineWidth choice count total)
+            data
+            |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
+        , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]
+        ]
+
+
+freeText : DataEntryWithOther a -> String -> Element msg
+freeText (DataEntryWithOther dataEntryWithOther) title =
+    let
+        data =
+            Dict.toList dataEntryWithOther.data
+                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+                |> List.sortBy (\{ count } -> -count)
+
+        maxCount =
+            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
+
+        total =
+            List.map .count data |> List.sum |> max 1
+    in
+    Element.column
+        [ Element.width Element.fill, Element.spacing 24 ]
+        [ Element.paragraph [] [ Element.text title ]
+        , Ui.multipleChoiceIndicator
+        , List.map
+            (\{ choice, count } -> barAndName Nothing choice count total)
             data
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
         , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]

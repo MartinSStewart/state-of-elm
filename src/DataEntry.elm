@@ -2,6 +2,7 @@ module DataEntry exposing
     ( DataEntry
     , DataEntryWithOther(..)
     , fromForms
+    , fromFreeText
     , fromMultiChoiceWithOther
     , get
     )
@@ -9,6 +10,7 @@ module DataEntry exposing
 import AnswerMap exposing (AnswerMap)
 import AssocList as Dict exposing (Dict)
 import AssocSet as Set
+import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import List.Extra as List
 import List.Nonempty as Nonempty exposing (Nonempty)
 import List.Nonempty.Ancillary as Nonempty
@@ -100,5 +102,39 @@ fromMultiChoiceWithOther question answerMap multiChoiceWithOther =
             initDict
             multiChoiceWithOther
     , comment = AnswerMap.comment answerMap
+    }
+        |> DataEntryWithOther
+
+
+fromFreeText : FreeTextAnswerMap -> List String -> DataEntryWithOther a
+fromFreeText answerMap multiChoiceWithOther =
+    let
+        initDict : Dict String Int
+        initDict =
+            FreeTextAnswerMap.allGroups
+                answerMap
+                |> List.map
+                    (\{ groupName } ->
+                        ( groupName, 0 )
+                    )
+                |> Dict.fromList
+    in
+    { data =
+        List.foldl
+            (\otherText dict ->
+                let
+                    normalizedOther =
+                        AnswerMap.otherAnswer otherText
+                in
+                FreeTextAnswerMap.otherAnswerMapsTo normalizedOther answerMap
+                    |> List.foldl
+                        (\{ groupName } dict2 ->
+                            Dict.update groupName (Maybe.map (\count -> count + 1)) dict2
+                        )
+                        dict
+            )
+            initDict
+            multiChoiceWithOther
+    , comment = FreeTextAnswerMap.comment answerMap
     }
         |> DataEntryWithOther

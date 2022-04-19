@@ -25,7 +25,7 @@ module Questions exposing
     , applicationDomains
     , biggestPainPointTitle
     , buildTools
-    , countryLivingInTitle
+    , countryLivingIn
     , doYouUseElm
     , doYouUseElmAtWork
     , doYouUseElmFormat
@@ -48,6 +48,8 @@ module Questions exposing
     , whichElmReviewRulesDoYouUse
     )
 
+import Countries exposing (Country)
+import Dict exposing (Dict)
 import List.Nonempty exposing (Nonempty(..))
 
 
@@ -593,8 +595,27 @@ initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
 
-countryLivingInTitle =
-    "Which country do you live in?"
+countryLivingIn : Question String
+countryLivingIn =
+    { title = "Which country do you live in?"
+    , choices =
+        let
+            overrides : Dict String Country
+            overrides =
+                Dict.fromList
+                    [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
+        in
+        List.map
+            (\country ->
+                Dict.get country.code overrides
+                    |> Maybe.withDefault country
+                    |> (\{ name, flag } -> name ++ " " ++ flag)
+            )
+            Countries.all
+            |> List.Nonempty.fromList
+            |> Maybe.withDefault (Nonempty "" [])
+    , choiceToString = identity
+    }
 
 
 applicationDomains : Question ApplicationDomains

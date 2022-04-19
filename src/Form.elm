@@ -5,10 +5,12 @@ module Form exposing
     , emptyForm
     , formCodec
     , getOtherAnswer
+    , getOtherAnswer_
     )
 
 import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
+import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Questions
     exposing
         ( Age(..)
@@ -92,7 +94,7 @@ type alias FormOtherQuestions =
     , otherLanguages : AnswerMap OtherLanguages
     , newsAndDiscussions : AnswerMap NewsAndDiscussions
     , elmResources : AnswerMap ElmResources
-    , countryLivingIn : String
+    , countryLivingIn : AnswerMap String
     , applicationDomains : AnswerMap ApplicationDomains
     , doYouUseElmAtWork : String
     , howLargeIsTheCompany : String
@@ -108,9 +110,9 @@ type alias FormOtherQuestions =
     , whichElmReviewRulesDoYouUse : AnswerMap WhichElmReviewRulesDoYouUse
     , testTools : AnswerMap TestTools
     , testsWrittenFor : AnswerMap TestsWrittenFor
-    , elmInitialInterest : AnswerMap ()
-    , biggestPainPoint : AnswerMap ()
-    , whatDoYouLikeMost : AnswerMap ()
+    , elmInitialInterest : FreeTextAnswerMap
+    , biggestPainPoint : FreeTextAnswerMap
+    , whatDoYouLikeMost : FreeTextAnswerMap
     }
 
 

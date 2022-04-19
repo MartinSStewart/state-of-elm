@@ -3,8 +3,6 @@ module Frontend exposing (..)
 import AdminPage
 import AssocSet as Set exposing (Set)
 import Browser
-import Countries exposing (Country)
-import Dict exposing (Dict)
 import Duration exposing (Duration)
 import Effect.Browser.Dom
 import Effect.Browser.Events
@@ -24,6 +22,7 @@ import Env
 import Form exposing (Form)
 import Lamdera
 import List.Extra as List
+import List.Nonempty
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
 import SurveyResults
@@ -643,23 +642,6 @@ section windowSize text content =
         ]
 
 
-countries : List String
-countries =
-    let
-        overrides : Dict String Country
-        overrides =
-            Dict.fromList
-                [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
-    in
-    List.map
-        (\country ->
-            Dict.get country.code overrides
-                |> Maybe.withDefault country
-                |> (\{ name, flag } -> name ++ " " ++ flag)
-        )
-        Countries.all
-
-
 formView : Size -> Form -> Element FrontendMsg
 formView windowSize form =
     let
@@ -766,9 +748,11 @@ formView windowSize form =
                 (\a -> FormChanged { form | elmInitialInterest = a })
             , Ui.searchableTextInput
                 windowSize
-                Questions.countryLivingInTitle
+                Questions.countryLivingIn.title
                 Nothing
-                countries
+                (List.Nonempty.toList Questions.countryLivingIn.choices
+                    |> List.map Questions.countryLivingIn.choiceToString
+                )
                 form.countryLivingIn
                 (\a -> FormChanged { form | countryLivingIn = a })
             , Ui.emailAddressInput

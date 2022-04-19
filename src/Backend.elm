@@ -11,6 +11,7 @@ import Effect.Task
 import Effect.Time
 import Env
 import Form exposing (Form, FormOtherQuestions)
+import FreeTextAnswerMap
 import Lamdera
 import Questions
 import Sha256
@@ -36,28 +37,28 @@ init =
             { doYouUseElm = ""
             , age = ""
             , functionalProgrammingExperience = ""
-            , otherLanguages = AnswerMap.fromMultiChoiceWithOther Questions.otherLanguages
-            , newsAndDiscussions = AnswerMap.fromMultiChoiceWithOther Questions.newsAndDiscussions
-            , elmResources = AnswerMap.fromMultiChoiceWithOther Questions.elmResources
-            , countryLivingIn = ""
-            , applicationDomains = AnswerMap.fromMultiChoiceWithOther Questions.applicationDomains
+            , otherLanguages = AnswerMap.init Questions.otherLanguages
+            , newsAndDiscussions = AnswerMap.init Questions.newsAndDiscussions
+            , elmResources = AnswerMap.init Questions.elmResources
+            , countryLivingIn = AnswerMap.init Questions.countryLivingIn
+            , applicationDomains = AnswerMap.init Questions.applicationDomains
             , doYouUseElmAtWork = ""
             , howLargeIsTheCompany = ""
-            , whatLanguageDoYouUseForBackend = AnswerMap.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend
+            , whatLanguageDoYouUseForBackend = AnswerMap.init Questions.whatLanguageDoYouUseForBackend
             , howLong = ""
-            , elmVersion = AnswerMap.fromMultiChoiceWithOther Questions.elmVersion
+            , elmVersion = AnswerMap.init Questions.elmVersion
             , doYouUseElmFormat = ""
-            , stylingTools = AnswerMap.fromMultiChoiceWithOther Questions.stylingTools
-            , buildTools = AnswerMap.fromMultiChoiceWithOther Questions.buildTools
-            , frameworks = AnswerMap.fromMultiChoiceWithOther Questions.frameworks
-            , editors = AnswerMap.fromMultiChoiceWithOther Questions.editors
+            , stylingTools = AnswerMap.init Questions.stylingTools
+            , buildTools = AnswerMap.init Questions.buildTools
+            , frameworks = AnswerMap.init Questions.frameworks
+            , editors = AnswerMap.init Questions.editors
             , doYouUseElmReview = ""
-            , whichElmReviewRulesDoYouUse = AnswerMap.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse
-            , testTools = AnswerMap.fromMultiChoiceWithOther Questions.testTools
-            , testsWrittenFor = AnswerMap.fromMultiChoiceWithOther Questions.testsWrittenFor
-            , elmInitialInterest = AnswerMap.fromFreeText
-            , biggestPainPoint = AnswerMap.fromFreeText
-            , whatDoYouLikeMost = AnswerMap.fromFreeText
+            , whichElmReviewRulesDoYouUse = AnswerMap.init Questions.whichElmReviewRulesDoYouUse
+            , testTools = AnswerMap.init Questions.testTools
+            , testsWrittenFor = AnswerMap.init Questions.testsWrittenFor
+            , elmInitialInterest = FreeTextAnswerMap.init
+            , biggestPainPoint = FreeTextAnswerMap.init
+            , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
     in
     ( { forms = Dict.empty
