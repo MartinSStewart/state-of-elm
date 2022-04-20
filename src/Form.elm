@@ -10,6 +10,7 @@ module Form exposing
 
 import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
+import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Questions
     exposing
@@ -94,7 +95,7 @@ type alias FormOtherQuestions =
     , otherLanguages : AnswerMap OtherLanguages
     , newsAndDiscussions : AnswerMap NewsAndDiscussions
     , elmResources : AnswerMap ElmResources
-    , countryLivingIn : AnswerMap String
+    , countryLivingIn : String
     , applicationDomains : AnswerMap ApplicationDomains
     , doYouUseElmAtWork : String
     , howLargeIsTheCompany : String

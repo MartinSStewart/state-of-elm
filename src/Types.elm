@@ -18,7 +18,7 @@ type FrontendModel
     | FormCompleted Effect.Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
-    | SurveyResultsLoaded SurveyResults.Data
+    | SurveyResultsLoaded SurveyResults.Model
 
 
 type SurveyStatus

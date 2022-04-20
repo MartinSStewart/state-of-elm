@@ -1,6 +1,7 @@
 module DataEntry exposing
     ( DataEntry
     , DataEntryWithOther(..)
+    , comment
     , fromForms
     , fromFreeText
     , fromMultiChoiceWithOther
@@ -26,6 +27,11 @@ type DataEntryWithOther a
     = DataEntryWithOther { data : Dict String Int, comment : String }
 
 
+comment : DataEntry a -> String
+comment (DataEntry dataEntry) =
+    dataEntry.comment
+
+
 get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }
 get choices (DataEntry dataEntry) =
     Nonempty.zip choices dataEntry.data
@@ -33,7 +39,7 @@ get choices (DataEntry dataEntry) =
 
 
 fromForms : String -> Nonempty a -> List a -> DataEntry a
-fromForms comment choices answers =
+fromForms comment_ choices answers =
     let
         list =
             Nonempty.toList choices
@@ -50,7 +56,7 @@ fromForms comment choices answers =
             )
             (Nonempty.map (always 0) choices)
             answers
-    , comment = comment
+    , comment = comment_
     }
         |> DataEntry
 

@@ -40,7 +40,7 @@ init =
             , otherLanguages = AnswerMap.init Questions.otherLanguages
             , newsAndDiscussions = AnswerMap.init Questions.newsAndDiscussions
             , elmResources = AnswerMap.init Questions.elmResources
-            , countryLivingIn = AnswerMap.init Questions.countryLivingIn
+            , countryLivingIn = ""
             , applicationDomains = AnswerMap.init Questions.applicationDomains
             , doYouUseElmAtWork = ""
             , howLargeIsTheCompany = ""
@@ -144,7 +144,9 @@ loadFormData sessionId time model =
             , elmResources =
                 List.map .elmResources forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.answerMap.elmResources
-            , countryLivingIn = ""
+            , countryLivingIn =
+                List.filterMap .countryLivingIn forms
+                    |> DataEntry.fromForms "" Questions.countryLivingIn.choices
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork forms
                     |> DataEntry.fromForms "" Questions.doYouUseElmAtWork.choices

@@ -16,6 +16,7 @@ module Ui exposing
     , searchableTextInput
     , singleChoiceQuestion
     , textInput
+    , titleAndSubtitle
     , titleFontSize
     , white
     )
@@ -368,7 +369,7 @@ container windowSize content =
 
 multipleChoiceIndicator : Element msg
 multipleChoiceIndicator =
-    Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple choice" ]
+    Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple answers can be chosen" ]
 
 
 multiChoiceQuestionWithOther :

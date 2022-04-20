@@ -288,6 +288,10 @@ updateFromBackend msg model =
 
 loadForm : LoadFormStatus -> Maybe Size -> Maybe Effect.Time.Posix -> FrontendModel
 loadForm formStatus maybeWindowSize maybeTime =
+    let
+        windowSize =
+            Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+    in
     case formStatus of
         NoFormFound ->
             FormLoaded
@@ -296,7 +300,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , windowSize = windowSize
                 , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
@@ -307,7 +311,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , windowSize = windowSize
                 , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
@@ -315,7 +319,7 @@ loadForm formStatus maybeWindowSize maybeTime =
             FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
-            SurveyResultsLoaded data
+            SurveyResultsLoaded { windowSize = windowSize, data = data }
 
         AwaitingResultsData ->
             Loading maybeWindowSize maybeTime
@@ -395,8 +399,8 @@ view model =
                 Admin admin ->
                     AdminPage.adminView admin |> Element.map AdminPageMsg
 
-                SurveyResultsLoaded data ->
-                    SurveyResults.view data
+                SurveyResultsLoaded surveyResultsLoaded ->
+                    SurveyResults.view surveyResultsLoaded
             )
         ]
     }

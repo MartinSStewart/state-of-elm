@@ -613,7 +613,32 @@ countryLivingIn =
             Countries.all
             |> List.Nonempty.fromList
             |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
-    , choiceToString = \{ name, flag } -> name ++ " " ++ flag
+    , choiceToString =
+        \{ name, flag } ->
+            (case name of
+                "United Kingdom of Great Britain and Northern Ireland" ->
+                    "United Kingdom"
+
+                "United States of America" ->
+                    "United States"
+
+                "Russian Federation" ->
+                    "Russia"
+
+                "Bosnia and Herzegovina" ->
+                    "Bosnia"
+
+                "Iran (Islamic Republic of)" ->
+                    "Iran"
+
+                "Venezuela (Bolivarian Republic of)" ->
+                    "Venezuela"
+
+                _ ->
+                    name
+            )
+                ++ " "
+                ++ flag
     }
 
 

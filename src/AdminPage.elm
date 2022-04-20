@@ -360,7 +360,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = removeGroup answerMap.countryLivingIn }
+                            answerMap
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -459,7 +459,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = renameGroup answerMap.countryLivingIn }
+                            answerMap
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -552,7 +552,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = addGroup answerMap.countryLivingIn }
+                            answerMap
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -649,7 +649,7 @@ update msg model =
                             answerMap
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = updateOtherAnswer answerMap.countryLivingIn }
+                            answerMap
 
                         DoYouUseElmAtWorkQuestion ->
                             answerMap
@@ -751,7 +751,7 @@ update msg model =
                             { answerMap | functionalProgrammingExperience = text }
 
                         CountryLivingInQuestion ->
-                            { answerMap | countryLivingIn = withComment answerMap.countryLivingIn }
+                            { answerMap | countryLivingIn = text }
 
                         DoYouUseElmAtWorkQuestion ->
                             { answerMap | doYouUseElmAtWork = text }
@@ -869,7 +869,7 @@ answerMapView model =
     case model.selectedMapping of
         OtherLanguagesQuestion ->
             answerMappingView
-                (Just 90)
+                True
                 Questions.otherLanguages
                 .otherLanguages
                 formMapping.otherLanguages
@@ -877,7 +877,7 @@ answerMapView model =
 
         NewsAndDiscussionsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.newsAndDiscussions
                 .newsAndDiscussions
                 formMapping.newsAndDiscussions
@@ -885,7 +885,7 @@ answerMapView model =
 
         ElmResourcesQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.elmResources
                 .elmResources
                 formMapping.elmResources
@@ -893,7 +893,7 @@ answerMapView model =
 
         ApplicationDomainsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.applicationDomains
                 .applicationDomains
                 formMapping.applicationDomains
@@ -901,7 +901,7 @@ answerMapView model =
 
         WhatLanguageDoYouUseForBackendQuestion ->
             answerMappingView
-                (Just 110)
+                True
                 Questions.whatLanguageDoYouUseForBackend
                 .whatLanguageDoYouUseForBackend
                 formMapping.whatLanguageDoYouUseForBackend
@@ -909,7 +909,7 @@ answerMapView model =
 
         ElmVersionQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.elmVersion
                 .elmVersion
                 formMapping.elmVersion
@@ -917,7 +917,7 @@ answerMapView model =
 
         StylingToolsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.stylingTools
                 .stylingTools
                 formMapping.stylingTools
@@ -925,7 +925,7 @@ answerMapView model =
 
         BuildToolsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.buildTools
                 .buildTools
                 formMapping.buildTools
@@ -933,7 +933,7 @@ answerMapView model =
 
         FrameworksQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.frameworks
                 .frameworks
                 formMapping.frameworks
@@ -941,7 +941,7 @@ answerMapView model =
 
         EditorsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.editors
                 .editors
                 formMapping.editors
@@ -949,7 +949,7 @@ answerMapView model =
 
         WhichElmReviewRulesDoYouUseQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.whichElmReviewRulesDoYouUse
                 .whichElmReviewRulesDoYouUse
                 formMapping.whichElmReviewRulesDoYouUse
@@ -957,7 +957,7 @@ answerMapView model =
 
         TestToolsQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.testTools
                 .testTools
                 formMapping.testTools
@@ -965,7 +965,7 @@ answerMapView model =
 
         TestsWrittenForQuestion ->
             answerMappingView
-                Nothing
+                False
                 Questions.testsWrittenFor
                 .testsWrittenFor
                 formMapping.testsWrittenFor
@@ -1002,38 +1002,33 @@ answerMapView model =
         --    formMapping.doYouUseElm
         --    model
         AgeQuestion ->
-            commentEditor Questions.age .age formMapping.age model
+            commentEditor False Questions.age .age formMapping.age model
 
         FunctionalProgrammingExperienceQuestion ->
-            commentEditor Questions.experienceLevel .functionalProgrammingExperience formMapping.functionalProgrammingExperience model
+            commentEditor False Questions.experienceLevel .functionalProgrammingExperience formMapping.functionalProgrammingExperience model
 
         CountryLivingInQuestion ->
-            answerMappingView
-                Nothing
+            commentEditor
+                True
                 Questions.countryLivingIn
-                (\a ->
-                    { choices = Set.empty
-                    , otherChecked = True
-                    , otherText = a.countryLivingIn
-                    }
-                )
+                .countryLivingIn
                 formMapping.countryLivingIn
                 model
 
         DoYouUseElmAtWorkQuestion ->
-            commentEditor Questions.doYouUseElmAtWork .doYouUseElmAtWork formMapping.doYouUseElmAtWork model
+            commentEditor False Questions.doYouUseElmAtWork .doYouUseElmAtWork formMapping.doYouUseElmAtWork model
 
         HowLargeIsTheCompanyQuestion ->
-            commentEditor Questions.howLargeIsTheCompany .howLargeIsTheCompany formMapping.howLargeIsTheCompany model
+            commentEditor False Questions.howLargeIsTheCompany .howLargeIsTheCompany formMapping.howLargeIsTheCompany model
 
         HowLongQuestion ->
-            commentEditor Questions.howLong .howLong formMapping.howLong model
+            commentEditor False Questions.howLong .howLong formMapping.howLong model
 
         DoYouUseElmFormatQuestion ->
-            commentEditor Questions.doYouUseElmFormat .doYouUseElmFormat formMapping.doYouUseElmFormat model
+            commentEditor False Questions.doYouUseElmFormat .doYouUseElmFormat formMapping.doYouUseElmFormat model
 
         DoYouUseElmReviewQuestion ->
-            commentEditor Questions.doYouUseElmReview .doYouUseElmReview formMapping.doYouUseElmReview model
+            commentEditor False Questions.doYouUseElmReview .doYouUseElmReview formMapping.doYouUseElmReview model
 
 
 questionName : SpecificQuestion -> String
@@ -1115,16 +1110,16 @@ questionName selectedMapping =
             "DoYouUseElmReview"
 
 
-commentEditor : Question a -> (Form -> Maybe a) -> String -> Model -> Element Msg
-commentEditor question getAnswer comment model =
+commentEditor : Bool -> Question a -> (Form -> Maybe a) -> String -> Model -> Element Msg
+commentEditor singleLine question getAnswer comment model =
     let
         answers : List a
         answers =
             submittedForms model.forms |> List.map getAnswer |> List.filterMap identity
     in
-    Element.row []
+    Element.row [ Element.spacing 8 ]
         [ Element.Input.multiline
-            [ Element.width Element.fill ]
+            [ Element.width Element.fill, Element.alignTop ]
             { onChange = TypedComment
             , text = comment
             , placeholder = Nothing
@@ -1132,6 +1127,8 @@ commentEditor question getAnswer comment model =
             , spellcheck = True
             }
         , SurveyResults.singleChoiceGraph
+            { width = 1920, height = 1080 }
+            singleLine
             True
             (DataEntry.fromForms comment question.choices answers)
             question
@@ -1244,13 +1241,13 @@ freeTextMappingView title getAnswer answerMap model =
 
 
 answerMappingView :
-    Maybe Int
+    Bool
     -> Question a
     -> (Form -> MultiChoiceWithOther a)
     -> AnswerMap a
     -> Model
     -> Element Msg
-answerMappingView singleLineWidth question getAnswer answerMap model =
+answerMappingView singleLine question getAnswer answerMap model =
     let
         answers : List (MultiChoiceWithOther a)
         answers =
@@ -1346,7 +1343,8 @@ answerMappingView singleLineWidth question getAnswer answerMap model =
                 }
             ]
         , SurveyResults.multiChoiceWithOther
-            singleLineWidth
+            { width = 1920, height = 1080 }
+            singleLine
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question
         ]
