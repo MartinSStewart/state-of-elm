@@ -634,6 +634,12 @@ countryLivingIn =
                 "Venezuela (Bolivarian Republic of)" ->
                     "Venezuela"
 
+                "Trinidad and Tobago" ->
+                    "Trinidad"
+
+                "Viet Nam" ->
+                    "Vietnam"
+
                 _ ->
                     name
             )

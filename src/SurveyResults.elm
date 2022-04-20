@@ -83,30 +83,42 @@ view model =
             model.data
     in
     Element.column
-        [ Element.width (Element.maximum 800 Element.fill)
-        , Element.centerX
-        , Element.spacing 24
-        , Element.paddingXY 8 16
-        ]
-        [ singleChoiceGraph model.windowSize False True data.doYouUseElm Questions.doYouUseElm
-        , singleChoiceGraph model.windowSize False False data.age Questions.age
-        , singleChoiceGraph model.windowSize False False data.functionalProgrammingExperience Questions.experienceLevel
-        , multiChoiceWithOther model.windowSize True data.otherLanguages Questions.otherLanguages
-        , multiChoiceWithOther model.windowSize False data.newsAndDiscussions Questions.newsAndDiscussions
-        , multiChoiceWithOther model.windowSize False data.elmResources Questions.elmResources
-        , singleChoiceGraph model.windowSize True True data.countryLivingIn Questions.countryLivingIn
-        , singleChoiceGraph model.windowSize False True data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-        , multiChoiceWithOther model.windowSize False data.applicationDomains Questions.applicationDomains
-        , singleChoiceGraph model.windowSize False False data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-        , multiChoiceWithOther model.windowSize True data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-        , singleChoiceGraph model.windowSize False False data.howLong Questions.howLong
-        , multiChoiceWithOther model.windowSize False data.elmVersion Questions.elmVersion
-        , singleChoiceGraph model.windowSize False True data.doYouUseElmFormat Questions.doYouUseElmFormat
-        , multiChoiceWithOther model.windowSize False data.stylingTools Questions.stylingTools
-        , multiChoiceWithOther model.windowSize False data.buildTools Questions.buildTools
-        , multiChoiceWithOther model.windowSize False data.frameworks Questions.frameworks
-        , multiChoiceWithOther model.windowSize False data.editors Questions.editors
-        , singleChoiceGraph model.windowSize False True data.doYouUseElmReview Questions.doYouUseElmReview
+        [ Element.width Element.fill ]
+        [ Ui.headerContainer
+            model.windowSize
+            [ Element.paragraph
+                []
+                [ Element.text "The survey results are in!" ]
+            , Element.paragraph
+                []
+                [ Element.text "Thank you to everyone who participated!" ]
+            ]
+        , Element.column
+            [ Element.width (Element.maximum 800 Element.fill)
+            , Element.centerX
+            , Element.spacing 24
+            , Element.paddingXY 8 16
+            ]
+            [ singleChoiceGraph model.windowSize False True data.doYouUseElm Questions.doYouUseElm
+            , singleChoiceGraph model.windowSize False False data.age Questions.age
+            , singleChoiceGraph model.windowSize False False data.functionalProgrammingExperience Questions.experienceLevel
+            , multiChoiceWithOther model.windowSize True data.otherLanguages Questions.otherLanguages
+            , multiChoiceWithOther model.windowSize False data.newsAndDiscussions Questions.newsAndDiscussions
+            , multiChoiceWithOther model.windowSize False data.elmResources Questions.elmResources
+            , singleChoiceGraph model.windowSize True True data.countryLivingIn Questions.countryLivingIn
+            , singleChoiceGraph model.windowSize False True data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+            , multiChoiceWithOther model.windowSize False data.applicationDomains Questions.applicationDomains
+            , singleChoiceGraph model.windowSize False False data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+            , multiChoiceWithOther model.windowSize True data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+            , singleChoiceGraph model.windowSize False False data.howLong Questions.howLong
+            , multiChoiceWithOther model.windowSize False data.elmVersion Questions.elmVersion
+            , singleChoiceGraph model.windowSize False True data.doYouUseElmFormat Questions.doYouUseElmFormat
+            , multiChoiceWithOther model.windowSize False data.stylingTools Questions.stylingTools
+            , multiChoiceWithOther model.windowSize False data.buildTools Questions.buildTools
+            , multiChoiceWithOther model.windowSize False data.frameworks Questions.frameworks
+            , multiChoiceWithOther model.windowSize False data.editors Questions.editors
+            , singleChoiceGraph model.windowSize False True data.doYouUseElmReview Questions.doYouUseElmReview
+            ]
         ]
 
 
@@ -143,7 +155,7 @@ multiChoiceWithOther windowSize singleLine (DataEntryWithOther dataEntryWithOthe
     in
     container
         windowSize
-        [ Element.paragraph [] [ Element.text title ]
+        [ Ui.title title
         , Ui.multipleChoiceIndicator
         , if singleLine then
             Element.table
@@ -170,22 +182,27 @@ multiChoiceWithOther windowSize singleLine (DataEntryWithOther dataEntryWithOthe
                                     , Element.height (Element.px 24)
                                     , Element.centerY
                                     ]
-                                    (bar count total)
+                                    (bar count total maxCount)
                       }
                     ]
                 }
 
           else
             List.map
-                (\{ choice, count } -> barAndName choice count total)
+                (\{ choice, count } -> barAndName choice count total maxCount)
                 data
-                |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
+                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
         , commentView dataEntryWithOther.comment
         ]
 
 
+commentView : String -> Element msg
 commentView comment =
-    Element.paragraph [ Element.Font.size 18 ] [ Element.text comment ]
+    Element.paragraph
+        [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 }
+        , Element.Font.size 18
+        ]
+        [ Element.text comment ]
 
 
 freeText : DataEntryWithOther a -> String -> Element msg
@@ -207,7 +224,7 @@ freeText (DataEntryWithOther dataEntryWithOther) title =
         [ Element.paragraph [] [ Element.text title ]
         , Ui.multipleChoiceIndicator
         , List.map
-            (\{ choice, count } -> barAndName choice count total)
+            (\{ choice, count } -> barAndName choice count total maxCount)
             data
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
         , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]
@@ -239,17 +256,17 @@ freeText (DataEntryWithOther dataEntryWithOther) title =
 --    ]
 
 
-barAndName : String -> Int -> Int -> Element msg
-barAndName name count total =
+barAndName : String -> Int -> Int -> Int -> Element msg
+barAndName name count total maxCount =
     Element.column
         [ Element.width Element.fill, Element.spacing 1 ]
         [ Element.paragraph [ Element.Font.size 16 ] [ Element.text name ]
-        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total)
+        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total maxCount)
         ]
 
 
-bar : Int -> Int -> Element msg
-bar count total =
+bar : Int -> Int -> Int -> Element msg
+bar count total maxCount =
     let
         a =
             10000
@@ -260,9 +277,10 @@ bar count total =
     Element.row
         [ Element.width Element.fill
         , Element.height Element.fill
+        , Element.paddingEach { left = 0, right = 40, top = 0, bottom = 0 }
         ]
         [ Element.el
-            [ Element.Background.color (Element.rgb 0 0 0)
+            [ Element.Background.color Ui.blue0
             , Element.fillPortion (a * count) |> Element.minimum 2 |> Element.width
             , Element.height Element.fill
             , Element.Border.rounded 4
@@ -274,7 +292,7 @@ bar count total =
             ]
             Element.none
         , Element.el
-            [ Element.fillPortion (a * (total - count)) |> Element.width ]
+            [ Element.fillPortion (a * (maxCount - count)) |> Element.width ]
             Element.none
         ]
 
@@ -312,7 +330,7 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
     in
     container
         windowSize
-        [ Element.paragraph [] [ Element.text title ]
+        [ Ui.title title
         , if singleLine then
             Element.table
                 [ Element.width Element.fill ]
@@ -338,7 +356,7 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
                                     , Element.height (Element.px 24)
                                     , Element.centerY
                                     ]
-                                    (bar count total)
+                                    (bar count total maxCount)
                       }
                     ]
                 }
@@ -347,8 +365,8 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
             sorted
                 |> List.map
                     (\{ choice, count } ->
-                        barAndName (choiceToString choice) count total
+                        barAndName (choiceToString choice) count total maxCount
                     )
-                |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
+                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
         , commentView (DataEntry.comment dataEntry)
         ]

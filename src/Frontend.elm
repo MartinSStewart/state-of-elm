@@ -22,7 +22,6 @@ import Env
 import Form exposing (Form)
 import Lamdera
 import List.Extra as List
-import List.Nonempty
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
 import SurveyResults
@@ -201,7 +200,7 @@ update msg model =
                     Admin adminLoginData
 
                 SurveyResultsLoaded data ->
-                    SurveyResultsLoaded data
+                    SurveyResultsLoaded { data | windowSize = windowSize }
             , Command.none
             )
 
@@ -459,38 +458,21 @@ answerSurveyView formLoaded =
         [ Element.spacing 24
         , Element.width Element.fill
         ]
-        [ Element.el
-            [ Element.Background.color Ui.blue0
-            , Element.width Element.fill
+        [ Ui.headerContainer
+            formLoaded.windowSize
+            [ Element.paragraph
+                [ Ui.titleFontSize, Element.Font.bold ]
+                [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
+            , Element.paragraph
+                []
+                [ Element.text "This is a survey to better understand the Elm community." ]
+            , Element.paragraph
+                []
+                [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
+            , Element.paragraph
+                [ Ui.titleFontSize, Element.Font.bold ]
+                [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
             ]
-            (Element.column
-                [ Element.Font.color Ui.white
-                , Ui.ifMobile formLoaded.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
-                , Element.centerX
-                , Element.width (Element.maximum 800 Element.fill)
-                , Element.spacing 24
-                ]
-                [ Element.paragraph
-                    [ Element.Font.size 48
-                    , Element.Font.bold
-                    , Element.Font.center
-                    ]
-                    [ Element.text "State of Elm 2022" ]
-                , Element.paragraph
-                    [ Ui.titleFontSize, Element.Font.bold ]
-                    [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
-                , Element.paragraph
-                    []
-                    [ Element.text "This is a survey to better understand the Elm community." ]
-                , Element.paragraph
-                    []
-                    [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
-                , Element.paragraph
-                    [ Ui.titleFontSize, Element.Font.bold ]
-                    [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
-                , Ui.disclaimer
-                ]
-            )
         , formView formLoaded.windowSize formLoaded.form
         , Ui.acceptTosQuestion
             formLoaded.windowSize

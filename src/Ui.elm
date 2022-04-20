@@ -8,6 +8,7 @@ module Ui exposing
     , button
     , disclaimer
     , emailAddressInput
+    , headerContainer
     , ifMobile
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
@@ -16,6 +17,7 @@ module Ui exposing
     , searchableTextInput
     , singleChoiceQuestion
     , textInput
+    , title
     , titleAndSubtitle
     , titleFontSize
     , white
@@ -44,7 +46,7 @@ type alias Size =
 
 
 textInput : Size -> String -> Maybe String -> String -> (String -> model) -> Element model
-textInput windowSize title maybeSubtitle text updateModel =
+textInput windowSize title_ maybeSubtitle text updateModel =
     container windowSize
         [ Element.Input.multiline
             multilineAttributes
@@ -54,17 +56,17 @@ textInput windowSize title maybeSubtitle text updateModel =
             , label =
                 Element.Input.labelAbove
                     [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 16 } ]
-                    (titleAndSubtitle title maybeSubtitle)
+                    (titleAndSubtitle title_ maybeSubtitle)
             , spellcheck = True
             }
         ]
 
 
 searchableTextInput : Size -> String -> Maybe String -> List String -> String -> (String -> model) -> Element model
-searchableTextInput windowSize title maybeSubtitle choices text updateModel =
+searchableTextInput windowSize title_ maybeSubtitle choices text updateModel =
     let
         id =
-            title ++ "_list"
+            title_ ++ "_list"
     in
     container windowSize
         [ Element.Input.text
@@ -75,7 +77,7 @@ searchableTextInput windowSize title maybeSubtitle choices text updateModel =
             , label =
                 Element.Input.labelAbove
                     [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 16 } ]
-                    (titleAndSubtitle title maybeSubtitle)
+                    (titleAndSubtitle title_ maybeSubtitle)
             }
         , Html.datalist
             [ Html.Attributes.id id ]
@@ -117,13 +119,13 @@ singleChoiceQuestion :
     -> Maybe a
     -> (Maybe a -> model)
     -> Element model
-singleChoiceQuestion windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
+singleChoiceQuestion windowSize question maybeSubtitle selection updateModel =
     container windowSize
-        [ titleAndSubtitle title maybeSubtitle
-        , List.Nonempty.toList choices
+        [ titleAndSubtitle question.title maybeSubtitle
+        , List.Nonempty.toList question.choices
             |> List.map
                 (\choice ->
-                    radioButton title (choiceToString choice) (Just choice == selection)
+                    radioButton question.title (question.choiceToString choice) (Just choice == selection)
                         |> Element.map
                             (\() ->
                                 if Just choice == selection then
@@ -187,16 +189,16 @@ multiChoiceQuestion :
     -> Set a
     -> (Set a -> model)
     -> Element model
-multiChoiceQuestion windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
+multiChoiceQuestion windowSize question maybeSubtitle selection updateModel =
     container windowSize
-        [ titleAndSubtitle title maybeSubtitle
+        [ titleAndSubtitle question.title maybeSubtitle
         , Element.column
             [ Element.spacing 8 ]
             [ Element.paragraph [ Element.Font.size 16, Element.Font.color blue0 ] [ Element.text "Multiple choice" ]
-            , List.Nonempty.toList choices
+            , List.Nonempty.toList question.choices
                 |> List.map
                     (\choice ->
-                        checkButton (choiceToString choice) (Set.member choice selection)
+                        checkButton (question.choiceToString choice) (Set.member choice selection)
                             |> Element.map (\() -> updateModel (toggleSet choice selection))
                     )
                 |> Element.column []
@@ -298,11 +300,36 @@ multiChoiceWithOtherInit =
     }
 
 
+headerContainer : Size -> List (Element msg) -> Element msg
+headerContainer windowSize contents =
+    Element.el
+        [ Element.Background.color blue0
+        , Element.width Element.fill
+        ]
+        (Element.column
+            [ Element.Font.color white
+            , ifMobile windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
+            , Element.centerX
+            , Element.width (Element.maximum 800 Element.fill)
+            , Element.spacing 24
+            ]
+            (Element.paragraph
+                [ Element.Font.size 48
+                , Element.Font.bold
+                , Element.Font.center
+                ]
+                [ Element.text "State of Elm 2022" ]
+                :: contents
+                ++ [ disclaimer ]
+            )
+        )
+
+
 titleAndSubtitle : String -> Maybe String -> Element msg
-titleAndSubtitle title maybeSubtitle =
+titleAndSubtitle title_ maybeSubtitle =
     Element.column
         [ Element.spacing 8 ]
-        [ Element.paragraph [ titleFontSize, Element.Font.bold, Element.Region.heading 3 ] [ Element.text title ]
+        [ title title_
         , case maybeSubtitle of
             Just subtitle ->
                 Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text subtitle ]
@@ -310,6 +337,13 @@ titleAndSubtitle title maybeSubtitle =
             Nothing ->
                 Element.none
         ]
+
+
+title : String -> Element msg
+title title_ =
+    Element.paragraph
+        [ titleFontSize, Element.Font.bold, Element.Region.heading 3 ]
+        [ Element.text title_ ]
 
 
 white : Element.Color
@@ -379,16 +413,16 @@ multiChoiceQuestionWithOther :
     -> MultiChoiceWithOther a
     -> (MultiChoiceWithOther a -> model)
     -> Element model
-multiChoiceQuestionWithOther windowSize { title, choices, choiceToString } maybeSubtitle selection updateModel =
+multiChoiceQuestionWithOther windowSize question maybeSubtitle selection updateModel =
     container windowSize
-        [ titleAndSubtitle title maybeSubtitle
+        [ titleAndSubtitle question.title maybeSubtitle
         , Element.column
             [ Element.width Element.fill, Element.spacing 8 ]
             [ multipleChoiceIndicator
-            , List.Nonempty.toList choices
+            , List.Nonempty.toList question.choices
                 |> List.map
                     (\choice ->
-                        checkButton (choiceToString choice) (Set.member choice selection.choices)
+                        checkButton (question.choiceToString choice) (Set.member choice selection.choices)
                             |> Element.map
                                 (\() ->
                                     updateModel
