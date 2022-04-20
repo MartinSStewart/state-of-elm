@@ -595,7 +595,7 @@ initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
 
-countryLivingIn : Question String
+countryLivingIn : Question Country
 countryLivingIn =
     { title = "Which country do you live in?"
     , choices =
@@ -609,12 +609,11 @@ countryLivingIn =
             (\country ->
                 Dict.get country.code overrides
                     |> Maybe.withDefault country
-                    |> (\{ name, flag } -> name ++ " " ++ flag)
             )
             Countries.all
             |> List.Nonempty.fromList
-            |> Maybe.withDefault (Nonempty "" [])
-    , choiceToString = identity
+            |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
+    , choiceToString = \{ name, flag } -> name ++ " " ++ flag
     }
 
 

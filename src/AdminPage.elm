@@ -1406,7 +1406,7 @@ adminFormView { form, submitTime } =
         , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguages form.otherLanguages)
         , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussions form.newsAndDiscussions)
         , infoRow "elmResources" (multichoiceToString Questions.elmResources form.elmResources)
-        , infoRow "countryLivingIn" form.countryLivingIn
+        , infoRow "countryLivingIn" (maybeToString Questions.countryLivingIn form.countryLivingIn)
         , infoRow "applicationDomains" (multichoiceToString Questions.applicationDomains form.applicationDomains)
         , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWork form.doYouUseElmAtWork)
         , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompany form.howLargeIsTheCompany)

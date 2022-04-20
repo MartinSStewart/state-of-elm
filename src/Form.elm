@@ -46,7 +46,7 @@ type alias Form =
     , otherLanguages : MultiChoiceWithOther OtherLanguages
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
     , elmResources : MultiChoiceWithOther ElmResources
-    , countryLivingIn : String
+    , countryLivingIn : Maybe Country
     , applicationDomains : MultiChoiceWithOther ApplicationDomains
     , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
     , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
@@ -124,7 +124,7 @@ emptyForm =
     , otherLanguages = Ui.multiChoiceWithOtherInit
     , newsAndDiscussions = Ui.multiChoiceWithOtherInit
     , elmResources = Ui.multiChoiceWithOtherInit
-    , countryLivingIn = ""
+    , countryLivingIn = Nothing
     , applicationDomains = Ui.multiChoiceWithOtherInit
     , doYouUseElmAtWork = Nothing
     , howLargeIsTheCompany = Nothing
@@ -184,7 +184,7 @@ formCodec =
         |> Serialize.field .otherLanguages (multiChoiceWithOtherCodec otherLanguagesCodec)
         |> Serialize.field .newsAndDiscussions (multiChoiceWithOtherCodec newsAndDiscussionsCodec)
         |> Serialize.field .elmResources (multiChoiceWithOtherCodec elmResourcesCodec)
-        |> Serialize.field .countryLivingIn Serialize.string
+        |> Serialize.field .countryLivingIn (Serialize.maybe countryCodec)
         |> Serialize.field .applicationDomains (multiChoiceWithOtherCodec whereDoYouUseElmCodec)
         |> Serialize.field .doYouUseElmAtWork (Serialize.maybe doYouUseElmAtWorkCodec)
         |> Serialize.field .howLargeIsTheCompany (Serialize.maybe howLargeIsTheCompanyCodec)
@@ -206,6 +206,15 @@ formCodec =
         |> Serialize.field .biggestPainPoint Serialize.string
         |> Serialize.field .whatDoYouLikeMost Serialize.string
         |> Serialize.field .emailAddress Serialize.string
+        |> Serialize.finishRecord
+
+
+countryCodec : Codec e Country
+countryCodec =
+    Serialize.record Country
+        |> Serialize.field .name Serialize.string
+        |> Serialize.field .code Serialize.string
+        |> Serialize.field .flag Serialize.string
         |> Serialize.finishRecord
 
 

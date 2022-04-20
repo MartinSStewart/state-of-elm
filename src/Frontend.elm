@@ -746,15 +746,15 @@ formView windowSize form =
                 Nothing
                 form.elmInitialInterest
                 (\a -> FormChanged { form | elmInitialInterest = a })
-            , Ui.searchableTextInput
-                windowSize
-                Questions.countryLivingIn.title
-                Nothing
-                (List.Nonempty.toList Questions.countryLivingIn.choices
-                    |> List.map Questions.countryLivingIn.choiceToString
-                )
-                form.countryLivingIn
-                (\a -> FormChanged { form | countryLivingIn = a })
+
+            -- TODO: Restore this
+            --, Ui.searchableTextInput
+            --    windowSize
+            --    Questions.countryLivingInTitle
+            --    Nothing
+            --    countries
+            --    form.countryLivingIn
+            --    (\a -> FormChanged { form | countryLivingIn = a })
             , Ui.emailAddressInput
                 windowSize
                 form.emailAddress
