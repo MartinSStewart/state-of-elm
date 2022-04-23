@@ -99,7 +99,7 @@ view model =
             , Element.spacing 24
             , Element.paddingXY 8 16
             ]
-            [ singleChoiceGraph model.windowSize False True data.doYouUseElm Questions.doYouUseElm
+            [ singleChoiceGraph model.windowSize False False data.doYouUseElm Questions.doYouUseElm
             , singleChoiceGraph model.windowSize False False data.age Questions.age
             , singleChoiceGraph model.windowSize False False data.functionalProgrammingExperience Questions.experienceLevel
             , multiChoiceWithOther model.windowSize True data.otherLanguages Questions.otherLanguages

@@ -993,14 +993,13 @@ answerMapView model =
                 model
 
         DoYouUseElmQuestion ->
-            Debug.todo ""
+            answerMappingView
+                False
+                Questions.doYouUseElm
+                (\a -> { choices = a.doYouUseElm, otherChecked = False, otherText = "" })
+                (AnswerMap.init Questions.doYouUseElm |> AnswerMap.withComment formMapping.doYouUseElm)
+                model
 
-        --answerMappingView
-        --    Nothing
-        --    Questions.doYouUseElm
-        --    (\a -> { choices = a.doYouUseElm, otherChecked = False, otherText = "" })
-        --    formMapping.doYouUseElm
-        --    model
         AgeQuestion ->
             commentEditor False Questions.age .age formMapping.age model
 
