@@ -599,19 +599,7 @@ countryLivingIn : Question Country
 countryLivingIn =
     { title = "Which country do you live in?"
     , choices =
-        let
-            overrides : Dict String Country
-            overrides =
-                Dict.fromList
-                    [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
-        in
-        List.map
-            (\country ->
-                Dict.get country.code overrides
-                    |> Maybe.withDefault country
-            )
-            Countries.all
-            |> List.Nonempty.fromList
+        List.Nonempty.fromList Countries.all
             |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
     , choiceToString =
         \{ name, flag } ->
@@ -639,6 +627,9 @@ countryLivingIn =
 
                 "Viet Nam" ->
                     "Vietnam"
+
+                "Taiwan, Province of China" ->
+                    "Taiwan"
 
                 _ ->
                     name

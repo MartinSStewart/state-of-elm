@@ -1235,7 +1235,7 @@ freeTextMappingView title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.freeText (DataEntry.fromFreeText answerMap answers) title
+        , SurveyResults.freeText { width = 1920, height = 1080 } (DataEntry.fromFreeText answerMap answers) title
         ]
 
 

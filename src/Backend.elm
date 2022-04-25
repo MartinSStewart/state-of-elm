@@ -130,11 +130,11 @@ loadFormData sessionId time model =
             in
             { doYouUseElm =
                 List.concatMap (.doYouUseElm >> Set.toList) forms
-                    |> DataEntry.fromForms "" Questions.doYouUseElm.choices
-            , age = List.filterMap .age forms |> DataEntry.fromForms "" Questions.age.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElm Questions.doYouUseElm.choices
+            , age = List.filterMap .age forms |> DataEntry.fromForms model.answerMap.age Questions.age.choices
             , functionalProgrammingExperience =
                 List.filterMap .functionalProgrammingExperience forms
-                    |> DataEntry.fromForms "" Questions.experienceLevel.choices
+                    |> DataEntry.fromForms model.answerMap.functionalProgrammingExperience Questions.experienceLevel.choices
             , otherLanguages =
                 List.map .otherLanguages forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.otherLanguages model.answerMap.otherLanguages
@@ -146,10 +146,10 @@ loadFormData sessionId time model =
                     |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.answerMap.elmResources
             , countryLivingIn =
                 List.filterMap .countryLivingIn forms
-                    |> DataEntry.fromForms "" Questions.countryLivingIn.choices
+                    |> DataEntry.fromForms model.answerMap.countryLivingIn Questions.countryLivingIn.choices
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork forms
-                    |> DataEntry.fromForms "" Questions.doYouUseElmAtWork.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices
             , applicationDomains =
                 List.map .applicationDomains forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.answerMap.applicationDomains
@@ -159,13 +159,13 @@ loadFormData sessionId time model =
             , whatLanguageDoYouUseForBackend =
                 List.map .whatLanguageDoYouUseForBackend forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.answerMap.whatLanguageDoYouUseForBackend
-            , howLong = List.filterMap .howLong forms |> DataEntry.fromForms "" Questions.howLong.choices
+            , howLong = List.filterMap .howLong forms |> DataEntry.fromForms model.answerMap.howLong Questions.howLong.choices
             , elmVersion =
                 List.map .elmVersion forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.elmVersion model.answerMap.elmVersion
             , doYouUseElmFormat =
                 List.filterMap .doYouUseElmFormat forms
-                    |> DataEntry.fromForms "" Questions.doYouUseElmFormat.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmFormat Questions.doYouUseElmFormat.choices
             , stylingTools =
                 List.map .stylingTools forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.stylingTools model.answerMap.stylingTools
@@ -180,7 +180,7 @@ loadFormData sessionId time model =
                     |> DataEntry.fromMultiChoiceWithOther Questions.editors model.answerMap.editors
             , doYouUseElmReview =
                 List.filterMap .doYouUseElmReview forms
-                    |> DataEntry.fromForms "" Questions.doYouUseElmReview.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmReview Questions.doYouUseElmReview.choices
             , whichElmReviewRulesDoYouUse =
                 List.map .whichElmReviewRulesDoYouUse forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.answerMap.whichElmReviewRulesDoYouUse
@@ -190,9 +190,15 @@ loadFormData sessionId time model =
             , testsWrittenFor =
                 List.map .testsWrittenFor forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.answerMap.testsWrittenFor
-            , elmInitialInterest = ""
-            , biggestPainPoint = ""
-            , whatDoYouLikeMost = ""
+            , elmInitialInterest =
+                List.map .elmInitialInterest forms
+                    |> DataEntry.fromFreeText model.answerMap.elmInitialInterest
+            , biggestPainPoint =
+                List.map .biggestPainPoint forms
+                    |> DataEntry.fromFreeText model.answerMap.biggestPainPoint
+            , whatDoYouLikeMost =
+                List.map .whatDoYouLikeMost forms
+                    |> DataEntry.fromFreeText model.answerMap.whatDoYouLikeMost
             }
                 |> SurveyResults
 

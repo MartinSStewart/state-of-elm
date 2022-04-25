@@ -43,9 +43,9 @@ type alias Data =
     , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
     , testTools : DataEntryWithOther TestTools
     , testsWrittenFor : DataEntryWithOther TestsWrittenFor
-    , elmInitialInterest : String
-    , biggestPainPoint : String
-    , whatDoYouLikeMost : String
+    , elmInitialInterest : DataEntryWithOther ()
+    , biggestPainPoint : DataEntryWithOther ()
+    , whatDoYouLikeMost : DataEntryWithOther ()
     }
 
 
@@ -118,6 +118,9 @@ view model =
             , multiChoiceWithOther model.windowSize False data.frameworks Questions.frameworks
             , multiChoiceWithOther model.windowSize False data.editors Questions.editors
             , singleChoiceGraph model.windowSize False True data.doYouUseElmReview Questions.doYouUseElmReview
+            , freeText model.windowSize data.elmInitialInterest Questions.initialInterestTitle
+            , freeText model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+            , freeText model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
             ]
         ]
 
@@ -205,8 +208,8 @@ commentView comment =
         [ Element.text comment ]
 
 
-freeText : DataEntryWithOther a -> String -> Element msg
-freeText (DataEntryWithOther dataEntryWithOther) title =
+freeText : Size -> DataEntryWithOther a -> String -> Element msg
+freeText windowSize (DataEntryWithOther dataEntryWithOther) title =
     let
         data =
             Dict.toList dataEntryWithOther.data
