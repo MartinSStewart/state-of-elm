@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData)
+import AnswerMap exposing (AnswerMap)
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
@@ -9,7 +10,8 @@ import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Task
 import Effect.Time
 import Env
-import Form exposing (Form)
+import Form exposing (Form, FormOtherQuestions)
+import FreeTextAnswerMap
 import Lamdera
 import Questions
 import Sha256
@@ -29,8 +31,38 @@ app =
 
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
+    let
+        answerMap : FormOtherQuestions
+        answerMap =
+            { doYouUseElm = ""
+            , age = ""
+            , functionalProgrammingExperience = ""
+            , otherLanguages = AnswerMap.init Questions.otherLanguages
+            , newsAndDiscussions = AnswerMap.init Questions.newsAndDiscussions
+            , elmResources = AnswerMap.init Questions.elmResources
+            , countryLivingIn = ""
+            , applicationDomains = AnswerMap.init Questions.applicationDomains
+            , doYouUseElmAtWork = ""
+            , howLargeIsTheCompany = ""
+            , whatLanguageDoYouUseForBackend = AnswerMap.init Questions.whatLanguageDoYouUseForBackend
+            , howLong = ""
+            , elmVersion = AnswerMap.init Questions.elmVersion
+            , doYouUseElmFormat = ""
+            , stylingTools = AnswerMap.init Questions.stylingTools
+            , buildTools = AnswerMap.init Questions.buildTools
+            , frameworks = AnswerMap.init Questions.frameworks
+            , editors = AnswerMap.init Questions.editors
+            , doYouUseElmReview = ""
+            , whichElmReviewRulesDoYouUse = AnswerMap.init Questions.whichElmReviewRulesDoYouUse
+            , testTools = AnswerMap.init Questions.testTools
+            , testsWrittenFor = AnswerMap.init Questions.testsWrittenFor
+            , elmInitialInterest = FreeTextAnswerMap.init
+            , biggestPainPoint = FreeTextAnswerMap.init
+            , whatDoYouLikeMost = FreeTextAnswerMap.init
+            }
+    in
     ( { forms = Dict.empty
-      , formMapping = Form.noMapping
+      , answerMap = answerMap
       , adminLogin = Nothing
       }
     , Command.none
@@ -39,7 +71,7 @@ init =
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms, formMapping = model.formMapping }
+    { forms = Dict.values model.forms, formMapping = model.answerMap }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -98,24 +130,75 @@ loadFormData sessionId time model =
             in
             { doYouUseElm =
                 List.concatMap (.doYouUseElm >> Set.toList) forms
-                    |> DataEntry.fromForms Questions.doYouUseElm.choices
-            , age = List.filterMap .age forms |> DataEntry.fromForms Questions.age.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElm Questions.doYouUseElm.choices
+            , age = List.filterMap .age forms |> DataEntry.fromForms model.answerMap.age Questions.age.choices
             , functionalProgrammingExperience =
                 List.filterMap .functionalProgrammingExperience forms
-                    |> DataEntry.fromForms Questions.experienceLevel.choices
+                    |> DataEntry.fromForms model.answerMap.functionalProgrammingExperience Questions.experienceLevel.choices
+            , otherLanguages =
+                List.map .otherLanguages forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.otherLanguages model.answerMap.otherLanguages
+            , newsAndDiscussions =
+                List.map .newsAndDiscussions forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.newsAndDiscussions model.answerMap.newsAndDiscussions
+            , elmResources =
+                List.map .elmResources forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.answerMap.elmResources
+            , countryLivingIn =
+                List.filterMap .countryLivingIn forms
+                    |> DataEntry.fromForms model.answerMap.countryLivingIn Questions.countryLivingIn.choices
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork forms
-                    |> DataEntry.fromForms Questions.doYouUseElmAtWork.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices
+            , applicationDomains =
+                List.map .applicationDomains forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.answerMap.applicationDomains
             , howLargeIsTheCompany =
                 List.filterMap .howLargeIsTheCompany forms
-                    |> DataEntry.fromForms Questions.howLargeIsTheCompany.choices
-            , howLong = List.filterMap .howLong forms |> DataEntry.fromForms Questions.howLong.choices
+                    |> DataEntry.fromForms "" Questions.howLargeIsTheCompany.choices
+            , whatLanguageDoYouUseForBackend =
+                List.map .whatLanguageDoYouUseForBackend forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.answerMap.whatLanguageDoYouUseForBackend
+            , howLong = List.filterMap .howLong forms |> DataEntry.fromForms model.answerMap.howLong Questions.howLong.choices
+            , elmVersion =
+                List.map .elmVersion forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmVersion model.answerMap.elmVersion
             , doYouUseElmFormat =
                 List.filterMap .doYouUseElmFormat forms
-                    |> DataEntry.fromForms Questions.doYouUseElmFormat.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmFormat Questions.doYouUseElmFormat.choices
+            , stylingTools =
+                List.map .stylingTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.stylingTools model.answerMap.stylingTools
+            , buildTools =
+                List.map .buildTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.buildTools model.answerMap.buildTools
+            , frameworks =
+                List.map .frameworks forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.frameworks model.answerMap.frameworks
+            , editors =
+                List.map .editors forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.editors model.answerMap.editors
             , doYouUseElmReview =
                 List.filterMap .doYouUseElmReview forms
-                    |> DataEntry.fromForms Questions.doYouUseElmReview.choices
+                    |> DataEntry.fromForms model.answerMap.doYouUseElmReview Questions.doYouUseElmReview.choices
+            , whichElmReviewRulesDoYouUse =
+                List.map .whichElmReviewRulesDoYouUse forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.answerMap.whichElmReviewRulesDoYouUse
+            , testTools =
+                List.map .testTools forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testTools model.answerMap.testTools
+            , testsWrittenFor =
+                List.map .testsWrittenFor forms
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.answerMap.testsWrittenFor
+            , elmInitialInterest =
+                List.map .elmInitialInterest forms
+                    |> DataEntry.fromFreeText model.answerMap.elmInitialInterest
+            , biggestPainPoint =
+                List.map .biggestPainPoint forms
+                    |> DataEntry.fromFreeText model.answerMap.biggestPainPoint
+            , whatDoYouLikeMost =
+                List.map .whatDoYouLikeMost forms
+                    |> DataEntry.fromFreeText model.answerMap.whatDoYouLikeMost
             }
                 |> SurveyResults
 
@@ -224,6 +307,15 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             if isAdmin sessionId model then
                 ( { model | adminLogin = Nothing }
                 , loadFormData sessionId time model |> LogOutResponse |> Effect.Lamdera.sendToFrontend clientId
+                )
+
+            else
+                ( model, Command.none )
+
+        AdminToBackend (AdminPage.SaveAnswerMap answerMap) ->
+            if isAdmin sessionId model then
+                ( { model | answerMap = answerMap }
+                , Command.none
                 )
 
             else

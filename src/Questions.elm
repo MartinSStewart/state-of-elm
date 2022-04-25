@@ -1,12 +1,14 @@
 module Questions exposing
     ( Age(..)
+    , ApplicationDomains(..)
     , BuildTools(..)
     , DoYouUseElm(..)
     , DoYouUseElmAtWork(..)
     , DoYouUseElmFormat(..)
     , DoYouUseElmReview(..)
-    , Editor(..)
+    , Editors(..)
     , ElmResources(..)
+    , ElmVersion(..)
     , ExperienceLevel(..)
     , Frameworks(..)
     , HowLargeIsTheCompany(..)
@@ -17,11 +19,10 @@ module Questions exposing
     , StylingTools(..)
     , TestTools(..)
     , TestsWrittenFor(..)
-    , WhatElmVersion(..)
-    , WhatLanguageDoYouUseForTheBackend(..)
-    , WhereDoYouUseElm(..)
+    , WhatLanguageDoYouUseForBackend(..)
     , WhichElmReviewRulesDoYouUse(..)
     , age
+    , applicationDomains
     , biggestPainPointTitle
     , buildTools
     , countryLivingIn
@@ -29,8 +30,9 @@ module Questions exposing
     , doYouUseElmAtWork
     , doYouUseElmFormat
     , doYouUseElmReview
-    , editor
+    , editors
     , elmResources
+    , elmVersion
     , experienceLevel
     , frameworks
     , howLargeIsTheCompany
@@ -42,9 +44,7 @@ module Questions exposing
     , testTools
     , testsWrittenFor
     , whatDoYouLikeMostTitle
-    , whatElmVersion
-    , whatLanguageDoYouUseForTheBackend
-    , whereDoYouUseElm
+    , whatLanguageDoYouUseForBackend
     , whichElmReviewRulesDoYouUse
     )
 
@@ -131,7 +131,7 @@ type ElmResources
     | ElmOnline
 
 
-type WhereDoYouUseElm
+type ApplicationDomains
     = Education
     | Gaming
     | ECommerce
@@ -189,7 +189,7 @@ type HowLargeIsTheCompany
     | Size100OrMore
 
 
-type WhatLanguageDoYouUseForTheBackend
+type WhatLanguageDoYouUseForBackend
     = JavaScript_
     | TypeScript_
     | Go_
@@ -208,7 +208,7 @@ type WhatLanguageDoYouUseForTheBackend
     | NotApplicable
 
 
-type WhatElmVersion
+type ElmVersion
     = Version0_19
     | Version0_18
     | Version0_17
@@ -253,7 +253,7 @@ type Frameworks
     | ElmPlayground
 
 
-type Editor
+type Editors
     = SublimeText
     | Vim
     | Atom
@@ -599,26 +599,48 @@ countryLivingIn : Question Country
 countryLivingIn =
     { title = "Which country do you live in?"
     , choices =
-        let
-            overrides : Dict String Country
-            overrides =
-                Dict.fromList
-                    [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
-        in
-        List.map
-            (\country ->
-                Dict.get country.code overrides
-                    |> Maybe.withDefault country
-            )
-            Countries.all
-            |> List.Nonempty.fromList
+        List.Nonempty.fromList Countries.all
             |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
-    , choiceToString = \{ name, flag } -> name ++ " " ++ flag
+    , choiceToString =
+        \{ name, flag } ->
+            (case name of
+                "United Kingdom of Great Britain and Northern Ireland" ->
+                    "United Kingdom"
+
+                "United States of America" ->
+                    "United States"
+
+                "Russian Federation" ->
+                    "Russia"
+
+                "Bosnia and Herzegovina" ->
+                    "Bosnia"
+
+                "Iran (Islamic Republic of)" ->
+                    "Iran"
+
+                "Venezuela (Bolivarian Republic of)" ->
+                    "Venezuela"
+
+                "Trinidad and Tobago" ->
+                    "Trinidad"
+
+                "Viet Nam" ->
+                    "Vietnam"
+
+                "Taiwan, Province of China" ->
+                    "Taiwan"
+
+                _ ->
+                    name
+            )
+                ++ " "
+                ++ flag
     }
 
 
-whereDoYouUseElm : Question WhereDoYouUseElm
-whereDoYouUseElm =
+applicationDomains : Question ApplicationDomains
+applicationDomains =
     { title = "In which application domains, if any, have you used Elm?"
     , choices =
         Nonempty
@@ -724,8 +746,8 @@ howLargeIsTheCompany =
     }
 
 
-whatLanguageDoYouUseForTheBackend : Question WhatLanguageDoYouUseForTheBackend
-whatLanguageDoYouUseForTheBackend =
+whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForBackend
+whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
     , choices =
         Nonempty JavaScript_
@@ -853,8 +875,8 @@ howLong =
     }
 
 
-whatElmVersion : Question WhatElmVersion
-whatElmVersion =
+elmVersion : Question ElmVersion
+elmVersion =
     { title = "What versions of Elm are you using?"
     , choices = Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
     , choiceToString =
@@ -1013,8 +1035,8 @@ frameworks =
     }
 
 
-editor : Question Editor
-editor =
+editors : Question Editors
+editors =
     { title = "What editor(s) do you use to write your Elm applications?"
     , choices =
         Nonempty Atom

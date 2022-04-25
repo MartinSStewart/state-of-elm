@@ -1,18 +1,29 @@
-module Form exposing (Form, FormMapping, emptyForm, formCodec, noMapping)
+module Form exposing
+    ( Form
+    , FormOtherQuestions
+    , SpecificQuestion(..)
+    , emptyForm
+    , formCodec
+    , getOtherAnswer
+    , getOtherAnswer_
+    )
 
-import AssocList as Dict exposing (Dict)
+import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
+import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Questions
     exposing
         ( Age(..)
+        , ApplicationDomains(..)
         , BuildTools(..)
         , DoYouUseElm(..)
         , DoYouUseElmAtWork(..)
         , DoYouUseElmFormat(..)
         , DoYouUseElmReview(..)
-        , Editor(..)
+        , Editors(..)
         , ElmResources(..)
+        , ElmVersion(..)
         , ExperienceLevel(..)
         , Frameworks(..)
         , HowLargeIsTheCompany(..)
@@ -22,9 +33,7 @@ import Questions
         , StylingTools(..)
         , TestTools(..)
         , TestsWrittenFor(..)
-        , WhatElmVersion(..)
-        , WhatLanguageDoYouUseForTheBackend(..)
-        , WhereDoYouUseElm(..)
+        , WhatLanguageDoYouUseForBackend(..)
         , WhichElmReviewRulesDoYouUse(..)
         )
 import Serialize exposing (Codec)
@@ -39,17 +48,17 @@ type alias Form =
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
     , elmResources : MultiChoiceWithOther ElmResources
     , countryLivingIn : Maybe Country
-    , applicationDomains : MultiChoiceWithOther WhereDoYouUseElm
+    , applicationDomains : MultiChoiceWithOther ApplicationDomains
     , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
     , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForTheBackend
+    , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForBackend
     , howLong : Maybe HowLong
-    , elmVersion : MultiChoiceWithOther WhatElmVersion
+    , elmVersion : MultiChoiceWithOther ElmVersion
     , doYouUseElmFormat : Maybe DoYouUseElmFormat
     , stylingTools : MultiChoiceWithOther StylingTools
     , buildTools : MultiChoiceWithOther BuildTools
     , frameworks : MultiChoiceWithOther Frameworks
-    , editors : MultiChoiceWithOther Editor
+    , editors : MultiChoiceWithOther Editors
     , doYouUseElmReview : Maybe DoYouUseElmReview
     , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
     , testTools : MultiChoiceWithOther TestTools
@@ -61,23 +70,50 @@ type alias Form =
     }
 
 
-type alias FormMapping =
-    { otherLanguages : Dict String String
-    , newsAndDiscussions : Dict String String
-    , elmResources : Dict String String
-    , applicationDomains : Dict String String
-    , whatLanguageDoYouUseForBackend : Dict String String
-    , elmVersion : Dict String String
-    , stylingTools : Dict String String
-    , buildTools : Dict String String
-    , frameworks : Dict String String
-    , editors : Dict String String
-    , whichElmReviewRulesDoYouUse : Dict String String
-    , testTools : Dict String String
-    , testsWrittenFor : Dict String String
-    , elmInitialInterest : Dict String String
-    , biggestPainPoint : Dict String String
-    , whatDoYouLikeMost : Dict String String
+getOtherAnswer : MultiChoiceWithOther a -> Maybe String
+getOtherAnswer multiChoiceWithOther =
+    if multiChoiceWithOther.otherChecked && String.trim multiChoiceWithOther.otherText /= "" then
+        String.trim multiChoiceWithOther.otherText |> Just
+
+    else
+        Nothing
+
+
+getOtherAnswer_ : String -> Maybe String
+getOtherAnswer_ text =
+    if String.trim text /= "" then
+        String.trim text |> Just
+
+    else
+        Nothing
+
+
+type alias FormOtherQuestions =
+    { doYouUseElm : String
+    , age : String
+    , functionalProgrammingExperience : String
+    , otherLanguages : AnswerMap OtherLanguages
+    , newsAndDiscussions : AnswerMap NewsAndDiscussions
+    , elmResources : AnswerMap ElmResources
+    , countryLivingIn : String
+    , applicationDomains : AnswerMap ApplicationDomains
+    , doYouUseElmAtWork : String
+    , howLargeIsTheCompany : String
+    , whatLanguageDoYouUseForBackend : AnswerMap WhatLanguageDoYouUseForBackend
+    , howLong : String
+    , elmVersion : AnswerMap ElmVersion
+    , doYouUseElmFormat : String
+    , stylingTools : AnswerMap StylingTools
+    , buildTools : AnswerMap BuildTools
+    , frameworks : AnswerMap Frameworks
+    , editors : AnswerMap Editors
+    , doYouUseElmReview : String
+    , whichElmReviewRulesDoYouUse : AnswerMap WhichElmReviewRulesDoYouUse
+    , testTools : AnswerMap TestTools
+    , testsWrittenFor : AnswerMap TestsWrittenFor
+    , elmInitialInterest : FreeTextAnswerMap
+    , biggestPainPoint : FreeTextAnswerMap
+    , whatDoYouLikeMost : FreeTextAnswerMap
     }
 
 
@@ -112,25 +148,32 @@ emptyForm =
     }
 
 
-noMapping : FormMapping
-noMapping =
-    { otherLanguages = Dict.empty
-    , newsAndDiscussions = Dict.empty
-    , elmResources = Dict.empty
-    , applicationDomains = Dict.empty
-    , whatLanguageDoYouUseForBackend = Dict.empty
-    , elmVersion = Dict.empty
-    , stylingTools = Dict.empty
-    , buildTools = Dict.empty
-    , frameworks = Dict.empty
-    , editors = Dict.empty
-    , whichElmReviewRulesDoYouUse = Dict.empty
-    , testTools = Dict.empty
-    , testsWrittenFor = Dict.empty
-    , elmInitialInterest = Dict.empty
-    , biggestPainPoint = Dict.empty
-    , whatDoYouLikeMost = Dict.empty
-    }
+type SpecificQuestion
+    = DoYouUseElmQuestion
+    | AgeQuestion
+    | FunctionalProgrammingExperienceQuestion
+    | OtherLanguagesQuestion
+    | NewsAndDiscussionsQuestion
+    | ElmResourcesQuestion
+    | CountryLivingInQuestion
+    | ApplicationDomainsQuestion
+    | DoYouUseElmAtWorkQuestion
+    | HowLargeIsTheCompanyQuestion
+    | WhatLanguageDoYouUseForBackendQuestion
+    | HowLongQuestion
+    | ElmVersionQuestion
+    | DoYouUseElmFormatQuestion
+    | StylingToolsQuestion
+    | BuildToolsQuestion
+    | FrameworksQuestion
+    | EditorsQuestion
+    | DoYouUseElmReviewQuestion
+    | WhichElmReviewRulesDoYouUseQuestion
+    | TestToolsQuestion
+    | TestsWrittenForQuestion
+    | ElmInitialInterestQuestion
+    | BiggestPainPointQuestion
+    | WhatDoYouLikeMostQuestion
 
 
 formCodec : Codec e Form
@@ -292,7 +335,7 @@ doYouUseElmReviewCodec =
         |> Serialize.finishCustomType
 
 
-editorCodec : Codec e Editor
+editorCodec : Codec e Editors
 editorCodec =
     Serialize.customType
         (\a b c d e f value ->
@@ -460,7 +503,7 @@ doYouUseElmFormatCodec =
         |> Serialize.finishCustomType
 
 
-whatElmVersionCodec : Codec e WhatElmVersion
+whatElmVersionCodec : Codec e ElmVersion
 whatElmVersionCodec =
     Serialize.customType
         (\a b c d value ->
@@ -536,7 +579,7 @@ howLongCodec =
         |> Serialize.finishCustomType
 
 
-whatLanguageDoYouUseForTheBackendCodec : Codec e WhatLanguageDoYouUseForTheBackend
+whatLanguageDoYouUseForTheBackendCodec : Codec e WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForTheBackendCodec =
     Serialize.customType
         (\a b c d e f g h i j k l m n o p value ->
@@ -660,7 +703,7 @@ doYouUseElmAtWorkCodec =
         |> Serialize.finishCustomType
 
 
-whereDoYouUseElmCodec : Codec e WhereDoYouUseElm
+whereDoYouUseElmCodec : Codec e ApplicationDomains
 whereDoYouUseElmCodec =
     Serialize.customType
         (\a b c d e f g h i j value ->

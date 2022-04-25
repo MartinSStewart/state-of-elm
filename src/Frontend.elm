@@ -3,8 +3,6 @@ module Frontend exposing (..)
 import AdminPage
 import AssocSet as Set exposing (Set)
 import Browser
-import Countries exposing (Country)
-import Dict exposing (Dict)
 import Duration exposing (Duration)
 import Effect.Browser.Dom
 import Effect.Browser.Events
@@ -26,7 +24,6 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
-import Serialize
 import SurveyResults
 import Svg
 import Svg.Attributes
@@ -203,7 +200,7 @@ update msg model =
                     Admin adminLoginData
 
                 SurveyResultsLoaded data ->
-                    SurveyResultsLoaded data
+                    SurveyResultsLoaded { data | windowSize = windowSize }
             , Command.none
             )
 
@@ -262,14 +259,14 @@ updateFromBackend msg model =
                     model
 
         LoadAdmin adminData ->
-            Admin adminData
+            AdminPage.init adminData |> Admin
 
         AdminLoginResponse result ->
             case model of
                 AdminLogin adminLogin ->
                     case result of
                         Ok adminLoginData ->
-                            Admin adminLoginData
+                            AdminPage.init adminLoginData |> Admin
 
                         Err () ->
                             AdminLogin { adminLogin | loginFailed = True }
@@ -290,6 +287,10 @@ updateFromBackend msg model =
 
 loadForm : LoadFormStatus -> Maybe Size -> Maybe Effect.Time.Posix -> FrontendModel
 loadForm formStatus maybeWindowSize maybeTime =
+    let
+        windowSize =
+            Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+    in
     case formStatus of
         NoFormFound ->
             FormLoaded
@@ -298,7 +299,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , windowSize = windowSize
                 , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
@@ -309,7 +310,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+                , windowSize = windowSize
                 , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
                 }
 
@@ -317,7 +318,7 @@ loadForm formStatus maybeWindowSize maybeTime =
             FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
-            SurveyResultsLoaded data
+            SurveyResultsLoaded { windowSize = windowSize, data = data }
 
         AwaitingResultsData ->
             Loading maybeWindowSize maybeTime
@@ -397,8 +398,8 @@ view model =
                 Admin admin ->
                     AdminPage.adminView admin |> Element.map AdminPageMsg
 
-                SurveyResultsLoaded data ->
-                    SurveyResults.view data
+                SurveyResultsLoaded surveyResultsLoaded ->
+                    SurveyResults.view surveyResultsLoaded
             )
         ]
     }
@@ -457,38 +458,21 @@ answerSurveyView formLoaded =
         [ Element.spacing 24
         , Element.width Element.fill
         ]
-        [ Element.el
-            [ Element.Background.color Ui.blue0
-            , Element.width Element.fill
+        [ Ui.headerContainer
+            formLoaded.windowSize
+            [ Element.paragraph
+                [ Ui.titleFontSize, Element.Font.bold ]
+                [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
+            , Element.paragraph
+                []
+                [ Element.text "This is a survey to better understand the Elm community." ]
+            , Element.paragraph
+                []
+                [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
+            , Element.paragraph
+                [ Ui.titleFontSize, Element.Font.bold ]
+                [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
             ]
-            (Element.column
-                [ Element.Font.color Ui.white
-                , Ui.ifMobile formLoaded.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
-                , Element.centerX
-                , Element.width (Element.maximum 800 Element.fill)
-                , Element.spacing 24
-                ]
-                [ Element.paragraph
-                    [ Element.Font.size 48
-                    , Element.Font.bold
-                    , Element.Font.center
-                    ]
-                    [ Element.text "State of Elm 2022" ]
-                , Element.paragraph
-                    [ Ui.titleFontSize, Element.Font.bold ]
-                    [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
-                , Element.paragraph
-                    []
-                    [ Element.text "This is a survey to better understand the Elm community." ]
-                , Element.paragraph
-                    []
-                    [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
-                , Element.paragraph
-                    [ Ui.titleFontSize, Element.Font.bold ]
-                    [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
-                , Ui.disclaimer
-                ]
-            )
         , formView formLoaded.windowSize formLoaded.form
         , Ui.acceptTosQuestion
             formLoaded.windowSize
@@ -644,23 +628,6 @@ section windowSize text content =
         ]
 
 
-countries : List String
-countries =
-    let
-        overrides : Dict String Country
-        overrides =
-            Dict.fromList
-                [ ( "TW", { name = "Taiwan", code = "TW", flag = "🇹🇼" } ) ]
-    in
-    List.map
-        (\country ->
-            Dict.get country.code overrides
-                |> Maybe.withDefault country
-                |> (\{ name, flag } -> name ++ " " ++ flag)
-        )
-        Countries.all
-
-
 formView : Size -> Form -> Element FrontendMsg
 formView windowSize form =
     let
@@ -787,7 +754,7 @@ formView windowSize form =
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.whereDoYouUseElm
+                    Questions.applicationDomains
                     (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
@@ -813,7 +780,7 @@ formView windowSize form =
                   else
                     Ui.multiChoiceQuestionWithOther
                         windowSize
-                        Questions.whatLanguageDoYouUseForTheBackend
+                        Questions.whatLanguageDoYouUseForBackend
                         Nothing
                         form.whatLanguageDoYouUseForBackend
                         (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
@@ -825,7 +792,7 @@ formView windowSize form =
                     (\a -> FormChanged { form | howLong = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.whatElmVersion
+                    Questions.elmVersion
                     Nothing
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
@@ -862,7 +829,7 @@ formView windowSize form =
                     (\a -> FormChanged { form | frameworks = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.editor
+                    Questions.editors
                     Nothing
                     form.editors
                     (\a -> FormChanged { form | editors = a })
