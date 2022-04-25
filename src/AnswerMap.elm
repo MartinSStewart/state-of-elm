@@ -1,7 +1,7 @@
 module AnswerMap exposing
-    ( AnswerMap
+    ( AnswerMap(..)
     , Hotkey
-    , OtherAnswer
+    , OtherAnswer(..)
     , addGroup
     , allGroups
     , comment

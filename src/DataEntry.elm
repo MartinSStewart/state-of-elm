@@ -1,5 +1,5 @@
 module DataEntry exposing
-    ( DataEntry
+    ( DataEntry(..)
     , DataEntryWithOther(..)
     , comment
     , fromForms

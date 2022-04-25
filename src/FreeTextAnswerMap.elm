@@ -1,4 +1,15 @@
-module FreeTextAnswerMap exposing (FreeTextAnswerMap, addGroup, allGroups, comment, init, otherAnswerMapsTo, removeGroup, renameGroup, updateOtherAnswer, withComment)
+module FreeTextAnswerMap exposing
+    ( FreeTextAnswerMap(..)
+    , addGroup
+    , allGroups
+    , comment
+    , init
+    , otherAnswerMapsTo
+    , removeGroup
+    , renameGroup
+    , updateOtherAnswer
+    , withComment
+    )
 
 import AnswerMap exposing (Hotkey, OtherAnswer)
 import AssocSet as Set exposing (Set)
