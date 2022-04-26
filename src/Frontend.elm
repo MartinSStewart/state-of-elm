@@ -1,7 +1,7 @@
 module Frontend exposing (..)
 
 import AdminPage
-import AssocSet as Set exposing (Set)
+import AssocSet as Set
 import Browser
 import Duration exposing (Duration)
 import Effect.Browser.Dom
@@ -10,7 +10,7 @@ import Effect.Browser.Navigation
 import Effect.Command as Command exposing (Command, FrontendOnly)
 import Effect.Lamdera
 import Effect.Process
-import Effect.Subscription as Subscription exposing (Subscription)
+import Effect.Subscription as Subscription
 import Effect.Task
 import Effect.Time
 import Element exposing (Element)
@@ -23,7 +23,7 @@ import Form exposing (Form)
 import Lamdera
 import List.Extra as List
 import Quantity
-import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..), Question)
+import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
 import SurveyResults
 import Svg
 import Svg.Attributes
@@ -278,6 +278,14 @@ updateFromBackend msg model =
             case model of
                 Admin _ ->
                     loadForm formStatus Nothing Nothing
+
+                _ ->
+                    model
+
+        AdminToFrontend toFrontend ->
+            case model of
+                Admin adminModel ->
+                    AdminPage.updateFromBackend toFrontend adminModel |> Admin
 
                 _ ->
                     model

@@ -10,7 +10,6 @@ module AnswerMap exposing
     , hotkeyToString
     , indexToHotkey
     , init
-    , normalizeOtherAnswer
     , otherAnswer
     , otherAnswerMapsTo
     , otherAnswerToString
@@ -22,9 +21,8 @@ module AnswerMap exposing
 
 import AssocSet as Set exposing (Set)
 import List.Extra as List
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty
 import Questions exposing (Question)
-import Ui
 
 
 type AnswerMap a
@@ -256,12 +254,3 @@ addGroup groupName (AnswerMap formMapData) =
         | otherMapping = formMapData.otherMapping ++ [ { groupName = groupName, otherAnswers = Set.empty } ]
     }
         |> AnswerMap
-
-
-toggleSet : a -> Set a -> Set a
-toggleSet a set =
-    if Set.member a set then
-        Set.remove a set
-
-    else
-        Set.insert a set

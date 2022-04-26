@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData)
-import AnswerMap exposing (AnswerMap)
+import AnswerMap
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
@@ -10,7 +10,7 @@ import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Task
 import Effect.Time
 import Env
-import Form exposing (Form, FormOtherQuestions)
+import Form exposing (Form, FormMapping)
 import FreeTextAnswerMap
 import Lamdera
 import Questions
@@ -32,7 +32,7 @@ app =
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
     let
-        answerMap : FormOtherQuestions
+        answerMap : FormMapping
         answerMap =
             { doYouUseElm = ""
             , age = ""
@@ -63,7 +63,7 @@ init =
     in
     ( { forms = Dict.empty
       , answerMap = answerMap
-      , adminLogin = Nothing
+      , adminLogin = Set.empty
       }
     , Command.none
     )
@@ -277,7 +277,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminLoginRequest password ->
             if Env.adminPasswordHash == Sha256.sha256 password then
-                ( { model | adminLogin = Just sessionId }
+                ( { model | adminLogin = Set.insert sessionId model.adminLogin }
                 , getAdminData model |> Ok |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId
                 )
 
@@ -305,17 +305,23 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminToBackend AdminPage.LogOutRequest ->
             if isAdmin sessionId model then
-                ( { model | adminLogin = Nothing }
+                ( { model | adminLogin = Set.remove sessionId model.adminLogin }
                 , loadFormData sessionId time model |> LogOutResponse |> Effect.Lamdera.sendToFrontend clientId
                 )
 
             else
                 ( model, Command.none )
 
-        AdminToBackend (AdminPage.SaveAnswerMap answerMap) ->
+        AdminToBackend (AdminPage.EditFormMappingRequest edit) ->
             if isAdmin sessionId model then
-                ( { model | answerMap = answerMap }
-                , Command.none
+                ( { model | answerMap = AdminPage.networkUpdate edit model.answerMap }
+                , Set.toList model.adminLogin
+                    |> List.map
+                        (\sessionId_ ->
+                            AdminToFrontend (AdminPage.EditFormMappingResponse edit)
+                                |> Effect.Lamdera.sendToFrontends sessionId_
+                        )
+                    |> Command.batch
                 )
 
             else
@@ -324,4 +330,4 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
 isAdmin : SessionId -> BackendModel -> Bool
 isAdmin sessionId model =
-    Just sessionId == model.adminLogin
+    Set.member sessionId model.adminLogin

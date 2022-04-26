@@ -1,6 +1,6 @@
 module Form exposing
     ( Form
-    , FormOtherQuestions
+    , FormMapping
     , SpecificQuestion(..)
     , emptyForm
     , formCodec
@@ -88,7 +88,7 @@ getOtherAnswer_ text =
         Nothing
 
 
-type alias FormOtherQuestions =
+type alias FormMapping =
     { doYouUseElm : String
     , age : String
     , functionalProgrammingExperience : String

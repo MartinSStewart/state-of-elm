@@ -1,15 +1,15 @@
 module Types exposing (..)
 
 import AdminPage exposing (AdminLoginData)
-import AnswerMap exposing (AnswerMap)
 import AssocList exposing (Dict)
-import Browser exposing (UrlRequest)
+import AssocSet exposing (Set)
+import Browser
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import Env
-import Form exposing (Form, FormOtherQuestions)
+import Form exposing (Form, FormMapping)
 import SurveyResults
-import Ui exposing (MultiChoiceWithOther, Size)
+import Ui exposing (Size)
 
 
 type FrontendModel
@@ -48,8 +48,8 @@ type alias FormLoaded_ =
 
 type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , answerMap : FormOtherQuestions
-    , adminLogin : Maybe SessionId
+    , answerMap : FormMapping
+    , adminLogin : Set SessionId
     }
 
 
@@ -94,3 +94,4 @@ type ToFrontend
     | AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus
+    | AdminToFrontend AdminPage.ToFrontend
