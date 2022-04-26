@@ -14,11 +14,9 @@ module Ui exposing
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
     , multipleChoiceIndicator
-    , searchableTextInput
     , singleChoiceQuestion
     , textInput
     , title
-    , titleAndSubtitle
     , titleFontSize
     , white
     )
@@ -59,31 +57,6 @@ textInput windowSize title_ maybeSubtitle text updateModel =
                     (titleAndSubtitle title_ maybeSubtitle)
             , spellcheck = True
             }
-        ]
-
-
-searchableTextInput : Size -> String -> Maybe String -> List String -> String -> (String -> model) -> Element model
-searchableTextInput windowSize title_ maybeSubtitle choices text updateModel =
-    let
-        id =
-            title_ ++ "_list"
-    in
-    container windowSize
-        [ Element.Input.text
-            (Element.htmlAttribute (Html.Attributes.list id) :: multilineAttributes)
-            { onChange = updateModel
-            , text = text
-            , placeholder = Nothing
-            , label =
-                Element.Input.labelAbove
-                    [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 16 } ]
-                    (titleAndSubtitle title_ maybeSubtitle)
-            }
-        , Html.datalist
-            [ Html.Attributes.id id ]
-            (List.map (\choice -> Html.option [ Html.Attributes.value choice ] []) choices)
-            |> Element.html
-            |> Element.el []
         ]
 
 

@@ -12,13 +12,9 @@ module AdminPage exposing
     )
 
 import AnswerMap exposing (AnswerMap, Hotkey, OtherAnswer)
-import AssocSet as Set exposing (Set)
-import DataEntry exposing (DataEntryWithOther)
-import Duration
+import DataEntry
 import Effect.Command as Command exposing (Command, FrontendOnly)
 import Effect.Lamdera as Lamdera
-import Effect.Process as Process
-import Effect.Task as Task
 import Effect.Time
 import Element exposing (Element)
 import Element.Background
@@ -28,8 +24,6 @@ import Element.Input
 import Env
 import Form exposing (Form, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import Html.Events
-import List.Nonempty exposing (Nonempty)
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
 import Serialize
@@ -1234,30 +1228,6 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         ]
 
 
-textInput :
-    List (Element.Attribute msg)
-    ->
-        { text : String
-        , onChange : String -> msg
-        , onFocus : msg
-        , onBlur : msg
-        , placeholder : Maybe (Element.Input.Placeholder msg)
-        , label : Element.Input.Label msg
-        }
-    -> Element msg
-textInput attributes { text, onChange, onFocus, onBlur, placeholder, label } =
-    Element.Input.text
-        (Element.htmlAttribute (Html.Events.onFocus onFocus)
-            :: Element.htmlAttribute (Html.Events.onBlur onBlur)
-            :: attributes
-        )
-        { text = text
-        , onChange = onChange
-        , placeholder = placeholder
-        , label = label
-        }
-
-
 submittedForms : List { form : Form, submitTime : Maybe Effect.Time.Posix } -> List Form
 submittedForms forms =
     List.filterMap
@@ -1270,81 +1240,3 @@ submittedForms forms =
                     Nothing
         )
         forms
-
-
-adminFormView : { form : Form, submitTime : Maybe Effect.Time.Posix } -> Element msg
-adminFormView { form, submitTime } =
-    Element.column
-        [ Element.spacing 8 ]
-        [ case submitTime of
-            Just time ->
-                Element.text ("Submitted at " ++ String.fromInt (Effect.Time.posixToMillis time))
-
-            Nothing ->
-                Element.text "Not submitted"
-        , infoRow "doYouUseElm" (setToString Questions.doYouUseElm form.doYouUseElm)
-        , infoRow "age" (maybeToString Questions.age form.age)
-        , infoRow "functionalProgrammingExperience" (maybeToString Questions.experienceLevel form.functionalProgrammingExperience)
-        , infoRow "otherLanguages" (multichoiceToString Questions.otherLanguages form.otherLanguages)
-        , infoRow "newsAndDiscussions" (multichoiceToString Questions.newsAndDiscussions form.newsAndDiscussions)
-        , infoRow "elmResources" (multichoiceToString Questions.elmResources form.elmResources)
-        , infoRow "countryLivingIn" (maybeToString Questions.countryLivingIn form.countryLivingIn)
-        , infoRow "applicationDomains" (multichoiceToString Questions.applicationDomains form.applicationDomains)
-        , infoRow "doYouUseElmAtWork" (maybeToString Questions.doYouUseElmAtWork form.doYouUseElmAtWork)
-        , infoRow "howLargeIsTheCompany" (maybeToString Questions.howLargeIsTheCompany form.howLargeIsTheCompany)
-        , infoRow "whatLanguageDoYouUseForBackend" (multichoiceToString Questions.whatLanguageDoYouUseForBackend form.whatLanguageDoYouUseForBackend)
-        , infoRow "howLong" (maybeToString Questions.howLong form.howLong)
-        , infoRow "elmVersion" (multichoiceToString Questions.elmVersion form.elmVersion)
-        , infoRow "doYouUseElmFormat" (maybeToString Questions.doYouUseElmFormat form.doYouUseElmFormat)
-        , infoRow "stylingTools" (multichoiceToString Questions.stylingTools form.stylingTools)
-        , infoRow "buildTools" (multichoiceToString Questions.buildTools form.buildTools)
-        , infoRow "frameworks" (multichoiceToString Questions.frameworks form.frameworks)
-        , infoRow "editors" (multichoiceToString Questions.editors form.editors)
-        , infoRow "doYouUseElmReview" (maybeToString Questions.doYouUseElmReview form.doYouUseElmReview)
-        , infoRow "whichElmReviewRulesDoYouUse" (multichoiceToString Questions.whichElmReviewRulesDoYouUse form.whichElmReviewRulesDoYouUse)
-        , infoRow "testTools" (multichoiceToString Questions.testTools form.testTools)
-        , infoRow "testsWrittenFor" (multichoiceToString Questions.testsWrittenFor form.testsWrittenFor)
-        , infoRow "elmInitialInterest" form.elmInitialInterest
-        , infoRow "biggestPainPoint" form.biggestPainPoint
-        , infoRow "whatDoYouLikeMost" form.whatDoYouLikeMost
-        , infoRow "emailAddress" form.emailAddress
-        ]
-
-
-multichoiceToString : Question a -> Ui.MultiChoiceWithOther a -> String
-multichoiceToString { choiceToString } multiChoiceWithOther =
-    Set.toList multiChoiceWithOther.choices
-        |> List.map choiceToString
-        |> (\choices ->
-                if multiChoiceWithOther.otherChecked then
-                    choices ++ [ multiChoiceWithOther.otherText ]
-
-                else
-                    choices
-           )
-        |> String.join ", "
-
-
-setToString : Question a -> Set a -> String
-setToString { choiceToString } set =
-    Set.toList set
-        |> List.map choiceToString
-        |> String.join ", "
-
-
-maybeToString : Question a -> Maybe a -> String
-maybeToString { choiceToString } maybe =
-    case maybe of
-        Just a ->
-            choiceToString a
-
-        Nothing ->
-            ""
-
-
-infoRow name value =
-    Element.row
-        [ Element.spacing 24 ]
-        [ Element.el [ Element.Font.color (Element.rgb 0.4 0.5 0.5) ] (Element.text name)
-        , Element.paragraph [] [ Element.text value ]
-        ]

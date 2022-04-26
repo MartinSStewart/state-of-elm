@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData)
-import AnswerMap exposing (AnswerMap)
+import AnswerMap
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry

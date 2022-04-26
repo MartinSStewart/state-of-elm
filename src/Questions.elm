@@ -49,7 +49,6 @@ module Questions exposing
     )
 
 import Countries exposing (Country)
-import Dict exposing (Dict)
 import List.Nonempty exposing (Nonempty(..))
 
 

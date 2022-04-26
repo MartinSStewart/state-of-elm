@@ -1,16 +1,15 @@
 module Types exposing (..)
 
 import AdminPage exposing (AdminLoginData)
-import AnswerMap exposing (AnswerMap)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
-import Browser exposing (UrlRequest)
+import Browser
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import Env
 import Form exposing (Form, FormMapping)
 import SurveyResults
-import Ui exposing (MultiChoiceWithOther, Size)
+import Ui exposing (Size)
 
 
 type FrontendModel

@@ -168,7 +168,7 @@ multiChoiceWithOther windowSize singleLine (DataEntryWithOther dataEntryWithOthe
                     [ { header = Element.none
                       , width = Element.shrink
                       , view =
-                            \{ choice, count } ->
+                            \{ choice } ->
                                 Element.paragraph
                                     [ Element.Font.size 16
                                     , Element.Font.alignRight
@@ -300,15 +300,6 @@ bar count total maxCount =
         ]
 
 
-ellipsis : String -> Element msg
-ellipsis text =
-    if String.length text > 40 then
-        Element.el [ Element.Font.size 14 ] (Element.text text)
-
-    else
-        Element.text text
-
-
 singleChoiceGraph : Size -> Bool -> Bool -> DataEntry a -> Question a -> Element msg
 singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, choiceToString } =
     let
@@ -342,7 +333,7 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
                     [ { header = Element.none
                       , width = Element.shrink
                       , view =
-                            \{ choice, count } ->
+                            \{ choice } ->
                                 Element.paragraph
                                     [ Element.Font.size 16
                                     , Element.Font.alignRight
