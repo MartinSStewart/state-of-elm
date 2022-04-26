@@ -281,6 +281,14 @@ updateFromBackend msg model =
 
                 _ ->
                     model
+
+        AdminToFrontend toFrontend ->
+            case model of
+                Admin adminModel ->
+                    AdminPage.updateFromBackend toFrontend adminModel |> Admin
+
+                _ ->
+                    model
     , Command.none
     )
 
