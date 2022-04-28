@@ -27,7 +27,7 @@ import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
 import Serialize
-import SurveyResults
+import SurveyResults exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -1004,6 +1004,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             { width = 1920, height = 1080 }
             singleLine
             True
+            Percentage
             (DataEntry.fromForms comment question.choices answers)
             question
         ]
@@ -1113,7 +1114,11 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.freeText { width = 1920, height = 1080 } (DataEntry.fromFreeText answerMap answers) title
+        , SurveyResults.freeText
+            Percentage
+            { width = 1920, height = 1080 }
+            (DataEntry.fromFreeText answerMap answers)
+            title
         ]
 
 
@@ -1223,6 +1228,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         , SurveyResults.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
+            Percentage
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question
         ]

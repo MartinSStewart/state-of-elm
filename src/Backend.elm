@@ -128,7 +128,8 @@ loadFormData sessionId time model =
                                         Nothing
                             )
             in
-            { doYouUseElm =
+            { totalParticipants = List.length forms
+            , doYouUseElm =
                 List.concatMap (.doYouUseElm >> Set.toList) forms
                     |> DataEntry.fromForms model.answerMap.doYouUseElm Questions.doYouUseElm.choices
             , age = List.filterMap .age forms |> DataEntry.fromForms model.answerMap.age Questions.age.choices

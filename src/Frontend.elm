@@ -24,7 +24,7 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
-import SurveyResults
+import SurveyResults exposing (Mode(..))
 import Svg
 import Svg.Attributes
 import Types exposing (..)
@@ -326,7 +326,7 @@ loadForm formStatus maybeWindowSize maybeTime =
             FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
-            SurveyResultsLoaded { windowSize = windowSize, data = data }
+            SurveyResultsLoaded { windowSize = windowSize, data = data, mode = Total }
 
         AwaitingResultsData ->
             Loading maybeWindowSize maybeTime
@@ -617,23 +617,6 @@ githubLogo =
         ]
         |> Element.html
         |> Element.el []
-
-
-section : Size -> String -> List (Element msg) -> Element msg
-section windowSize text content =
-    Element.column
-        [ Element.spacing 24 ]
-        [ Element.paragraph
-            [ Element.Region.heading 2
-            , Element.Font.size 24
-            , Element.Font.bold
-            , Element.Font.color Ui.blue0
-            ]
-            [ Element.text text ]
-        , Element.column
-            [ Element.spacing (Ui.ifMobile windowSize 36 48) ]
-            content
-        ]
 
 
 formView : Size -> Form -> Element FrontendMsg

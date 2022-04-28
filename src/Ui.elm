@@ -14,6 +14,7 @@ module Ui exposing
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
     , multipleChoiceIndicator
+    , section
     , singleChoiceQuestion
     , textInput
     , title
@@ -337,6 +338,23 @@ blue0 =
 blue1 : Element.Color
 blue1 =
     Element.rgb255 38 167 246
+
+
+section : Size -> String -> List (Element msg) -> Element msg
+section windowSize text content =
+    Element.column
+        [ Element.spacing 24 ]
+        [ Element.paragraph
+            [ Element.Region.heading 2
+            , Element.Font.size 24
+            , Element.Font.bold
+            , Element.Font.color blue0
+            ]
+            [ Element.text text ]
+        , Element.column
+            [ Element.spacing (ifMobile windowSize 36 48) ]
+            content
+        ]
 
 
 ifMobile : Size -> a -> a -> a
