@@ -24,7 +24,7 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
-import SurveyResults exposing (Mode(..))
+import SurveyResults exposing (Mode(..), Segment(..))
 import Svg
 import Svg.Attributes
 import Types exposing (..)
@@ -326,7 +326,7 @@ loadForm formStatus maybeWindowSize maybeTime =
             FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
-            SurveyResultsLoaded { windowSize = windowSize, data = data, mode = Total }
+            SurveyResultsLoaded { windowSize = windowSize, data = data, mode = Total, segment = Users }
 
         AwaitingResultsData ->
             Loading maybeWindowSize maybeTime
@@ -621,19 +621,13 @@ githubLogo =
 
 formView : Size -> Form -> Element FrontendMsg
 formView windowSize form =
-    let
-        doesNotUseElm : Bool
-        doesNotUseElm =
-            Set.member NoButImCuriousAboutIt form.doYouUseElm
-                || Set.member NoAndIDontPlanTo form.doYouUseElm
-    in
     Element.column
         [ Element.spacing 64
         , Element.padding 8
         , Element.width (Element.maximum 800 Element.fill)
         , Element.centerX
         ]
-        [ section windowSize
+        [ Ui.section windowSize
             "About you"
             [ Ui.multiChoiceQuestion
                 windowSize
@@ -707,7 +701,7 @@ formView windowSize form =
                 Nothing
                 form.newsAndDiscussions
                 (\a -> FormChanged { form | newsAndDiscussions = a })
-            , if doesNotUseElm then
+            , if Form.doesNotUseElm form then
                 Element.none
 
               else
@@ -737,11 +731,11 @@ formView windowSize form =
                 form.emailAddress
                 (\a -> FormChanged { form | emailAddress = a })
             ]
-        , if doesNotUseElm then
+        , if Form.doesNotUseElm form then
             Element.none
 
           else
-            section windowSize
+            Ui.section windowSize
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
@@ -788,11 +782,11 @@ formView windowSize form =
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
                 ]
-        , if doesNotUseElm then
+        , if Form.doesNotUseElm form then
             Element.none
 
           else
-            section windowSize
+            Ui.section windowSize
                 "How do you use Elm?"
                 [ Ui.singleChoiceQuestion
                     windowSize

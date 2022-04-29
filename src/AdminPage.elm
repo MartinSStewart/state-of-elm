@@ -1228,6 +1228,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         , SurveyResults.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
+            True
             Percentage
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question

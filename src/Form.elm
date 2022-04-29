@@ -2,10 +2,12 @@ module Form exposing
     ( Form
     , FormMapping
     , SpecificQuestion(..)
+    , doesNotUseElm
     , emptyForm
     , formCodec
     , getOtherAnswer
     , getOtherAnswer_
+    , notInterestedInElm
     )
 
 import AnswerMap exposing (AnswerMap)
@@ -68,6 +70,17 @@ type alias Form =
     , whatDoYouLikeMost : String
     , emailAddress : String
     }
+
+
+doesNotUseElm : Form -> Bool
+doesNotUseElm form =
+    Set.member NoButImCuriousAboutIt form.doYouUseElm
+        || Set.member NoAndIDontPlanTo form.doYouUseElm
+
+
+notInterestedInElm : Form -> Bool
+notInterestedInElm form =
+    Set.member NoAndIDontPlanTo form.doYouUseElm
 
 
 getOtherAnswer : MultiChoiceWithOther a -> Maybe String

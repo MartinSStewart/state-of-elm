@@ -1,4 +1,15 @@
-module SurveyResults exposing (Data, Mode(..), Model, freeText, multiChoiceWithOther, singleChoiceGraph, view)
+module SurveyResults exposing
+    ( Data
+    , DataEntrySegments
+    , DataEntryWithOtherSegments
+    , Mode(..)
+    , Model
+    , Segment(..)
+    , freeText
+    , multiChoiceWithOther
+    , singleChoiceGraph
+    , view
+    )
 
 import AssocList as Dict
 import Countries exposing (Country)
@@ -20,18 +31,38 @@ type alias Model =
     { windowSize : Size
     , data : Data
     , mode : Mode
+    , segment : Segment
+    }
+
+
+type Segment
+    = AllUsers
+    | Users
+    | PotentialUsers
+
+
+type alias DataEntrySegments a =
+    { users : DataEntry a
+    , potentialUsers : DataEntry a
+    }
+
+
+type alias DataEntryWithOtherSegments a =
+    { users : DataEntryWithOther a
+    , potentialUsers : DataEntryWithOther a
     }
 
 
 type alias Data =
     { totalParticipants : Int
     , doYouUseElm : DataEntry DoYouUseElm
-    , age : DataEntry Age
-    , functionalProgrammingExperience : DataEntry ExperienceLevel
-    , otherLanguages : DataEntryWithOther OtherLanguages
-    , newsAndDiscussions : DataEntryWithOther NewsAndDiscussions
-    , elmResources : DataEntryWithOther ElmResources
-    , countryLivingIn : DataEntry Country
+    , age : DataEntrySegments Age
+    , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
+    , otherLanguages : DataEntryWithOtherSegments OtherLanguages
+    , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
+    , elmResources : DataEntryWithOtherSegments ElmResources
+    , elmInitialInterest : DataEntryWithOtherSegments ()
+    , countryLivingIn : DataEntrySegments Country
     , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
     , applicationDomains : DataEntryWithOther ApplicationDomains
     , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
@@ -47,7 +78,6 @@ type alias Data =
     , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
     , testTools : DataEntryWithOther TestTools
     , testsWrittenFor : DataEntryWithOther TestsWrittenFor
-    , elmInitialInterest : DataEntryWithOther ()
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     }
@@ -110,10 +140,10 @@ view model =
                     { url = "https://www.brianthicks.com/post/2018/12/26/state-of-elm-2018-results/"
                     , label = Element.text "Brian Hicks"
                     }
-                , Element.text " ran this survey but going forward  "
+                , Element.text " ran this survey but going forward "
                 , Element.newTabLink linkAttributes
                     { url = "https://github.com/MartinSStewart/state-of-elm"
-                    , label = Element.text "I'll  be managing it"
+                    , label = Element.text "I'll be managing it"
                     }
                 , Element.text ". Special thanks to "
                 , Element.newTabLink linkAttributes
@@ -142,33 +172,82 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
                 , { choice = "2017", count = 1170 }
                 ]
             , singleChoiceGraph model.windowSize False False model.mode data.doYouUseElm Questions.doYouUseElm
-            , singleChoiceGraph model.windowSize False False model.mode data.age Questions.age
-            , singleChoiceGraph model.windowSize False False model.mode data.functionalProgrammingExperience Questions.experienceLevel
-            , multiChoiceWithOther model.windowSize True model.mode data.otherLanguages Questions.otherLanguages
-            , multiChoiceWithOther model.windowSize False model.mode data.newsAndDiscussions Questions.newsAndDiscussions
-            , multiChoiceWithOther model.windowSize False model.mode data.elmResources Questions.elmResources
-            , singleChoiceGraph model.windowSize True True model.mode data.countryLivingIn Questions.countryLivingIn
+            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.age Questions.age
+            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.functionalProgrammingExperience Questions.experienceLevel
+            , multiChoiceWithOtherSegment model.windowSize True True model.mode model.segment data.otherLanguages Questions.otherLanguages
+            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.newsAndDiscussions Questions.newsAndDiscussions
+            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.elmResources Questions.elmResources
+
+            --, freeText model.mode model.windowSize data.elmInitialInterest Questions.initialInterestTitle
+            , singleChoiceSegmentGraph model.windowSize True True model.mode model.segment data.countryLivingIn Questions.countryLivingIn
             , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-            , multiChoiceWithOther model.windowSize False model.mode data.applicationDomains Questions.applicationDomains
+            , multiChoiceWithOther model.windowSize False True model.mode data.applicationDomains Questions.applicationDomains
             , singleChoiceGraph model.windowSize False False model.mode data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-            , multiChoiceWithOther model.windowSize True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+            , multiChoiceWithOther model.windowSize True True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
             , singleChoiceGraph model.windowSize False False model.mode data.howLong Questions.howLong
-            , multiChoiceWithOther model.windowSize False model.mode data.elmVersion Questions.elmVersion
+            , multiChoiceWithOther model.windowSize False False model.mode data.elmVersion Questions.elmVersion
             , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmFormat Questions.doYouUseElmFormat
-            , multiChoiceWithOther model.windowSize False model.mode data.stylingTools Questions.stylingTools
-            , multiChoiceWithOther model.windowSize False model.mode data.buildTools Questions.buildTools
-            , multiChoiceWithOther model.windowSize False model.mode data.frameworks Questions.frameworks
-            , multiChoiceWithOther model.windowSize False model.mode data.editors Questions.editors
+            , multiChoiceWithOther model.windowSize False True model.mode data.stylingTools Questions.stylingTools
+            , multiChoiceWithOther model.windowSize False True model.mode data.buildTools Questions.buildTools
+            , multiChoiceWithOther model.windowSize False True model.mode data.frameworks Questions.frameworks
+            , multiChoiceWithOther model.windowSize False True model.mode data.editors Questions.editors
             , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmReview Questions.doYouUseElmReview
-            , freeText model.mode model.windowSize data.elmInitialInterest Questions.initialInterestTitle
-            , freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-            , freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+
+            --, freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+            --, freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
             ]
         ]
 
 
-multiChoiceWithOther : Size -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element msg
-multiChoiceWithOther windowSize singleLine mode (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
+multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element msg
+multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
+    let
+        (DataEntryWithOther dataEntryWithOther) =
+            case segment of
+                AllUsers ->
+                    Debug.todo ""
+
+                Users ->
+                    segmentData.users
+
+                PotentialUsers ->
+                    segmentData.potentialUsers
+
+        otherKey =
+            "Other"
+
+        dataEntry =
+            Dict.remove otherKey dataEntryWithOther.data
+
+        maybeOther =
+            Dict.get otherKey dataEntryWithOther.data
+    in
+    Dict.toList dataEntry
+        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+        |> (if sortValues then
+                List.sortBy (\{ count } -> -count)
+
+            else
+                identity
+           )
+        |> (\a ->
+                case maybeOther of
+                    Just count ->
+                        a ++ [ { choice = otherKey, count = count } ]
+
+                    Nothing ->
+                        a
+           )
+        |> simpleGraph
+            windowSize
+            singleLine
+            mode
+            title
+            dataEntryWithOther.comment
+
+
+multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element msg
+multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
     let
         otherKey =
             "Other"
@@ -178,67 +257,73 @@ multiChoiceWithOther windowSize singleLine mode (DataEntryWithOther dataEntryWit
 
         maybeOther =
             Dict.get otherKey dataEntryWithOther.data
-
-        data =
-            Dict.toList dataEntry
-                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-                |> List.sortBy (\{ count } -> -count)
-                |> (\a ->
-                        case maybeOther of
-                            Just count ->
-                                a ++ [ { choice = otherKey, count = count } ]
-
-                            Nothing ->
-                                a
-                   )
-
-        maxCount =
-            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
-
-        total =
-            List.map .count data |> List.sum |> max 1
     in
-    container
-        windowSize
-        [ Ui.title title
-        , Ui.multipleChoiceIndicator
-        , if singleLine then
-            Element.table
-                [ Element.width Element.fill ]
-                { data = data
-                , columns =
-                    [ { header = Element.none
-                      , width = Element.shrink
-                      , view =
-                            \{ choice } ->
-                                Element.paragraph
-                                    [ Element.Font.size 16
-                                    , Element.Font.alignRight
-                                    , Element.paddingEach { left = 0, right = 4, top = 6, bottom = 6 }
-                                    ]
-                                    [ Element.text choice ]
-                      }
-                    , { header = Element.none
-                      , width = Element.fill
-                      , view =
-                            \{ count } ->
-                                Element.el
-                                    [ Element.width Element.fill
-                                    , Element.height (Element.px 24)
-                                    , Element.centerY
-                                    ]
-                                    (bar mode count total maxCount)
-                      }
-                    ]
-                }
+    Dict.toList dataEntry
+        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+        |> (if sortValues then
+                List.sortBy (\{ count } -> -count)
 
-          else
-            List.map
-                (\{ choice, count } -> barAndName mode choice count total maxCount)
-                data
-                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
-        , commentView dataEntryWithOther.comment
-        ]
+            else
+                identity
+           )
+        |> (\a ->
+                case maybeOther of
+                    Just count ->
+                        a ++ [ { choice = otherKey, count = count } ]
+
+                    Nothing ->
+                        a
+           )
+        |> simpleGraph
+            windowSize
+            singleLine
+            mode
+            title
+            dataEntryWithOther.comment
+
+
+
+--container
+--    windowSize
+--    [ Ui.title title
+--    , Ui.multipleChoiceIndicator
+--    , if singleLine then
+--        Element.table
+--            [ Element.width Element.fill ]
+--            { data = data
+--            , columns =
+--                [ { header = Element.none
+--                  , width = Element.shrink
+--                  , view =
+--                        \{ choice } ->
+--                            Element.paragraph
+--                                [ Element.Font.size 16
+--                                , Element.Font.alignRight
+--                                , Element.paddingEach { left = 0, right = 4, top = 6, bottom = 6 }
+--                                ]
+--                                [ Element.text choice ]
+--                  }
+--                , { header = Element.none
+--                  , width = Element.fill
+--                  , view =
+--                        \{ count } ->
+--                            Element.el
+--                                [ Element.width Element.fill
+--                                , Element.height (Element.px 24)
+--                                , Element.centerY
+--                                ]
+--                                (bar mode count total maxCount)
+--                  }
+--                ]
+--            }
+--
+--      else
+--        List.map
+--            (\{ choice, count } -> barAndName mode choice count total maxCount)
+--            data
+--            |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
+--    , commentView dataEntryWithOther.comment
+--    ]
 
 
 commentView : String -> Element msg
@@ -418,6 +503,40 @@ simpleGraph windowSize singleLine mode title comment data =
                 |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
         , commentView comment
         ]
+
+
+singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element msg
+singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
+    let
+        dataEntry =
+            case segment of
+                AllUsers ->
+                    Debug.todo ""
+
+                Users ->
+                    segmentData.users
+
+                PotentialUsers ->
+                    segmentData.potentialUsers
+
+        data =
+            DataEntry.get choices dataEntry
+    in
+    simpleGraph
+        windowSize
+        singleLine
+        mode
+        title
+        (DataEntry.comment dataEntry)
+        ((if sortValues then
+            nonemptySortBy (\{ count } -> -count) data
+
+          else
+            data
+         )
+            |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
+            |> Nonempty.toList
+        )
 
 
 singleChoiceGraph : Size -> Bool -> Bool -> Mode -> DataEntry a -> Question a -> Element msg

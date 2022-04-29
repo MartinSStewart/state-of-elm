@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData)
-import AnswerMap
+import AnswerMap exposing (AnswerMap)
 import AssocList as Dict
 import AssocSet as Set
 import DataEntry
@@ -13,9 +13,12 @@ import Env
 import Form exposing (Form, FormMapping)
 import FreeTextAnswerMap
 import Lamdera
-import Questions
+import List.Nonempty exposing (Nonempty)
+import Questions exposing (Question)
 import Sha256
+import SurveyResults
 import Types exposing (..)
+import Ui exposing (MultiChoiceWithOther)
 
 
 app =
@@ -40,6 +43,7 @@ init =
             , otherLanguages = AnswerMap.init Questions.otherLanguages
             , newsAndDiscussions = AnswerMap.init Questions.newsAndDiscussions
             , elmResources = AnswerMap.init Questions.elmResources
+            , elmInitialInterest = FreeTextAnswerMap.init
             , countryLivingIn = ""
             , applicationDomains = AnswerMap.init Questions.applicationDomains
             , doYouUseElmAtWork = ""
@@ -56,7 +60,6 @@ init =
             , whichElmReviewRulesDoYouUse = AnswerMap.init Questions.whichElmReviewRulesDoYouUse
             , testTools = AnswerMap.init Questions.testTools
             , testsWrittenFor = AnswerMap.init Questions.testsWrittenFor
-            , elmInitialInterest = FreeTextAnswerMap.init
             , biggestPainPoint = FreeTextAnswerMap.init
             , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
@@ -127,27 +130,100 @@ loadFormData sessionId time model =
                                     Nothing ->
                                         Nothing
                             )
+
+                segmentWithOther :
+                    (Form -> MultiChoiceWithOther a)
+                    -> (FormMapping -> AnswerMap a)
+                    -> Question a
+                    -> SurveyResults.DataEntryWithOtherSegments a
+                segmentWithOther formField answerMapField question =
+                    { users =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form then
+                                    Nothing
+
+                                else
+                                    Just (formField form)
+                            )
+                            forms
+                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.answerMap)
+                    , potentialUsers =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form && not (Form.notInterestedInElm form) then
+                                    Just (formField form)
+
+                                else
+                                    Nothing
+                            )
+                            forms
+                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.answerMap)
+                    }
+
+                segment : (Form -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults.DataEntrySegments a
+                segment formField answerMapField question =
+                    { users =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form then
+                                    Nothing
+
+                                else
+                                    formField form
+                            )
+                            forms
+                            |> DataEntry.fromForms (answerMapField model.answerMap) question.choices
+                    , potentialUsers =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form && not (Form.notInterestedInElm form) then
+                                    formField form
+
+                                else
+                                    Nothing
+                            )
+                            forms
+                            |> DataEntry.fromForms (answerMapField model.answerMap) question.choices
+                    }
+
+                segmentFreeText formField answerMapField =
+                    { users =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form then
+                                    Nothing
+
+                                else
+                                    Just (formField form)
+                            )
+                            forms
+                            |> DataEntry.fromFreeText (answerMapField model.answerMap)
+                    , potentialUsers =
+                        List.filterMap
+                            (\form ->
+                                if Form.doesNotUseElm form && not (Form.notInterestedInElm form) then
+                                    Just (formField form)
+
+                                else
+                                    Nothing
+                            )
+                            forms
+                            |> DataEntry.fromFreeText (answerMapField model.answerMap)
+                    }
             in
             { totalParticipants = List.length forms
             , doYouUseElm =
                 List.concatMap (.doYouUseElm >> Set.toList) forms
                     |> DataEntry.fromForms model.answerMap.doYouUseElm Questions.doYouUseElm.choices
-            , age = List.filterMap .age forms |> DataEntry.fromForms model.answerMap.age Questions.age.choices
+            , age = segment .age .age Questions.age
             , functionalProgrammingExperience =
-                List.filterMap .functionalProgrammingExperience forms
-                    |> DataEntry.fromForms model.answerMap.functionalProgrammingExperience Questions.experienceLevel.choices
-            , otherLanguages =
-                List.map .otherLanguages forms
-                    |> DataEntry.fromMultiChoiceWithOther Questions.otherLanguages model.answerMap.otherLanguages
-            , newsAndDiscussions =
-                List.map .newsAndDiscussions forms
-                    |> DataEntry.fromMultiChoiceWithOther Questions.newsAndDiscussions model.answerMap.newsAndDiscussions
-            , elmResources =
-                List.map .elmResources forms
-                    |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.answerMap.elmResources
-            , countryLivingIn =
-                List.filterMap .countryLivingIn forms
-                    |> DataEntry.fromForms model.answerMap.countryLivingIn Questions.countryLivingIn.choices
+                segment .functionalProgrammingExperience .functionalProgrammingExperience Questions.experienceLevel
+            , otherLanguages = segmentWithOther .otherLanguages .otherLanguages Questions.otherLanguages
+            , newsAndDiscussions = segmentWithOther .newsAndDiscussions .newsAndDiscussions Questions.newsAndDiscussions
+            , elmResources = segmentWithOther .elmResources .elmResources Questions.elmResources
+            , elmInitialInterest = segmentFreeText .elmInitialInterest .elmInitialInterest
+            , countryLivingIn = segment .countryLivingIn .countryLivingIn Questions.countryLivingIn
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork forms
                     |> DataEntry.fromForms model.answerMap.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices
@@ -156,7 +232,7 @@ loadFormData sessionId time model =
                     |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.answerMap.applicationDomains
             , howLargeIsTheCompany =
                 List.filterMap .howLargeIsTheCompany forms
-                    |> DataEntry.fromForms "" Questions.howLargeIsTheCompany.choices
+                    |> DataEntry.fromForms model.answerMap.howLargeIsTheCompany Questions.howLargeIsTheCompany.choices
             , whatLanguageDoYouUseForBackend =
                 List.map .whatLanguageDoYouUseForBackend forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.answerMap.whatLanguageDoYouUseForBackend
@@ -191,9 +267,6 @@ loadFormData sessionId time model =
             , testsWrittenFor =
                 List.map .testsWrittenFor forms
                     |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.answerMap.testsWrittenFor
-            , elmInitialInterest =
-                List.map .elmInitialInterest forms
-                    |> DataEntry.fromFreeText model.answerMap.elmInitialInterest
             , biggestPainPoint =
                 List.map .biggestPainPoint forms
                     |> DataEntry.fromFreeText model.answerMap.biggestPainPoint
