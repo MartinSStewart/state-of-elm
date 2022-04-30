@@ -4,20 +4,24 @@ module SurveyResults exposing
     , DataEntryWithOtherSegments
     , Mode(..)
     , Model
+    , Msg
     , Segment(..)
     , freeText
     , multiChoiceWithOther
     , singleChoiceGraph
+    , update
     , view
     )
 
 import AssocList as Dict
+import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
 import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font
+import Element.Input
 import Html
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty(..))
@@ -33,6 +37,11 @@ type alias Model =
     , mode : Mode
     , segment : Segment
     }
+
+
+type Msg
+    = PressedModeButton Mode
+    | PressedSegmentButton Segment
 
 
 type Segment
@@ -116,7 +125,17 @@ linkAttributes =
     ]
 
 
-view : Model -> Element msg
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        PressedModeButton mode ->
+            { model | mode = mode }
+
+        PressedSegmentButton segment ->
+            { model | segment = segment }
+
+
+view : Model -> Element Msg
 view model =
     let
         data =
@@ -162,8 +181,10 @@ view model =
             [ simpleGraph
                 model.windowSize
                 False
+                False
                 Total
                 "Number of participants"
+                Element.none
                 """Fewer people participated in the survey this year compared to 2018 and 2017.
 
 It's hard to say why that is. Maybe it's because this survey was open for 20 days and 2018's survey was open for 60 days (though the number of new submissions was increasing quite slowly by the 20 day mark). Maybe the community shrank in size? Maybe Brian Hicks is just better at spreading the word than I am. Or maybe it's some combination of those factors."""
@@ -199,7 +220,7 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
         ]
 
 
-multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element msg
+multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
 multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
     let
         (DataEntryWithOther dataEntryWithOther) =
@@ -241,12 +262,94 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
         |> simpleGraph
             windowSize
             singleLine
+            True
             mode
             title
+            (percentVsTotalAndSegment mode segment)
             dataEntryWithOther.comment
 
 
-multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element msg
+percentVsTotal : Mode -> Element Msg
+percentVsTotal mode =
+    Element.row
+        []
+        [ filterButton (mode == Percentage) Left (PressedModeButton Percentage) "% of answers"
+        , filterButton (mode == Total) Right (PressedModeButton Total) "Total"
+        ]
+
+
+segmentFilter : Segment -> Element Msg
+segmentFilter segment =
+    Element.row
+        []
+        [ filterButton (segment == AllUsers) Left (PressedSegmentButton AllUsers) "All users"
+        , filterButton (segment == Users) Middle (PressedSegmentButton Users) "Use(d) Elm"
+        , filterButton (segment == PotentialUsers) Right (PressedSegmentButton PotentialUsers) "Potential users"
+        ]
+
+
+percentVsTotalAndSegment : Mode -> Segment -> Element Msg
+percentVsTotalAndSegment mode segment =
+    Element.wrappedRow
+        [ Element.spacingXY 16 8 ]
+        [ percentVsTotal mode, segmentFilter segment ]
+
+
+type Side
+    = Left
+    | Middle
+    | Right
+
+
+filterButton : Bool -> Side -> msg -> String -> Element msg
+filterButton isSelected side onPress label =
+    Element.Input.button
+        [ (case side of
+            Left ->
+                { topLeft = 4, bottomLeft = 4, topRight = 0, bottomRight = 0 }
+
+            Middle ->
+                { topLeft = 0, bottomLeft = 0, topRight = 0, bottomRight = 0 }
+
+            Right ->
+                { topLeft = 0, bottomLeft = 0, topRight = 4, bottomRight = 4 }
+          )
+            |> Element.Border.roundEach
+        , Element.Border.color Ui.black
+        , (case side of
+            Left ->
+                { left = 1, right = 1, top = 1, bottom = 1 }
+
+            Middle ->
+                { left = 0, right = 1, top = 1, bottom = 1 }
+
+            Right ->
+                { left = 0, right = 1, top = 1, bottom = 1 }
+          )
+            |> Element.Border.widthEach
+        , Element.paddingXY 4 8
+        , Element.Font.size 16
+        , (if isSelected then
+            Ui.blue1
+
+           else
+            Element.rgba 0 0 0 0
+          )
+            |> Element.Background.color
+        , (if isSelected then
+            Ui.white
+
+           else
+            Ui.black
+          )
+            |> Element.Font.color
+        ]
+        { onPress = Just onPress
+        , label = Element.text label
+        }
+
+
+multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element Msg
 multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
     let
         otherKey =
@@ -274,56 +377,7 @@ multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther d
                     Nothing ->
                         a
            )
-        |> simpleGraph
-            windowSize
-            singleLine
-            mode
-            title
-            dataEntryWithOther.comment
-
-
-
---container
---    windowSize
---    [ Ui.title title
---    , Ui.multipleChoiceIndicator
---    , if singleLine then
---        Element.table
---            [ Element.width Element.fill ]
---            { data = data
---            , columns =
---                [ { header = Element.none
---                  , width = Element.shrink
---                  , view =
---                        \{ choice } ->
---                            Element.paragraph
---                                [ Element.Font.size 16
---                                , Element.Font.alignRight
---                                , Element.paddingEach { left = 0, right = 4, top = 6, bottom = 6 }
---                                ]
---                                [ Element.text choice ]
---                  }
---                , { header = Element.none
---                  , width = Element.fill
---                  , view =
---                        \{ count } ->
---                            Element.el
---                                [ Element.width Element.fill
---                                , Element.height (Element.px 24)
---                                , Element.centerY
---                                ]
---                                (bar mode count total maxCount)
---                  }
---                ]
---            }
---
---      else
---        List.map
---            (\{ choice, count } -> barAndName mode choice count total maxCount)
---            data
---            |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
---    , commentView dataEntryWithOther.comment
---    ]
+        |> simpleGraph windowSize singleLine True mode title (percentVsTotal mode) dataEntryWithOther.comment
 
 
 commentView : String -> Element msg
@@ -449,25 +503,31 @@ type Mode
     | Total
 
 
-simpleGraph : Size -> Bool -> Mode -> String -> String -> List { choice : String, count : Int } -> Element msg
-simpleGraph windowSize singleLine mode title comment data =
+simpleGraph : Size -> Bool -> Bool -> Mode -> String -> Element msg -> String -> List { choice : String, count : Int } -> Element msg
+simpleGraph windowSize singleLine isMultiChoice mode title filterUi comment data =
     let
         maxCount =
             List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
 
         total =
             List.map .count data |> List.sum |> max 1
-
-        sorted =
-            List.filter (\{ count } -> count > 0) data
     in
     container
         windowSize
-        [ Ui.title title
+        [ Element.column
+            [ Element.spacing 8 ]
+            [ Ui.title title
+            , filterUi
+            ]
+        , if isMultiChoice then
+            Ui.multipleChoiceIndicator
+
+          else
+            Element.none
         , if singleLine then
             Element.table
                 [ Element.width Element.fill ]
-                { data = sorted
+                { data = data
                 , columns =
                     [ { header = Element.none
                       , width = Element.shrink
@@ -495,23 +555,21 @@ simpleGraph windowSize singleLine mode title comment data =
                 }
 
           else
-            sorted
-                |> List.map
-                    (\{ choice, count } ->
-                        barAndName mode choice count total maxCount
-                    )
+            List.map
+                (\{ choice, count } -> barAndName mode choice count total maxCount)
+                data
                 |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
         , commentView comment
         ]
 
 
-singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element msg
+singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
 singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
     let
         dataEntry =
             case segment of
                 AllUsers ->
-                    Debug.todo ""
+                    DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
 
                 Users ->
                     segmentData.users
@@ -521,12 +579,29 @@ singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentDa
 
         data =
             DataEntry.get choices dataEntry
+
+        emptyChoices : Set a
+        emptyChoices =
+            DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+                |> DataEntry.get choices
+                |> Nonempty.toList
+                |> List.filterMap
+                    (\{ choice, count } ->
+                        if count == 0 then
+                            Just choice
+
+                        else
+                            Nothing
+                    )
+                |> Set.fromList
     in
     simpleGraph
         windowSize
         singleLine
+        False
         mode
         title
+        (percentVsTotalAndSegment mode segment)
         (DataEntry.comment dataEntry)
         ((if sortValues then
             nonemptySortBy (\{ count } -> -count) data
@@ -534,12 +609,19 @@ singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentDa
           else
             data
          )
-            |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
             |> Nonempty.toList
+            |> List.filterMap
+                (\a ->
+                    if Set.member a.choice emptyChoices then
+                        Nothing
+
+                    else
+                        Just { choice = choiceToString a.choice, count = a.count }
+                )
         )
 
 
-singleChoiceGraph : Size -> Bool -> Bool -> Mode -> DataEntry a -> Question a -> Element msg
+singleChoiceGraph : Size -> Bool -> Bool -> Mode -> DataEntry a -> Question a -> Element Msg
 singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choices, choiceToString } =
     let
         data =
@@ -548,8 +630,10 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
     simpleGraph
         windowSize
         singleLine
+        False
         mode
         title
+        (percentVsTotal mode)
         (DataEntry.comment dataEntry)
         ((if sortValues then
             nonemptySortBy (\{ count } -> -count) data

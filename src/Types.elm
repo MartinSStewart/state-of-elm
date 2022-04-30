@@ -65,6 +65,7 @@ type FrontendMsg
     | GotWindowSize Size
     | GotTime Effect.Time.Posix
     | AdminPageMsg AdminPage.Msg
+    | SurveyResultsMsg SurveyResults.Msg
 
 
 type ToBackend

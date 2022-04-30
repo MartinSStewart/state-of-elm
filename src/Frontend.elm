@@ -238,6 +238,14 @@ update msg model =
                 _ ->
                     ( model, Command.none )
 
+        SurveyResultsMsg surveyResultsMsg ->
+            case model of
+                SurveyResultsLoaded surveyResultsModel ->
+                    ( SurveyResults.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded, Command.none )
+
+                _ ->
+                    ( model, Command.none )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
@@ -407,7 +415,7 @@ view model =
                     AdminPage.adminView admin |> Element.map AdminPageMsg
 
                 SurveyResultsLoaded surveyResultsLoaded ->
-                    SurveyResults.view surveyResultsLoaded
+                    SurveyResults.view surveyResultsLoaded |> Element.map SurveyResultsMsg
             )
         ]
     }

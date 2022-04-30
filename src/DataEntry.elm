@@ -1,6 +1,7 @@
 module DataEntry exposing
     ( DataEntry(..)
     , DataEntryWithOther(..)
+    , combineDataEntries
     , comment
     , fromForms
     , fromFreeText
@@ -21,6 +22,14 @@ import Ui exposing (MultiChoiceWithOther)
 
 type DataEntry a
     = DataEntry { data : Nonempty Int, comment : String }
+
+
+combineDataEntries : DataEntry a -> DataEntry a -> DataEntry a
+combineDataEntries (DataEntry a) (DataEntry b) =
+    { data = Nonempty.zip a.data b.data |> Nonempty.map (\( valueA, valueB ) -> valueA + valueB)
+    , comment = a.comment
+    }
+        |> DataEntry
 
 
 type DataEntryWithOther a

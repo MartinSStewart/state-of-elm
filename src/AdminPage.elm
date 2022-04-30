@@ -37,6 +37,7 @@ type Msg
     | FormMappingEditMsg FormMappingEdit
     | PressedQuestionWithOther SpecificQuestion
     | PressedToggleShowEncodedState
+    | NoOp
 
 
 type ToBackend
@@ -584,6 +585,9 @@ update msg model =
             , Lamdera.sendToBackend (EditFormMappingRequest edit)
             )
 
+        NoOp ->
+            ( model, Command.none )
+
 
 button : Bool -> msg -> String -> Element msg
 button isSelected onPress text =
@@ -1007,6 +1011,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             Percentage
             (DataEntry.fromForms comment question.choices answers)
             question
+            |> Element.map (\_ -> NoOp)
         ]
 
 
@@ -1232,6 +1237,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
             Percentage
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question
+            |> Element.map (\_ -> NoOp)
         ]
 
 
