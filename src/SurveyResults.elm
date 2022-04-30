@@ -22,7 +22,7 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
-import Html
+import Html exposing (Html)
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty(..))
 import List.Nonempty.Ancillary as Nonempty
@@ -119,10 +119,28 @@ container windowSize content =
         )
 
 
+css : Html msg
+css =
+    Html.node "style"
+        []
+        [ Html.text """
+.linkFocus:focus {
+    outline: solid #9bcbff !important;
+}
+"""
+        ]
+
+
 linkAttributes =
     [ Element.Font.underline
-    , Element.mouseOver [ Element.Font.color (Element.rgb255 188 227 255) ]
+    , Element.mouseOver [ Element.Font.color lightBlue ]
+    , Element.htmlAttribute (Html.Attributes.class "linkFocus")
     ]
+
+
+lightBlue : Element.Color
+lightBlue =
+    Element.rgb255 188 227 255
 
 
 update : Msg -> Model -> Model
@@ -142,7 +160,7 @@ view model =
             model.data
     in
     Element.column
-        [ Element.width Element.fill ]
+        [ Element.width Element.fill, Element.behindContent (Element.html css) ]
         [ Ui.headerContainer
             model.windowSize
             [ Element.paragraph
@@ -226,7 +244,7 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
         (DataEntryWithOther dataEntryWithOther) =
             case segment of
                 AllUsers ->
-                    Debug.todo ""
+                    DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
 
                 Users ->
                     segmentData.users
@@ -242,6 +260,14 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
 
         maybeOther =
             Dict.get otherKey dataEntryWithOther.data
+
+        emptyChoices : Set String
+        emptyChoices =
+            DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+                |> (\(DataEntryWithOther a) -> a.data)
+                |> Dict.filter (\_ count -> count == 0)
+                |> Dict.keys
+                |> Set.fromList
     in
     Dict.toList dataEntry
         |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
@@ -327,7 +353,14 @@ filterButton isSelected side onPress label =
                 { left = 0, right = 1, top = 1, bottom = 1 }
           )
             |> Element.Border.widthEach
-        , Element.paddingXY 4 8
+        , Element.mouseOver
+            (if isSelected then
+                []
+
+             else
+                [ Element.Background.color lightBlue ]
+            )
+        , Element.paddingXY 6 8
         , Element.Font.size 16
         , (if isSelected then
             Ui.blue1
@@ -566,6 +599,7 @@ simpleGraph windowSize singleLine isMultiChoice mode title filterUi comment data
 singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
 singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
     let
+        dataEntry : DataEntry a
         dataEntry =
             case segment of
                 AllUsers ->
@@ -577,6 +611,7 @@ singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentDa
                 PotentialUsers ->
                     segmentData.potentialUsers
 
+        data : Nonempty { choice : a, count : Int }
         data =
             DataEntry.get choices dataEntry
 
