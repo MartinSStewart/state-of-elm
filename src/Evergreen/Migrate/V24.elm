@@ -1650,37 +1650,38 @@ migrateFormLoaded_ old =
     }
 
 
-migrateFrontendModel : Old.FrontendModel -> New.FrontendModel
-migrateFrontendModel old =
-    case old of
-        Old.Loading a b ->
-            New.Loading a b
 
-        Old.FormLoaded a ->
-            New.FormLoaded (migrateFormLoaded_ a)
-
-        Old.FormCompleted a ->
-            New.FormCompleted a
-
-        Old.AdminLogin a ->
-            New.AdminLogin { password = identity a.password, loginFailed = identity a.loginFailed }
-
-        Old.Admin a ->
-            New.Admin
-                { forms = List.map (\{ form, submitTime } -> { form = migrateForm form, submitTime = submitTime }) a.forms
-                , formMapping = migrateNetworkModel migrateFormMappingEdit migrateFormMapping a.formMapping
-                , selectedMapping = migrateSelectedMapping a.selectedMapping
-                , showEncodedState = a.showEncodedState
-                }
-
-        Old.SurveyResultsLoaded data ->
-            New.SurveyResultsLoaded
-                { windowSize = data.windowSize
-                , data = migrateSurveyResultsData data.data
-                , -- TODO
-                  mode = Evergreen.V24.SurveyResults.Percentage
-                , segment = Evergreen.V24.SurveyResults.AllUsers
-                }
+--migrateFrontendModel : Old.FrontendModel -> New.FrontendModel
+--migrateFrontendModel old =
+--    case old of
+--        Old.Loading a b ->
+--            New.Loading a b
+--
+--        Old.FormLoaded a ->
+--            New.FormLoaded (migrateFormLoaded_ a)
+--
+--        Old.FormCompleted a ->
+--            New.FormCompleted a
+--
+--        Old.AdminLogin a ->
+--            New.AdminLogin { password = identity a.password, loginFailed = identity a.loginFailed }
+--
+--        Old.Admin a ->
+--            New.Admin
+--                { forms = List.map (\{ form, submitTime } -> { form = migrateForm form, submitTime = submitTime }) a.forms
+--                , formMapping = migrateNetworkModel migrateFormMappingEdit migrateFormMapping a.formMapping
+--                , selectedMapping = migrateSelectedMapping a.selectedMapping
+--                , showEncodedState = a.showEncodedState
+--                }
+--
+--        Old.SurveyResultsLoaded data ->
+--            New.SurveyResultsLoaded
+--                { windowSize = data.windowSize
+--                , data = migrateSurveyResultsData data.data
+--                , -- TODO
+--                  mode = Evergreen.V24.SurveyResults.Percentage
+--                , segment = Evergreen.V24.SurveyResults.AllUsers
+--                }
 
 
 migrateNetworkModel : (msg1 -> msg2) -> (model1 -> model2) -> Evergreen.V23.NetworkModel.NetworkModel msg1 model1 -> Evergreen.V24.NetworkModel.NetworkModel msg2 model2
@@ -1692,7 +1693,28 @@ migrateNetworkModel migrateMsg migrateModel old =
 
 migrateFormMappingEdit : Evergreen.V23.AdminPage.FormMappingEdit -> Evergreen.V24.AdminPage.FormMappingEdit
 migrateFormMappingEdit old =
-    Debug.todo ""
+    case old of
+        Evergreen.V23.AdminPage.TypedGroupName a b c ->
+            Evergreen.V24.AdminPage.TypedGroupName (migrateSpecificQuestion a) (migrateHotkey b) c
+
+        Evergreen.V23.AdminPage.TypedNewGroupName a b ->
+            Evergreen.V24.AdminPage.TypedNewGroupName (migrateSpecificQuestion a) b
+
+        Evergreen.V23.AdminPage.TypedOtherAnswerGroups a b c ->
+            Evergreen.V24.AdminPage.TypedOtherAnswerGroups (migrateSpecificQuestion a) (migrateOtherAnswer b) c
+
+        Evergreen.V23.AdminPage.RemoveGroup a b ->
+            Evergreen.V24.AdminPage.RemoveGroup (migrateSpecificQuestion a) (migrateHotkey b)
+
+        Evergreen.V23.AdminPage.TypedComment a b ->
+            Evergreen.V24.AdminPage.TypedComment (migrateSpecificQuestion a) b
+
+
+migrateHotkey : Evergreen.V23.AnswerMap.Hotkey -> Evergreen.V24.AnswerMap.Hotkey
+migrateHotkey old =
+    case old of
+        Evergreen.V23.AnswerMap.Hotkey a ->
+            Evergreen.V24.AnswerMap.Hotkey a
 
 
 migrateFormMapping : Evergreen.V23.Form.FormMapping -> Evergreen.V24.Form.FormMapping
@@ -1883,53 +1905,131 @@ migrateAdminPageMsg msg =
             migrateFormMappingEdit formMappingEdit |> Evergreen.V24.AdminPage.FormMappingEditMsg |> Just
 
 
-migrateLoadFormStatus : Old.LoadFormStatus -> New.LoadFormStatus
-migrateLoadFormStatus old =
+migrateSpecificQuestion : Evergreen.V23.Form.SpecificQuestion -> Evergreen.V24.Form.SpecificQuestion
+migrateSpecificQuestion old =
     case old of
-        Old.NoFormFound ->
-            New.NoFormFound
+        Evergreen.V23.Form.DoYouUseElmQuestion ->
+            Evergreen.V24.Form.DoYouUseElmQuestion
 
-        Old.FormAutoSaved a ->
-            New.FormAutoSaved (migrateForm a)
+        Evergreen.V23.Form.AgeQuestion ->
+            Evergreen.V24.Form.AgeQuestion
 
-        Old.FormSubmitted ->
-            New.FormSubmitted
+        Evergreen.V23.Form.FunctionalProgrammingExperienceQuestion ->
+            Evergreen.V24.Form.FunctionalProgrammingExperienceQuestion
 
-        Old.SurveyResults data ->
-            New.SurveyResults (migrateSurveyResultsData data)
+        Evergreen.V23.Form.OtherLanguagesQuestion ->
+            Evergreen.V24.Form.OtherLanguagesQuestion
 
-        Old.AwaitingResultsData ->
-            New.AwaitingResultsData
+        Evergreen.V23.Form.NewsAndDiscussionsQuestion ->
+            Evergreen.V24.Form.NewsAndDiscussionsQuestion
+
+        Evergreen.V23.Form.ElmResourcesQuestion ->
+            Evergreen.V24.Form.ElmResourcesQuestion
+
+        Evergreen.V23.Form.CountryLivingInQuestion ->
+            Evergreen.V24.Form.CountryLivingInQuestion
+
+        Evergreen.V23.Form.ApplicationDomainsQuestion ->
+            Evergreen.V24.Form.ApplicationDomainsQuestion
+
+        Evergreen.V23.Form.DoYouUseElmAtWorkQuestion ->
+            Evergreen.V24.Form.DoYouUseElmAtWorkQuestion
+
+        Evergreen.V23.Form.HowLargeIsTheCompanyQuestion ->
+            Evergreen.V24.Form.HowLargeIsTheCompanyQuestion
+
+        Evergreen.V23.Form.WhatLanguageDoYouUseForBackendQuestion ->
+            Evergreen.V24.Form.WhatLanguageDoYouUseForBackendQuestion
+
+        Evergreen.V23.Form.HowLongQuestion ->
+            Evergreen.V24.Form.HowLongQuestion
+
+        Evergreen.V23.Form.ElmVersionQuestion ->
+            Evergreen.V24.Form.ElmVersionQuestion
+
+        Evergreen.V23.Form.DoYouUseElmFormatQuestion ->
+            Evergreen.V24.Form.DoYouUseElmFormatQuestion
+
+        Evergreen.V23.Form.StylingToolsQuestion ->
+            Evergreen.V24.Form.StylingToolsQuestion
+
+        Evergreen.V23.Form.BuildToolsQuestion ->
+            Evergreen.V24.Form.BuildToolsQuestion
+
+        Evergreen.V23.Form.FrameworksQuestion ->
+            Evergreen.V24.Form.FrameworksQuestion
+
+        Evergreen.V23.Form.EditorsQuestion ->
+            Evergreen.V24.Form.EditorsQuestion
+
+        Evergreen.V23.Form.DoYouUseElmReviewQuestion ->
+            Evergreen.V24.Form.DoYouUseElmReviewQuestion
+
+        Evergreen.V23.Form.WhichElmReviewRulesDoYouUseQuestion ->
+            Evergreen.V24.Form.WhichElmReviewRulesDoYouUseQuestion
+
+        Evergreen.V23.Form.TestToolsQuestion ->
+            Evergreen.V24.Form.TestToolsQuestion
+
+        Evergreen.V23.Form.TestsWrittenForQuestion ->
+            Evergreen.V24.Form.TestsWrittenForQuestion
+
+        Evergreen.V23.Form.ElmInitialInterestQuestion ->
+            Evergreen.V24.Form.ElmInitialInterestQuestion
+
+        Evergreen.V23.Form.BiggestPainPointQuestion ->
+            Evergreen.V24.Form.BiggestPainPointQuestion
+
+        Evergreen.V23.Form.WhatDoYouLikeMostQuestion ->
+            Evergreen.V24.Form.WhatDoYouLikeMostQuestion
 
 
-migrateSurveyResultsData : Evergreen.V23.SurveyResults.Data -> Evergreen.V24.SurveyResults.Data
-migrateSurveyResultsData old =
-    { doYouUseElm = migrateDataEntry old.doYouUseElm
-    , age = migrateDataEntry old.age
-    , functionalProgrammingExperience = migrateDataEntry old.functionalProgrammingExperience
-    , otherLanguages = migrateDataEntryWithOther old.otherLanguages
-    , newsAndDiscussions = migrateDataEntryWithOther old.newsAndDiscussions
-    , elmResources = migrateDataEntryWithOther old.elmResources
-    , countryLivingIn = migrateDataEntry old.countryLivingIn
-    , doYouUseElmAtWork = migrateDataEntry old.doYouUseElmAtWork
-    , applicationDomains = migrateDataEntryWithOther old.applicationDomains
-    , howLargeIsTheCompany = migrateDataEntry old.howLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend = migrateDataEntryWithOther old.whatLanguageDoYouUseForBackend
-    , howLong = migrateDataEntry old.howLong
-    , elmVersion = migrateDataEntryWithOther old.elmVersion
-    , doYouUseElmFormat = migrateDataEntry old.doYouUseElmFormat
-    , stylingTools = migrateDataEntryWithOther old.stylingTools
-    , buildTools = migrateDataEntryWithOther old.buildTools
-    , frameworks = migrateDataEntryWithOther old.frameworks
-    , editors = migrateDataEntryWithOther old.editors
-    , doYouUseElmReview = migrateDataEntry old.doYouUseElmReview
-    , whichElmReviewRulesDoYouUse = migrateDataEntryWithOther old.whichElmReviewRulesDoYouUse
-    , testTools = migrateDataEntryWithOther old.testTools
-    , testsWrittenFor = migrateDataEntryWithOther old.testsWrittenFor
-    , elmInitialInterest = migrateDataEntryWithOther old.elmInitialInterest
-    , biggestPainPoint = migrateDataEntryWithOther old.biggestPainPoint
-    , whatDoYouLikeMost = migrateDataEntryWithOther old.whatDoYouLikeMost
-    }
+
+--migrateLoadFormStatus : Old.LoadFormStatus -> New.LoadFormStatus
+--migrateLoadFormStatus old =
+--    case old of
+--        Old.NoFormFound ->
+--            New.NoFormFound
+--
+--        Old.FormAutoSaved a ->
+--            New.FormAutoSaved (migrateForm a)
+--
+--        Old.FormSubmitted ->
+--            New.FormSubmitted
+--
+--        Old.SurveyResults data ->
+--            New.SurveyResults (migrateSurveyResultsData data)
+--
+--        Old.AwaitingResultsData ->
+--            New.AwaitingResultsData
+--migrateSurveyResultsData : Evergreen.V23.SurveyResults.Data -> Evergreen.V24.SurveyResults.Data
+--migrateSurveyResultsData old =
+--    { doYouUseElm = migrateDataEntry old.doYouUseElm
+--    , age = migrateDataEntry old.age
+--    , functionalProgrammingExperience = migrateDataEntry old.functionalProgrammingExperience
+--    , otherLanguages = migrateDataEntryWithOther old.otherLanguages
+--    , newsAndDiscussions = migrateDataEntryWithOther old.newsAndDiscussions
+--    , elmResources = migrateDataEntryWithOther old.elmResources
+--    , countryLivingIn = migrateDataEntry old.countryLivingIn
+--    , doYouUseElmAtWork = migrateDataEntry old.doYouUseElmAtWork
+--    , applicationDomains = migrateDataEntryWithOther old.applicationDomains
+--    , howLargeIsTheCompany = migrateDataEntry old.howLargeIsTheCompany
+--    , whatLanguageDoYouUseForBackend = migrateDataEntryWithOther old.whatLanguageDoYouUseForBackend
+--    , howLong = migrateDataEntry old.howLong
+--    , elmVersion = migrateDataEntryWithOther old.elmVersion
+--    , doYouUseElmFormat = migrateDataEntry old.doYouUseElmFormat
+--    , stylingTools = migrateDataEntryWithOther old.stylingTools
+--    , buildTools = migrateDataEntryWithOther old.buildTools
+--    , frameworks = migrateDataEntryWithOther old.frameworks
+--    , editors = migrateDataEntryWithOther old.editors
+--    , doYouUseElmReview = migrateDataEntry old.doYouUseElmReview
+--    , whichElmReviewRulesDoYouUse = migrateDataEntryWithOther old.whichElmReviewRulesDoYouUse
+--    , testTools = migrateDataEntryWithOther old.testTools
+--    , testsWrittenFor = migrateDataEntryWithOther old.testsWrittenFor
+--    , elmInitialInterest = migrateDataEntryWithOther old.elmInitialInterest
+--    , biggestPainPoint = migrateDataEntryWithOther old.biggestPainPoint
+--    , whatDoYouLikeMost = migrateDataEntryWithOther old.whatDoYouLikeMost
+--    }
 
 
 migrateDataEntryWithOther : Evergreen.V23.DataEntry.DataEntryWithOther a -> Evergreen.V24.DataEntry.DataEntryWithOther b
@@ -1975,31 +2075,40 @@ migrateAdminToBackend old =
             migrateFormMappingEdit formMappingEdit |> Evergreen.V24.AdminPage.EditFormMappingRequest |> Just
 
 
-migrateToFrontend : Old.ToFrontend -> New.ToFrontend
-migrateToFrontend old =
+
+--migrateToFrontend : Old.ToFrontend -> New.ToFrontend
+--migrateToFrontend old =
+--    case old of
+--        Old.LoadForm a ->
+--            New.LoadForm (migrateLoadFormStatus a)
+--
+--        Old.LoadAdmin a ->
+--            New.LoadAdmin (migrateAdminLoginData a)
+--
+--        Old.AdminLoginResponse a ->
+--            New.AdminLoginResponse (Result.map migrateAdminLoginData a)
+--
+--        Old.SubmitConfirmed ->
+--            New.SubmitConfirmed
+--
+--        Old.LogOutResponse loadFormStatus ->
+--            New.LogOutResponse (migrateLoadFormStatus loadFormStatus)
+--
+--        Old.AdminToFrontend a ->
+--            migrateAdminToFrontend a |> New.AdminToFrontend
+
+
+migrateAdminToFrontend : Evergreen.V23.AdminPage.ToFrontend -> Evergreen.V24.AdminPage.ToFrontend
+migrateAdminToFrontend old =
     case old of
-        Old.LoadForm a ->
-            New.LoadForm (migrateLoadFormStatus a)
-
-        Old.LoadAdmin a ->
-            New.LoadAdmin (migrateAdminLoginData a)
-
-        Old.AdminLoginResponse a ->
-            New.AdminLoginResponse (Result.map migrateAdminLoginData a)
-
-        Old.SubmitConfirmed ->
-            New.SubmitConfirmed
-
-        Old.LogOutResponse loadFormStatus ->
-            New.LogOutResponse (migrateLoadFormStatus loadFormStatus)
-
-        Old.AdminToFrontend a ->
-            migrateAdminToFrontend a |> New.AdminToFrontend
+        Evergreen.V23.AdminPage.EditFormMappingResponse a ->
+            Evergreen.V24.AdminPage.EditFormMappingResponse (migrateFormMappingEdit a)
 
 
 frontendModel : Old.FrontendModel -> ModelMigration New.FrontendModel New.FrontendMsg
 frontendModel old =
-    ModelMigrated ( migrateFrontendModel old, Cmd.none )
+    --ModelMigrated ( migrateFrontendModel old, Cmd.none )
+    ModelUnchanged
 
 
 backendModel : Old.BackendModel -> ModelMigration New.BackendModel New.BackendMsg
@@ -2039,4 +2148,6 @@ backendMsg old =
 
 toFrontend : Old.ToFrontend -> MsgMigration New.ToFrontend New.FrontendMsg
 toFrontend old =
-    MsgMigrated ( migrateToFrontend old, Cmd.none )
+    --MsgMigrated ( migrateToFrontend old, Cmd.none )
+    --TODO
+    MsgOldValueIgnored

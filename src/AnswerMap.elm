@@ -1,6 +1,6 @@
 module AnswerMap exposing
     ( AnswerMap(..)
-    , Hotkey
+    , Hotkey(..)
     , OtherAnswer(..)
     , addGroup
     , allGroups

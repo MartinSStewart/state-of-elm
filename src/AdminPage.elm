@@ -1,5 +1,6 @@
 module AdminPage exposing
     ( AdminLoginData
+    , FormMappingEdit(..)
     , Model
     , Msg(..)
     , ToBackend(..)
