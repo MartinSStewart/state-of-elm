@@ -64,7 +64,7 @@ init =
             }
     in
     ( { forms = Dict.empty
-      , answerMap = answerMap
+      , formMapping = answerMap
       , adminLogin = Set.empty
       }
     , Command.none
@@ -73,7 +73,7 @@ init =
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms, formMapping = model.answerMap }
+    { forms = Dict.values model.forms, formMapping = model.formMapping }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -150,7 +150,7 @@ loadFormData sessionId time model =
                                     Just (formField form)
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.answerMap)
+                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.formMapping)
                     , potentialUsers =
                         List.filterMap
                             (\form ->
@@ -161,7 +161,7 @@ loadFormData sessionId time model =
                                     Nothing
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.answerMap)
+                            |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.formMapping)
                     }
 
                 segment : (Form -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults.DataEntrySegments a
@@ -176,7 +176,7 @@ loadFormData sessionId time model =
                                     formField form
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromForms (answerMapField model.answerMap) question.choices
+                            |> DataEntry.fromForms (answerMapField model.formMapping) question.choices
                     , potentialUsers =
                         List.filterMap
                             (\form ->
@@ -187,7 +187,7 @@ loadFormData sessionId time model =
                                     Nothing
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromForms (answerMapField model.answerMap) question.choices
+                            |> DataEntry.fromForms (answerMapField model.formMapping) question.choices
                     }
 
                 segmentFreeText : (Form -> String) -> (FormMapping -> FreeTextAnswerMap) -> SurveyResults.DataEntryWithOtherSegments a
@@ -202,7 +202,7 @@ loadFormData sessionId time model =
                                     Just (formField form)
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromFreeText (answerMapField model.answerMap)
+                            |> DataEntry.fromFreeText (answerMapField model.formMapping)
                     , potentialUsers =
                         List.filterMap
                             (\form ->
@@ -213,13 +213,13 @@ loadFormData sessionId time model =
                                     Nothing
                             )
                             formsWithoutNoInterestedInElm
-                            |> DataEntry.fromFreeText (answerMapField model.answerMap)
+                            |> DataEntry.fromFreeText (answerMapField model.formMapping)
                     }
             in
             { totalParticipants = List.length submittedForms
             , doYouUseElm =
                 List.concatMap (.doYouUseElm >> Set.toList) submittedForms
-                    |> DataEntry.fromForms model.answerMap.doYouUseElm Questions.doYouUseElm.choices
+                    |> DataEntry.fromForms model.formMapping.doYouUseElm Questions.doYouUseElm.choices
             , age = segment .age .age Questions.age
             , functionalProgrammingExperience =
                 segment .functionalProgrammingExperience .functionalProgrammingExperience Questions.experienceLevel
@@ -230,53 +230,53 @@ loadFormData sessionId time model =
             , countryLivingIn = segment .countryLivingIn .countryLivingIn Questions.countryLivingIn
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork formsWithoutNoInterestedInElm
-                    |> DataEntry.fromForms model.answerMap.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices
+                    |> DataEntry.fromForms model.formMapping.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices
             , applicationDomains =
                 List.map .applicationDomains formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.answerMap.applicationDomains
+                    |> DataEntry.fromMultiChoiceWithOther Questions.applicationDomains model.formMapping.applicationDomains
             , howLargeIsTheCompany =
                 List.filterMap .howLargeIsTheCompany formsWithoutNoInterestedInElm
-                    |> DataEntry.fromForms model.answerMap.howLargeIsTheCompany Questions.howLargeIsTheCompany.choices
+                    |> DataEntry.fromForms model.formMapping.howLargeIsTheCompany Questions.howLargeIsTheCompany.choices
             , whatLanguageDoYouUseForBackend =
                 List.map .whatLanguageDoYouUseForBackend formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.answerMap.whatLanguageDoYouUseForBackend
-            , howLong = List.filterMap .howLong formsWithoutNoInterestedInElm |> DataEntry.fromForms model.answerMap.howLong Questions.howLong.choices
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whatLanguageDoYouUseForBackend model.formMapping.whatLanguageDoYouUseForBackend
+            , howLong = List.filterMap .howLong formsWithoutNoInterestedInElm |> DataEntry.fromForms model.formMapping.howLong Questions.howLong.choices
             , elmVersion =
                 List.map .elmVersion formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.elmVersion model.answerMap.elmVersion
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmVersion model.formMapping.elmVersion
             , doYouUseElmFormat =
                 List.filterMap .doYouUseElmFormat formsWithoutNoInterestedInElm
-                    |> DataEntry.fromForms model.answerMap.doYouUseElmFormat Questions.doYouUseElmFormat.choices
+                    |> DataEntry.fromForms model.formMapping.doYouUseElmFormat Questions.doYouUseElmFormat.choices
             , stylingTools =
                 List.map .stylingTools formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.stylingTools model.answerMap.stylingTools
+                    |> DataEntry.fromMultiChoiceWithOther Questions.stylingTools model.formMapping.stylingTools
             , buildTools =
                 List.map .buildTools formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.buildTools model.answerMap.buildTools
+                    |> DataEntry.fromMultiChoiceWithOther Questions.buildTools model.formMapping.buildTools
             , frameworks =
                 List.map .frameworks formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.frameworks model.answerMap.frameworks
+                    |> DataEntry.fromMultiChoiceWithOther Questions.frameworks model.formMapping.frameworks
             , editors =
                 List.map .editors formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.editors model.answerMap.editors
+                    |> DataEntry.fromMultiChoiceWithOther Questions.editors model.formMapping.editors
             , doYouUseElmReview =
                 List.filterMap .doYouUseElmReview formsWithoutNoInterestedInElm
-                    |> DataEntry.fromForms model.answerMap.doYouUseElmReview Questions.doYouUseElmReview.choices
+                    |> DataEntry.fromForms model.formMapping.doYouUseElmReview Questions.doYouUseElmReview.choices
             , whichElmReviewRulesDoYouUse =
                 List.map .whichElmReviewRulesDoYouUse formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.answerMap.whichElmReviewRulesDoYouUse
+                    |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.formMapping.whichElmReviewRulesDoYouUse
             , testTools =
                 List.map .testTools formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.testTools model.answerMap.testTools
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testTools model.formMapping.testTools
             , testsWrittenFor =
                 List.map .testsWrittenFor formsWithoutNoInterestedInElm
-                    |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.answerMap.testsWrittenFor
+                    |> DataEntry.fromMultiChoiceWithOther Questions.testsWrittenFor model.formMapping.testsWrittenFor
             , biggestPainPoint =
                 List.map .biggestPainPoint formsWithoutNoInterestedInElm
-                    |> DataEntry.fromFreeText model.answerMap.biggestPainPoint
+                    |> DataEntry.fromFreeText model.formMapping.biggestPainPoint
             , whatDoYouLikeMost =
                 List.map .whatDoYouLikeMost formsWithoutNoInterestedInElm
-                    |> DataEntry.fromFreeText model.answerMap.whatDoYouLikeMost
+                    |> DataEntry.fromFreeText model.formMapping.whatDoYouLikeMost
             }
                 |> SurveyResults
 
@@ -362,7 +362,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             else
                 ( model, Err () |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId )
 
-        AdminToBackend (AdminPage.ReplaceFormsRequest forms) ->
+        AdminToBackend (AdminPage.ReplaceFormsRequest ( forms, formMapping )) ->
             ( if not Env.isProduction && isAdmin sessionId model then
                 { model
                     | forms =
@@ -374,6 +374,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                             )
                             forms
                             |> Dict.fromList
+                    , formMapping = formMapping
                 }
 
               else
@@ -392,7 +393,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminToBackend (AdminPage.EditFormMappingRequest edit) ->
             if isAdmin sessionId model then
-                ( { model | answerMap = AdminPage.networkUpdate edit model.answerMap }
+                ( { model | formMapping = AdminPage.networkUpdate edit model.formMapping }
                 , Set.toList model.adminLogin
                     |> List.map
                         (\sessionId_ ->

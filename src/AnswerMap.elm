@@ -4,6 +4,7 @@ module AnswerMap exposing
     , OtherAnswer(..)
     , addGroup
     , allGroups
+    , codec
     , comment
     , hotkey
     , hotkeyToIndex
@@ -23,6 +24,7 @@ import AssocSet as Set exposing (Set)
 import List.Extra as List
 import List.Nonempty
 import Questions exposing (Question)
+import Serialize exposing (Codec)
 
 
 type AnswerMap a
@@ -35,6 +37,50 @@ type AnswerMap a
 
 type OtherAnswer
     = OtherAnswer String
+
+
+codec : Codec e (AnswerMap a)
+codec =
+    Serialize.customType
+        (\a value ->
+            case value of
+                AnswerMap data0 ->
+                    a data0
+        )
+        |> Serialize.variant1
+            AnswerMap
+            (Serialize.record (\a b c -> { otherMapping = a, existingMapping = b, comment = c })
+                |> Serialize.field
+                    .otherMapping
+                    (Serialize.list
+                        (Serialize.record (\a b -> { groupName = a, otherAnswers = b })
+                            |> Serialize.field .groupName Serialize.string
+                            |> Serialize.field .otherAnswers (assocSetCodec otherAnswerCodec)
+                            |> Serialize.finishRecord
+                        )
+                    )
+                |> Serialize.field .existingMapping (Serialize.list (assocSetCodec otherAnswerCodec))
+                |> Serialize.field .comment Serialize.string
+                |> Serialize.finishRecord
+            )
+        |> Serialize.finishCustomType
+
+
+assocSetCodec : Codec e a -> Codec e (Set a)
+assocSetCodec a =
+    Serialize.list a |> Serialize.map Set.fromList Set.toList
+
+
+otherAnswerCodec : Codec e OtherAnswer
+otherAnswerCodec =
+    Serialize.customType
+        (\a value ->
+            case value of
+                OtherAnswer data0 ->
+                    a data0
+        )
+        |> Serialize.variant1 OtherAnswer Serialize.string
+        |> Serialize.finishCustomType
 
 
 otherAnswer : String -> OtherAnswer

@@ -41,7 +41,7 @@ type Msg
 
 
 type ToBackend
-    = ReplaceFormsRequest (List Form)
+    = ReplaceFormsRequest ( List Form, FormMapping )
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
 
@@ -557,15 +557,16 @@ update msg model =
                 ( model, Command.none )
 
             else
-                case Serialize.decodeFromString (Serialize.list Form.formCodec) text of
-                    Ok forms ->
+                case Serialize.decodeFromString (Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec) text of
+                    Ok ( forms, formMapping ) ->
                         ( { model
                             | forms =
                                 List.map
                                     (\form -> { form = form, submitTime = Just (Effect.Time.millisToPosix 0) })
                                     forms
+                            , formMapping = NetworkModel.init formMapping
                           }
-                        , ReplaceFormsRequest forms |> Lamdera.sendToBackend
+                        , ReplaceFormsRequest ( forms, formMapping ) |> Lamdera.sendToBackend
                         )
 
                     Err _ ->
