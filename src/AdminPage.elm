@@ -25,8 +25,6 @@ import Element.Input
 import Env
 import Form exposing (Form, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import Json.Decode
-import Json.Encode
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
 import Serialize
@@ -560,11 +558,7 @@ update msg model =
                 ( model, Command.none )
 
             else
-                case
-                    Serialize.decodeFromJson
-                        (Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec)
-                        (Json.Decode.decodeString Json.Decode.value text |> Result.withDefault (Json.Encode.string ""))
-                of
+                case Serialize.decodeFromString (Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec) text of
                     Ok ( forms, formMapping ) ->
                         ( { model
                             | forms =
@@ -655,8 +649,7 @@ adminView model =
                                     Nothing
                         )
                         model.forms
-                        |> Serialize.encodeToJson (Serialize.list Form.formCodec)
-                        |> Json.Encode.encode 0
+                        |> Serialize.encodeToString (Serialize.list Form.formCodec)
                 , placeholder = Nothing
                 , label = Element.Input.labelHidden ""
                 }
