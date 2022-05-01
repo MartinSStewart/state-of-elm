@@ -225,9 +225,11 @@ loadFormData sessionId time model =
                 segment .functionalProgrammingExperience .functionalProgrammingExperience Questions.experienceLevel
             , otherLanguages = segmentWithOther .otherLanguages .otherLanguages Questions.otherLanguages
             , newsAndDiscussions = segmentWithOther .newsAndDiscussions .newsAndDiscussions Questions.newsAndDiscussions
-            , elmResources = segmentWithOther .elmResources .elmResources Questions.elmResources
             , elmInitialInterest = segmentFreeText .elmInitialInterest .elmInitialInterest
             , countryLivingIn = segment .countryLivingIn .countryLivingIn Questions.countryLivingIn
+            , elmResources =
+                List.map .elmResources formsWithoutNoInterestedInElm
+                    |> DataEntry.fromMultiChoiceWithOther Questions.elmResources model.formMapping.elmResources
             , doYouUseElmAtWork =
                 List.filterMap .doYouUseElmAtWork formsWithoutNoInterestedInElm
                     |> DataEntry.fromForms model.formMapping.doYouUseElmAtWork Questions.doYouUseElmAtWork.choices

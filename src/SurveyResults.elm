@@ -68,9 +68,9 @@ type alias Data =
     , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
     , otherLanguages : DataEntryWithOtherSegments OtherLanguages
     , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
-    , elmResources : DataEntryWithOtherSegments ElmResources
     , elmInitialInterest : DataEntryWithOtherSegments ()
     , countryLivingIn : DataEntrySegments Country
+    , elmResources : DataEntryWithOther ElmResources
     , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
     , applicationDomains : DataEntryWithOther ApplicationDomains
     , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
@@ -199,6 +199,7 @@ view model =
                 model.windowSize
                 False
                 False
+                Nothing
                 Total
                 "Number of participants"
                 Element.none
@@ -209,30 +210,36 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
                 , { choice = "2018", count = 1176 }
                 , { choice = "2017", count = 1170 }
                 ]
-            , singleChoiceGraph model.windowSize False False model.mode data.doYouUseElm Questions.doYouUseElm
-            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.age Questions.age
-            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.functionalProgrammingExperience Questions.experienceLevel
-            , multiChoiceWithOtherSegment model.windowSize True True model.mode model.segment data.otherLanguages Questions.otherLanguages
-            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.elmResources Questions.elmResources
-
-            --, freeText model.mode model.windowSize data.elmInitialInterest Questions.initialInterestTitle
-            , singleChoiceSegmentGraph model.windowSize True True model.mode model.segment data.countryLivingIn Questions.countryLivingIn
-            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-            , multiChoiceWithOther model.windowSize False True model.mode data.applicationDomains Questions.applicationDomains
-            , singleChoiceGraph model.windowSize False False model.mode data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-            , multiChoiceWithOther model.windowSize True True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-            , singleChoiceGraph model.windowSize False False model.mode data.howLong Questions.howLong
-            , multiChoiceWithOther model.windowSize False False model.mode data.elmVersion Questions.elmVersion
-            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmFormat Questions.doYouUseElmFormat
-            , multiChoiceWithOther model.windowSize False True model.mode data.stylingTools Questions.stylingTools
-            , multiChoiceWithOther model.windowSize False True model.mode data.buildTools Questions.buildTools
-            , multiChoiceWithOther model.windowSize False True model.mode data.frameworks Questions.frameworks
-            , multiChoiceWithOther model.windowSize False True model.mode data.editors Questions.editors
-            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmReview Questions.doYouUseElmReview
-
-            --, freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-            --, freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+            , Ui.section
+                model.windowSize
+                "About you"
+                [ singleChoiceGraph model.windowSize False False model.mode data.doYouUseElm Questions.doYouUseElm
+                , singleChoiceSegmentGraph model.windowSize False False Nothing model.mode model.segment data.age Questions.age
+                , singleChoiceSegmentGraph model.windowSize False False Nothing model.mode model.segment data.functionalProgrammingExperience Questions.experienceLevel
+                , multiChoiceWithOtherSegment model.windowSize True True model.mode model.segment data.otherLanguages Questions.otherLanguages
+                , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.newsAndDiscussions Questions.newsAndDiscussions
+                , freeTextSegment model.mode model.segment model.windowSize data.elmInitialInterest Questions.initialInterestTitle
+                , singleChoiceSegmentGraph model.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+                ]
+            , Ui.section
+                model.windowSize
+                "Questions for people who use(d) Elm"
+                [ multiChoiceWithOther model.windowSize False True model.mode data.elmResources Questions.elmResources
+                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+                , multiChoiceWithOther model.windowSize False True model.mode data.applicationDomains Questions.applicationDomains
+                , singleChoiceGraph model.windowSize False False model.mode data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+                , multiChoiceWithOther model.windowSize True True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph model.windowSize False False model.mode data.howLong Questions.howLong
+                , multiChoiceWithOther model.windowSize False False model.mode data.elmVersion Questions.elmVersion
+                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmFormat Questions.doYouUseElmFormat
+                , multiChoiceWithOther model.windowSize False True model.mode data.stylingTools Questions.stylingTools
+                , multiChoiceWithOther model.windowSize False True model.mode data.buildTools Questions.buildTools
+                , multiChoiceWithOther model.windowSize False True model.mode data.frameworks Questions.frameworks
+                , multiChoiceWithOther model.windowSize False True model.mode data.editors Questions.editors
+                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmReview Questions.doYouUseElmReview
+                , freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+                , freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                ]
             ]
         ]
 
@@ -240,8 +247,8 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
 multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
 multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title } =
     let
-        (DataEntryWithOther dataEntryWithOther) =
-            case segment of
+        dataEntryWithOther =
+            (case segment of
                 AllUsers ->
                     DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
 
@@ -250,6 +257,8 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
 
                 PotentialUsers ->
                     segmentData.potentialUsers
+            )
+                |> DataEntry.get_
 
         otherKey =
             "Other"
@@ -289,9 +298,10 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
             windowSize
             singleLine
             True
+            (maxCountSegment mode segmentData |> Just)
             mode
             title
-            (percentVsTotalAndSegment mode segment)
+            (percentVsTotalAndSegment False mode segment)
             dataEntryWithOther.comment
 
 
@@ -299,7 +309,17 @@ percentVsTotal : Mode -> Element Msg
 percentVsTotal mode =
     Element.row
         []
+        [ filterButton (mode == Percentage || mode == PerCapita) Left (PressedModeButton Percentage) "% of answers"
+        , filterButton (mode == Total) Right (PressedModeButton Total) "Total"
+        ]
+
+
+percentVsPerCapitaVsTotal : Mode -> Element Msg
+percentVsPerCapitaVsTotal mode =
+    Element.row
+        []
         [ filterButton (mode == Percentage) Left (PressedModeButton Percentage) "% of answers"
+        , filterButton (mode == PerCapita) Middle (PressedModeButton PerCapita) "Per capita"
         , filterButton (mode == Total) Right (PressedModeButton Total) "Total"
         ]
 
@@ -314,11 +334,17 @@ segmentFilter segment =
         ]
 
 
-percentVsTotalAndSegment : Mode -> Segment -> Element Msg
-percentVsTotalAndSegment mode segment =
+percentVsTotalAndSegment : Bool -> Mode -> Segment -> Element Msg
+percentVsTotalAndSegment includePerCapita mode segment =
     Element.wrappedRow
         [ Element.spacingXY 16 8 ]
-        [ percentVsTotal mode, segmentFilter segment ]
+        [ if includePerCapita then
+            percentVsPerCapitaVsTotal mode
+
+          else
+            percentVsTotal mode
+        , segmentFilter segment
+        ]
 
 
 type Side
@@ -410,7 +436,7 @@ multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther d
                     Nothing ->
                         a
            )
-        |> simpleGraph windowSize singleLine True mode title (percentVsTotal mode) dataEntryWithOther.comment
+        |> simpleGraph windowSize singleLine True Nothing mode title (percentVsTotal mode) dataEntryWithOther.comment
 
 
 commentView : String -> Element msg
@@ -425,15 +451,100 @@ commentView comment =
         |> Element.el [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 } ]
 
 
+freeTextSegment : Mode -> Segment -> Size -> DataEntryWithOtherSegments () -> String -> Element Msg
+freeTextSegment mode segment windowSize segmentData title =
+    let
+        dataEntryWithOther =
+            (case segment of
+                AllUsers ->
+                    DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
 
---Element.paragraph
---    [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 }
---    , Element.Font.size 18
---    ]
---    [ Element.text comment ]
+                Users ->
+                    segmentData.users
+
+                PotentialUsers ->
+                    segmentData.potentialUsers
+            )
+                |> DataEntry.get_
+
+        otherKey =
+            "Other"
+
+        dataEntry =
+            Dict.remove otherKey dataEntryWithOther.data
+
+        maybeOther =
+            Dict.get otherKey dataEntryWithOther.data
+
+        emptyChoices : Set String
+        emptyChoices =
+            DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+                |> (\(DataEntryWithOther a) -> a.data)
+                |> Dict.filter (\_ count -> count == 0)
+                |> Dict.keys
+                |> Set.fromList
+    in
+    Dict.toList dataEntry
+        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+        |> List.sortBy (\{ count } -> -count)
+        |> (\a ->
+                case maybeOther of
+                    Just count ->
+                        a ++ [ { choice = otherKey, count = count } ]
+
+                    Nothing ->
+                        a
+           )
+        |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
+        |> simpleGraph
+            windowSize
+            False
+            True
+            (maxCountSegment mode segmentData |> Just)
+            mode
+            title
+            (percentVsTotalAndSegment False mode segment)
+            dataEntryWithOther.comment
 
 
-freeText : Mode -> Size -> DataEntryWithOther a -> String -> Element msg
+maxCountSegment : Mode -> DataEntryWithOtherSegments a -> Float
+maxCountSegment mode segmentData =
+    case mode of
+        Percentage ->
+            [ segmentData.users
+            , segmentData.potentialUsers
+            , DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+            ]
+                |> List.concatMap
+                    (\a ->
+                        let
+                            data : List Int
+                            data =
+                                (DataEntry.get_ a).data |> Dict.values
+
+                            total =
+                                List.sum data
+                        in
+                        List.map (\value -> 100 * toFloat value / toFloat total) data
+                    )
+                |> List.maximum
+                |> Maybe.withDefault 1
+
+        PerCapita ->
+            1
+
+        Total ->
+            [ segmentData.users
+            , segmentData.potentialUsers
+            , DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+            ]
+                |> List.concatMap (DataEntry.get_ >> .data >> Dict.values)
+                |> List.maximum
+                |> Maybe.withDefault 1
+                |> toFloat
+
+
+freeText : Mode -> Size -> DataEntryWithOther () -> String -> Element msg
 freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
     let
         data =
@@ -442,7 +553,7 @@ freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
                 |> List.sortBy (\{ count } -> -count)
 
         maxCount =
-            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
+            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1 |> toFloat
 
         total =
             List.map .count data |> List.sum |> max 1
@@ -484,7 +595,7 @@ freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
 --    ]
 
 
-barAndName : Mode -> String -> Int -> Int -> Int -> Element msg
+barAndName : Mode -> String -> Int -> Int -> Float -> Element msg
 barAndName mode name count total maxCount =
     Element.column
         [ Element.width Element.fill, Element.spacing 1 ]
@@ -493,14 +604,33 @@ barAndName mode name count total maxCount =
         ]
 
 
-bar : Mode -> Int -> Int -> Int -> Element msg
+bar : Mode -> Int -> Int -> Float -> Element msg
 bar mode count total maxCount =
     let
         a =
-            10000
+            100000
 
-        percentage =
-            100 * toFloat count / toFloat total |> StringExtra.removeTrailing0s 1
+        value =
+            case mode of
+                Percentage ->
+                    100 * toFloat count / toFloat total
+
+                PerCapita ->
+                    toFloat count / 1000
+
+                Total ->
+                    toFloat count
+
+        textValue =
+            case mode of
+                Percentage ->
+                    StringExtra.removeTrailing0s 1 value ++ "%"
+
+                PerCapita ->
+                    StringExtra.removeTrailing0s 2 value
+
+                Total ->
+                    String.fromFloat value
     in
     Element.row
         [ Element.width Element.fill
@@ -509,38 +639,38 @@ bar mode count total maxCount =
         ]
         [ Element.el
             [ Element.Background.color Ui.blue0
-            , Element.fillPortion (a * count) |> Element.minimum 2 |> Element.width
+            , a * value |> round |> Element.fillPortion |> Element.minimum 2 |> Element.width
             , Element.height Element.fill
             , Element.Border.rounded 4
             , Element.Font.size 16
-            , (case mode of
-                Percentage ->
-                    percentage ++ "%"
-
-                Total ->
-                    String.fromInt count
-              )
-                |> Element.text
+            , Element.text textValue
                 |> Element.el [ Element.moveRight 4, Element.centerY ]
                 |> Element.onRight
             ]
             Element.none
         , Element.el
-            [ Element.fillPortion (a * (maxCount - count)) |> Element.width ]
+            [ a * (maxCount - value) |> round |> Element.fillPortion |> Element.width ]
             Element.none
         ]
 
 
 type Mode
     = Percentage
+    | PerCapita
     | Total
 
 
-simpleGraph : Size -> Bool -> Bool -> Mode -> String -> Element msg -> String -> List { choice : String, count : Int } -> Element msg
-simpleGraph windowSize singleLine isMultiChoice mode title filterUi comment data =
+simpleGraph : Size -> Bool -> Bool -> Maybe Float -> Mode -> String -> Element msg -> String -> List { choice : String, count : Int } -> Element msg
+simpleGraph windowSize singleLine isMultiChoice customMaxCount mode title filterUi comment data =
     let
+        maxCount : Float
         maxCount =
-            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
+            case customMaxCount of
+                Just maxCount_ ->
+                    maxCount_
+
+                Nothing ->
+                    List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1 |> toFloat
 
         total =
             List.map .count data |> List.sum |> max 1
@@ -596,8 +726,8 @@ simpleGraph windowSize singleLine isMultiChoice mode title filterUi comment data
         ]
 
 
-singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
-singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
+singleChoiceSegmentGraph : Size -> Bool -> Bool -> Maybe (a -> Int) -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
+singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode segment segmentData { title, choices, choiceToString } =
     let
         dataEntry : DataEntry a
         dataEntry =
@@ -614,6 +744,61 @@ singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentDa
         data : Nonempty { choice : a, count : Int }
         data =
             DataEntry.get choices dataEntry
+
+        maxCount : Float
+        maxCount =
+            case mode of
+                Percentage ->
+                    [ segmentData.users
+                    , segmentData.potentialUsers
+                    , DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+                    ]
+                        |> List.concatMap
+                            (\a ->
+                                let
+                                    data_ : List Int
+                                    data_ =
+                                        DataEntry.get choices a |> Nonempty.toList |> List.map .count
+
+                                    total =
+                                        List.sum data_
+                                in
+                                List.map (\value -> 100 * toFloat value / toFloat total) data_
+                            )
+                        |> List.maximum
+                        |> Maybe.withDefault 1
+
+                PerCapita ->
+                    [ segmentData.users
+                    , segmentData.potentialUsers
+                    , DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+                    ]
+                        |> List.concatMap
+                            (DataEntry.get choices
+                                >> Nonempty.toList
+                                >> List.map
+                                    (\{ choice, count } ->
+                                        case includePerCapita of
+                                            Just perCapitaFunction ->
+                                                (1000000 * count) // perCapitaFunction choice
+
+                                            Nothing ->
+                                                count
+                                    )
+                            )
+                        |> List.maximum
+                        |> Maybe.withDefault 1
+                        |> toFloat
+
+                Total ->
+                    [ segmentData.users
+                    , segmentData.potentialUsers
+                    , DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+                    ]
+                        |> List.concatMap (DataEntry.get choices >> Nonempty.toList >> List.map .count)
+                        |> List.maximum
+                        |> Maybe.withDefault 1
+                        |> toFloat
 
         emptyChoices : Set a
         emptyChoices =
@@ -634,26 +819,480 @@ singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentDa
         windowSize
         singleLine
         False
+        (Just maxCount)
         mode
         title
-        (percentVsTotalAndSegment mode segment)
+        (percentVsTotalAndSegment (includePerCapita /= Nothing) mode segment)
         (DataEntry.comment dataEntry)
-        ((if sortValues then
-            nonemptySortBy (\{ count } -> -count) data
-
-          else
-            data
-         )
-            |> Nonempty.toList
+        (Nonempty.toList data
             |> List.filterMap
                 (\a ->
                     if Set.member a.choice emptyChoices then
                         Nothing
 
                     else
-                        Just { choice = choiceToString a.choice, count = a.count }
+                        Just
+                            { choice = choiceToString a.choice
+                            , count =
+                                case ( includePerCapita, mode ) of
+                                    ( Just perCapitaFunction, PerCapita ) ->
+                                        (1000000000 * a.count) // perCapitaFunction a.choice
+
+                                    _ ->
+                                        a.count
+                            }
                 )
+            |> (if sortValues then
+                    List.sortBy (\{ count } -> -count)
+
+                else
+                    identity
+               )
         )
+
+
+all =
+    [ ( "Andorra", "AD", "🇦🇩" )
+    , ( "United Arab Emirates", "AE", "🇦🇪" )
+    , ( "Afghanistan", "AF", "🇦🇫" )
+    , ( "Antigua and Barbuda", "AG", "🇦🇬" )
+    , ( "Anguilla", "AI", "🇦🇮" )
+    , ( "Albania", "AL", "🇦🇱" )
+    , ( "Armenia", "AM", "🇦🇲" )
+    , ( "Angola", "AO", "🇦🇴" )
+    , ( "Antarctica", "AQ", "🇦🇶" )
+    , ( "Argentina", "AR", "🇦🇷" )
+    , ( "American Samoa", "AS", "🇦🇸" )
+    , ( "Austria", "AT", "🇦🇹" )
+    , ( "Australia", "AU", "🇦🇺" )
+    , ( "Aruba", "AW", "🇦🇼" )
+    , ( "Åland Islands", "AX", "🇦🇽" )
+    , ( "Azerbaijan", "AZ", "🇦🇿" )
+    , ( "Bosnia and Herzegovina", "BA", "🇧🇦" )
+    , ( "Barbados", "BB", "🇧🇧" )
+    , ( "Bangladesh", "BD", "🇧🇩" )
+    , ( "Belgium", "BE", "🇧🇪" )
+    , ( "Burkina Faso", "BF", "🇧🇫" )
+    , ( "Bulgaria", "BG", "🇧🇬" )
+    , ( "Bahrain", "BH", "🇧🇭" )
+    , ( "Burundi", "BI", "🇧🇮" )
+    , ( "Benin", "BJ", "🇧🇯" )
+    , ( "Saint Barthélemy", "BL", "🇧🇱" )
+    , ( "Bermuda", "BM", "🇧🇲" )
+    , ( "Brunei Darussalam", "BN", "🇧🇳" )
+    , ( "Bolivia (Plurinational State of)", "BO", "🇧🇴" )
+    , ( "Bonaire, Sint Eustatius and Saba", "BQ", "🇧🇶" )
+    , ( "Brazil", "BR", "🇧🇷" )
+    , ( "Bahamas", "BS", "🇧🇸" )
+    , ( "Bhutan", "BT", "🇧🇹" )
+    , ( "Bouvet Island", "BV", "🇧🇻" )
+    , ( "Botswana", "BW", "🇧🇼" )
+    , ( "Belarus", "BY", "🇧🇾" )
+    , ( "Belize", "BZ", "🇧🇿" )
+    , ( "Canada", "CA", "🇨🇦" )
+    , ( "Cocos (Keeling) Islands", "CC", "🇨🇨" )
+    , ( "Congo, Democratic Republic of the", "CD", "🇨🇩" )
+    , ( "Central African Republic", "CF", "🇨🇫" )
+    , ( "Congo", "CG", "🇨🇬" )
+    , ( "Switzerland", "CH", "🇨🇭" )
+    , ( "Côte d'Ivoire", "CI", "🇨🇮" )
+    , ( "Cook Islands", "CK", "🇨🇰" )
+    , ( "Chile", "CL", "🇨🇱" )
+    , ( "Cameroon", "CM", "🇨🇲" )
+    , ( "China", "CN", "🇨🇳" )
+    , ( "Colombia", "CO", "🇨🇴" )
+    , ( "Costa Rica", "CR", "🇨🇷" )
+    , ( "Cuba", "CU", "🇨🇺" )
+    , ( "Cabo Verde", "CV", "🇨🇻" )
+    , ( "Curaçao", "CW", "🇨🇼" )
+    , ( "Christmas Island", "CX", "🇨🇽" )
+    , ( "Cyprus", "CY", "🇨🇾" )
+    , ( "Czechia", "CZ", "🇨🇿" )
+    , ( "Germany", "DE", "🇩🇪" )
+    , ( "Djibouti", "DJ", "🇩🇯" )
+    , ( "Dominica", "DM", "🇩🇲" )
+    , ( "Dominican Republic", "DO", "🇩🇴" )
+    , ( "Algeria", "DZ", "🇩🇿" )
+    , ( "Ecuador", "EC", "🇪🇨" )
+    , ( "Estonia", "EE", "🇪🇪" )
+    , ( "Egypt", "EG", "🇪🇬" )
+    , ( "Western Sahara", "EH", "🇪🇭" )
+    , ( "Eritrea", "ER", "🇪🇷" )
+    , ( "Spain", "ES", "🇪🇸" )
+    , ( "Ethiopia", "ET", "🇪🇹" )
+    , ( "Finland", "FI", "🇫🇮" )
+    , ( "Fiji", "FJ", "🇫🇯" )
+    , ( "Falkland Islands (Malvinas)", "FK", "🇫🇰" )
+    , ( "Micronesia (Federated States of)", "FM", "🇫🇲" )
+    , ( "Faroe Islands", "FO", "🇫🇴" )
+    , ( "France", "FR", "🇫🇷" )
+    , ( "Gabon", "GA", "🇬🇦" )
+    , ( "United Kingdom of Great Britain and Northern Ireland", "GB", "🇬🇧" )
+    , ( "Grenada", "GD", "🇬🇩" )
+    , ( "Georgia", "GE", "🇬🇪" )
+    , ( "French Guiana", "GF", "🇬🇫" )
+    , ( "Guernsey", "GG", "🇬🇬" )
+    , ( "Ghana", "GH", "🇬🇭" )
+    , ( "Gibraltar", "GI", "🇬🇮" )
+    , ( "Greenland", "GL", "🇬🇱" )
+    , ( "Gambia", "GM", "🇬🇲" )
+    , ( "Guinea", "GN", "🇬🇳" )
+    , ( "Guadeloupe", "GP", "🇬🇵" )
+    , ( "Equatorial Guinea", "GQ", "🇬🇶" )
+    , ( "Greece", "GR", "🇬🇷" )
+    , ( "South Georgia and the South Sandwich Islands", "GS", "🇬🇸" )
+    , ( "Guatemala", "GT", "🇬🇹" )
+    , ( "Guam", "GU", "🇬🇺" )
+    , ( "Guinea-Bissau", "GW", "🇬🇼" )
+    , ( "Guyana", "GY", "🇬🇾" )
+    , ( "Hong Kong", "HK", "🇭🇰" )
+    , ( "Heard Island and McDonald Islands", "HM", "🇭🇲" )
+    , ( "Honduras", "HN", "🇭🇳" )
+    , ( "Croatia", "HR", "🇭🇷" )
+    , ( "Haiti", "HT", "🇭🇹" )
+    , ( "Hungary", "HU", "🇭🇺" )
+    , ( "Indonesia", "ID", "🇮🇩" )
+    , ( "Ireland", "IE", "🇮🇪" )
+    , ( "Israel", "IL", "🇮🇱" )
+    , ( "Isle of Man", "IM", "🇮🇲" )
+    , ( "India", "IN", "🇮🇳" )
+    , ( "British Indian Ocean Territory", "IO", "🇮🇴" )
+    , ( "Iraq", "IQ", "🇮🇶" )
+    , ( "Iran (Islamic Republic of)", "IR", "🇮🇷" )
+    , ( "Iceland", "IS", "🇮🇸" )
+    , ( "Italy", "IT", "🇮🇹" )
+    , ( "Jersey", "JE", "🇯🇪" )
+    , ( "Jamaica", "JM", "🇯🇲" )
+    , ( "Jordan", "JO", "🇯🇴" )
+    , ( "Japan", "JP", "🇯🇵" )
+    , ( "Kenya", "KE", "🇰🇪" )
+    , ( "Kyrgyzstan", "KG", "🇰🇬" )
+    , ( "Cambodia", "KH", "🇰🇭" )
+    , ( "Kiribati", "KI", "🇰🇮" )
+    , ( "Comoros", "KM", "🇰🇲" )
+    , ( "Saint Kitts and Nevis", "KN", "🇰🇳" )
+    , ( "Korea (Democratic People's Republic of)", "KP", "🇰🇵" )
+    , ( "Korea, Republic of", "KR", "🇰🇷" )
+    , ( "Kuwait", "KW", "🇰🇼" )
+    , ( "Cayman Islands", "KY", "🇰🇾" )
+    , ( "Kazakhstan", "KZ", "🇰🇿" )
+    , ( "Lao People's Democratic Republic", "LA", "🇱🇦" )
+    , ( "Lebanon", "LB", "🇱🇧" )
+    , ( "Saint Lucia", "LC", "🇱🇨" )
+    , ( "Liechtenstein", "LI", "🇱🇮" )
+    , ( "Sri Lanka", "LK", "🇱🇰" )
+    , ( "Liberia", "LR", "🇱🇷" )
+    , ( "Lesotho", "LS", "🇱🇸" )
+    , ( "Lithuania", "LT", "🇱🇹" )
+    , ( "Luxembourg", "LU", "🇱🇺" )
+    , ( "Latvia", "LV", "🇱🇻" )
+    , ( "Libya", "LY", "🇱🇾" )
+    , ( "Morocco", "MA", "🇲🇦" )
+    , ( "Monaco", "MC", "🇲🇨" )
+    , ( "Moldova, Republic of", "MD", "🇲🇩" )
+    , ( "Montenegro", "ME", "🇲🇪" )
+    , ( "Saint Martin (French part)", "MF", "🇲🇫" )
+    , ( "Madagascar", "MG", "🇲🇬" )
+    , ( "Marshall Islands", "MH", "🇲🇭" )
+    , ( "North Macedonia", "MK", "🇲🇰" )
+    , ( "Mali", "ML", "🇲🇱" )
+    , ( "Myanmar", "MM", "🇲🇲" )
+    , ( "Mongolia", "MN", "🇲🇳" )
+    , ( "Macao", "MO", "🇲🇴" )
+    , ( "Northern Mariana Islands", "MP", "🇲🇵" )
+    , ( "Martinique", "MQ", "🇲🇶" )
+    , ( "Mauritania", "MR", "🇲🇷" )
+    , ( "Montserrat", "MS", "🇲🇸" )
+    , ( "Malta", "MT", "🇲🇹" )
+    , ( "Mauritius", "MU", "🇲🇺" )
+    , ( "Maldives", "MV", "🇲🇻" )
+    , ( "Malawi", "MW", "🇲🇼" )
+    , ( "Mexico", "MX", "🇲🇽" )
+    , ( "Malaysia", "MY", "🇲🇾" )
+    , ( "Mozambique", "MZ", "🇲🇿" )
+    , ( "Namibia", "NA", "🇳🇦" )
+    , ( "New Caledonia", "NC", "🇳🇨" )
+    , ( "Niger", "NE", "🇳🇪" )
+    , ( "Norfolk Island", "NF", "🇳🇫" )
+    , ( "Nigeria", "NG", "🇳🇬" )
+    , ( "Nicaragua", "NI", "🇳🇮" )
+    , ( "Netherlands", "NL", "🇳🇱" )
+    , ( "Norway", "NO", "🇳🇴" )
+    , ( "Nepal", "NP", "🇳🇵" )
+    , ( "Nauru", "NR", "🇳🇷" )
+    , ( "Niue", "NU", "🇳🇺" )
+    , ( "New Zealand", "NZ", "🇳🇿" )
+    , ( "Oman", "OM", "🇴🇲" )
+    , ( "Panama", "PA", "🇵🇦" )
+    , ( "Peru", "PE", "🇵🇪" )
+    , ( "French Polynesia", "PF", "🇵🇫" )
+    , ( "Papua New Guinea", "PG", "🇵🇬" )
+    , ( "Philippines", "PH", "🇵🇭" )
+    , ( "Pakistan", "PK", "🇵🇰" )
+    , ( "Poland", "PL", "🇵🇱" )
+    , ( "Saint Pierre and Miquelon", "PM", "🇵🇲" )
+    , ( "Pitcairn", "PN", "🇵🇳" )
+    , ( "Puerto Rico", "PR", "🇵🇷" )
+    , ( "Palestine, State of", "PS", "🇵🇸" )
+    , ( "Portugal", "PT", "🇵🇹" )
+    , ( "Palau", "PW", "🇵🇼" )
+    , ( "Paraguay", "PY", "🇵🇾" )
+    , ( "Qatar", "QA", "🇶🇦" )
+    , ( "Réunion", "RE", "🇷🇪" )
+    , ( "Romania", "RO", "🇷🇴" )
+    , ( "Serbia", "RS", "🇷🇸" )
+    , ( "Russian Federation", "RU", "🇷🇺" )
+    , ( "Rwanda", "RW", "🇷🇼" )
+    , ( "Saudi Arabia", "SA", "🇸🇦" )
+    , ( "Solomon Islands", "SB", "🇸🇧" )
+    , ( "Seychelles", "SC", "🇸🇨" )
+    , ( "Sudan", "SD", "🇸🇩" )
+    , ( "Sweden", "SE", "🇸🇪" )
+    , ( "Singapore", "SG", "🇸🇬" )
+    , ( "Saint Helena, Ascension and Tristan da Cunha", "SH", "🇸🇭" )
+    , ( "Slovenia", "SI", "🇸🇮" )
+    , ( "Svalbard and Jan Mayen", "SJ", "🇸🇯" )
+    , ( "Slovakia", "SK", "🇸🇰" )
+    , ( "Sierra Leone", "SL", "🇸🇱" )
+    , ( "San Marino", "SM", "🇸🇲" )
+    , ( "Senegal", "SN", "🇸🇳" )
+    , ( "Somalia", "SO", "🇸🇴" )
+    , ( "Suriname", "SR", "🇸🇷" )
+    , ( "South Sudan", "SS", "🇸🇸" )
+    , ( "Sao Tome and Principe", "ST", "🇸🇹" )
+    , ( "El Salvador", "SV", "🇸🇻" )
+    , ( "Sint Maarten (Dutch part)", "SX", "🇸🇽" )
+    , ( "Syrian Arab Republic", "SY", "🇸🇾" )
+    , ( "Eswatini", "SZ", "🇸🇿" )
+    , ( "Turks and Caicos Islands", "TC", "🇹🇨" )
+    , ( "Chad", "TD", "🇹🇩" )
+    , ( "French Southern Territories", "TF", "🇹🇫" )
+    , ( "Togo", "TG", "🇹🇬" )
+    , ( "Thailand", "TH", "🇹🇭" )
+    , ( "Tajikistan", "TJ", "🇹🇯" )
+    , ( "Tokelau", "TK", "🇹🇰" )
+    , ( "Timor-Leste", "TL", "🇹🇱" )
+    , ( "Turkmenistan", "TM", "🇹🇲" )
+    , ( "Tunisia", "TN", "🇹🇳" )
+    , ( "Tonga", "TO", "🇹🇴" )
+    , ( "Turkey", "TR", "🇹🇷" )
+    , ( "Trinidad and Tobago", "TT", "🇹🇹" )
+    , ( "Tuvalu", "TV", "🇹🇻" )
+    , ( "Taiwan, Province of China", "TW", "🇹🇼" )
+    , ( "Tanzania, United Republic of", "TZ", "🇹🇿" )
+    , ( "Ukraine", "UA", "🇺🇦" )
+    , ( "Uganda", "UG", "🇺🇬" )
+    , ( "United States Minor Outlying Islands", "UM", "🇺🇲" )
+    , ( "United States of America", "US", "🇺🇸" )
+    , ( "Uruguay", "UY", "🇺🇾" )
+    , ( "Uzbekistan", "UZ", "🇺🇿" )
+    , ( "Holy See", "VA", "🇻🇦" )
+    , ( "Saint Vincent and the Grenadines", "VC", "🇻🇨" )
+    , ( "Venezuela (Bolivarian Republic of)", "VE", "🇻🇪" )
+    , ( "Virgin Islands (British)", "VG", "🇻🇬" )
+    , ( "Virgin Islands (U.S.)", "VI", "🇻🇮" )
+    , ( "Viet Nam", "VN", "🇻🇳" )
+    , ( "Vanuatu", "VU", "🇻🇺" )
+    , ( "Wallis and Futuna", "WF", "🇼🇫" )
+    , ( "Samoa", "WS", "🇼🇸" )
+    , ( "Yemen", "YE", "🇾🇪" )
+    , ( "Mayotte", "YT", "🇾🇹" )
+    , ( "South Africa", "ZA", "🇿🇦" )
+    , ( "Zambia", "ZM", "🇿🇲" )
+    , ( "Zimbabwe", "ZW", "🇿🇼" )
+    ]
+
+
+{-| Sourced from <https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population>
+-}
+countryPopulation : Country -> Int
+countryPopulation country =
+    case country.code of
+        "US" ->
+            332653266
+
+        "DE" ->
+            83222442
+
+        "GB" ->
+            67081000
+
+        "FR" ->
+            67841000
+
+        "NL" ->
+            17716681
+
+        "AU" ->
+            25990538
+
+        "SE" ->
+            10462498
+
+        "CA" ->
+            38669438
+
+        "NO" ->
+            5425270
+
+        "PL" ->
+            38057000
+
+        "ES" ->
+            47326687
+
+        "BR" ->
+            214575895
+
+        "DK" ->
+            5873420
+
+        "IT" ->
+            58952787
+
+        "BE" ->
+            11629213
+
+        "CZ" ->
+            10516707
+
+        "CH" ->
+            8736500
+
+        "AT" ->
+            9027999
+
+        "IN" ->
+            1375836525
+
+        "FI" ->
+            5550066
+
+        "JP" ->
+            125502000
+
+        "PT" ->
+            10347892
+
+        "IL" ->
+            9510140
+
+        "RO" ->
+            19186201
+
+        "AR" ->
+            45808747
+
+        "HU" ->
+            9689000
+
+        "ZA" ->
+            60142978
+
+        "CN" ->
+            1412600000
+
+        "EC" ->
+            17969808
+
+        "ID" ->
+            272248500
+
+        "MX" ->
+            127996051
+
+        "RU" ->
+            145478097
+
+        "SG" ->
+            5453600
+
+        "SI" ->
+            2108977
+
+        "CO" ->
+            51049498
+
+        "EE" ->
+            1330068
+
+        "IE" ->
+            5011500
+
+        "PH" ->
+            111824794
+
+        "TR" ->
+            84680273
+
+        "UA" ->
+            41130432
+
+        "UY" ->
+            3554915
+
+        "AM" ->
+            2963900
+
+        "BA" ->
+            3320954
+
+        "BD" ->
+            172642054
+
+        "CY" ->
+            888005
+
+        "GH" ->
+            30832019
+
+        "IR" ->
+            85401767
+
+        "KE" ->
+            47564296
+
+        "NZ" ->
+            5137444
+
+        "PR" ->
+            3285874
+
+        "RS" ->
+            6871547
+
+        "TH" ->
+            66782717
+
+        "TT" ->
+            1367558
+
+        "VE" ->
+            28705000
+
+        "VN" ->
+            98505400
+
+        "BY" ->
+            9349645
+
+        "CL" ->
+            19678363
+
+        "GR" ->
+            10678632
+
+        "LT" ->
+            2794961
+
+        "MY" ->
+            32712600
+
+        "SK" ->
+            5434712
+
+        _ ->
+            1
 
 
 singleChoiceGraph : Size -> Bool -> Bool -> Mode -> DataEntry a -> Question a -> Element Msg
@@ -666,6 +1305,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
         windowSize
         singleLine
         False
+        Nothing
         mode
         title
         (percentVsTotal mode)
@@ -678,6 +1318,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
          )
             |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
             |> Nonempty.toList
+            |> List.filter (\{ count } -> count > 0)
         )
 
 
