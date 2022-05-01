@@ -558,7 +558,7 @@ update msg model =
                 ( model, Command.none )
 
             else
-                case Serialize.decodeFromString (Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec) text of
+                case Serialize.decodeFromString codec text of
                     Ok ( forms, formMapping ) ->
                         ( { model
                             | forms =
@@ -625,6 +625,10 @@ deleteButton onPress =
         }
 
 
+codec =
+    Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec
+
+
 adminView : Model -> Element Msg
 adminView model =
     Element.column
@@ -639,7 +643,7 @@ adminView model =
                 []
                 { onChange = TypedFormsData
                 , text =
-                    List.filterMap
+                    ( List.filterMap
                         (\{ form, submitTime } ->
                             case submitTime of
                                 Just _ ->
@@ -649,7 +653,9 @@ adminView model =
                                     Nothing
                         )
                         model.forms
-                        |> Serialize.encodeToString (Serialize.list Form.formCodec)
+                    , NetworkModel.localState networkUpdate model.formMapping
+                    )
+                        |> Serialize.encodeToString codec
                 , placeholder = Nothing
                 , label = Element.Input.labelHidden ""
                 }
