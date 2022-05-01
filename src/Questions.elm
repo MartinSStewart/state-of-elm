@@ -17,7 +17,6 @@ module Questions exposing
     , OtherLanguages(..)
     , Question
     , StylingTools(..)
-    , SurveyYears(..)
     , TestTools(..)
     , TestsWrittenFor(..)
     , WhatLanguageDoYouUseForBackend(..)
@@ -38,7 +37,6 @@ module Questions exposing
     , frameworks
     , howLargeIsTheCompany
     , howLong
-    , howManyParticipants
     , initialInterestTitle
     , newsAndDiscussions
     , otherLanguages
@@ -284,30 +282,6 @@ type alias Question a =
     { title : String
     , choices : Nonempty a
     , choiceToString : a -> String
-    }
-
-
-type SurveyYears
-    = Year2017
-    | Year2018
-    | Year2022
-
-
-howManyParticipants : Question SurveyYears
-howManyParticipants =
-    { title = "How many people filled in the survey?"
-    , choices = Nonempty Year2017 [ Year2018, Year2022 ]
-    , choiceToString =
-        \a ->
-            case a of
-                Year2017 ->
-                    "2017"
-
-                Year2018 ->
-                    "2018"
-
-                Year2022 ->
-                    "2022"
     }
 
 

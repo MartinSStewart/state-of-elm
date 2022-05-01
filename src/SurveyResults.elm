@@ -24,9 +24,8 @@ import Element.Font
 import Element.Input
 import Html exposing (Html)
 import Html.Attributes
-import List.Nonempty as Nonempty exposing (Nonempty(..))
-import List.Nonempty.Ancillary as Nonempty
-import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, SurveyYears, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
+import List.Nonempty as Nonempty exposing (Nonempty)
+import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
 import StringExtra
 import Ui exposing (Size)
 
@@ -239,7 +238,7 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
 
 
 multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
-multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
+multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title } =
     let
         (DataEntryWithOther dataEntryWithOther) =
             case segment of
@@ -285,6 +284,7 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
                     Nothing ->
                         a
            )
+        |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
         |> simpleGraph
             windowSize
             singleLine
@@ -383,7 +383,7 @@ filterButton isSelected side onPress label =
 
 
 multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element Msg
-multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
+multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title } =
     let
         otherKey =
             "Other"
@@ -434,7 +434,7 @@ commentView comment =
 
 
 freeText : Mode -> Size -> DataEntryWithOther a -> String -> Element msg
-freeText mode windowSize (DataEntryWithOther dataEntryWithOther) title =
+freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
     let
         data =
             Dict.toList dataEntryWithOther.data
