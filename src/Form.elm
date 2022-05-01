@@ -2,10 +2,13 @@ module Form exposing
     ( Form
     , FormMapping
     , SpecificQuestion(..)
+    , doesNotUseElm
     , emptyForm
     , formCodec
+    , formMappingCodec
     , getOtherAnswer
     , getOtherAnswer_
+    , notInterestedInElm
     )
 
 import AnswerMap exposing (AnswerMap)
@@ -68,6 +71,17 @@ type alias Form =
     , whatDoYouLikeMost : String
     , emailAddress : String
     }
+
+
+doesNotUseElm : Form -> Bool
+doesNotUseElm form =
+    Set.member NoButImCuriousAboutIt form.doYouUseElm
+        || Set.member NoAndIDontPlanTo form.doYouUseElm
+
+
+notInterestedInElm : Form -> Bool
+notInterestedInElm form =
+    Set.member NoAndIDontPlanTo form.doYouUseElm
 
 
 getOtherAnswer : MultiChoiceWithOther a -> Maybe String
@@ -174,6 +188,37 @@ type SpecificQuestion
     | ElmInitialInterestQuestion
     | BiggestPainPointQuestion
     | WhatDoYouLikeMostQuestion
+
+
+formMappingCodec : Codec e FormMapping
+formMappingCodec =
+    Serialize.record FormMapping
+        |> Serialize.field .doYouUseElm Serialize.string
+        |> Serialize.field .age Serialize.string
+        |> Serialize.field .functionalProgrammingExperience Serialize.string
+        |> Serialize.field .otherLanguages AnswerMap.codec
+        |> Serialize.field .newsAndDiscussions AnswerMap.codec
+        |> Serialize.field .elmResources AnswerMap.codec
+        |> Serialize.field .countryLivingIn Serialize.string
+        |> Serialize.field .applicationDomains AnswerMap.codec
+        |> Serialize.field .doYouUseElmAtWork Serialize.string
+        |> Serialize.field .howLargeIsTheCompany Serialize.string
+        |> Serialize.field .whatLanguageDoYouUseForBackend AnswerMap.codec
+        |> Serialize.field .howLong Serialize.string
+        |> Serialize.field .elmVersion AnswerMap.codec
+        |> Serialize.field .doYouUseElmFormat Serialize.string
+        |> Serialize.field .stylingTools AnswerMap.codec
+        |> Serialize.field .buildTools AnswerMap.codec
+        |> Serialize.field .frameworks AnswerMap.codec
+        |> Serialize.field .editors AnswerMap.codec
+        |> Serialize.field .doYouUseElmReview Serialize.string
+        |> Serialize.field .whichElmReviewRulesDoYouUse AnswerMap.codec
+        |> Serialize.field .testTools AnswerMap.codec
+        |> Serialize.field .testsWrittenFor AnswerMap.codec
+        |> Serialize.field .elmInitialInterest FreeTextAnswerMap.codec
+        |> Serialize.field .biggestPainPoint FreeTextAnswerMap.codec
+        |> Serialize.field .whatDoYouLikeMost FreeTextAnswerMap.codec
+        |> Serialize.finishRecord
 
 
 formCodec : Codec e Form

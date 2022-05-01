@@ -1,5 +1,6 @@
 module AdminPage exposing
     ( AdminLoginData
+    , FormMappingEdit(..)
     , Model
     , Msg(..)
     , ToBackend(..)
@@ -27,7 +28,7 @@ import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
 import Serialize
-import SurveyResults
+import SurveyResults exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -37,10 +38,11 @@ type Msg
     | FormMappingEditMsg FormMappingEdit
     | PressedQuestionWithOther SpecificQuestion
     | PressedToggleShowEncodedState
+    | NoOp
 
 
 type ToBackend
-    = ReplaceFormsRequest (List Form)
+    = ReplaceFormsRequest ( List Form, FormMapping )
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
 
@@ -556,15 +558,16 @@ update msg model =
                 ( model, Command.none )
 
             else
-                case Serialize.decodeFromString (Serialize.list Form.formCodec) text of
-                    Ok forms ->
+                case Serialize.decodeFromString (Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec) text of
+                    Ok ( forms, formMapping ) ->
                         ( { model
                             | forms =
                                 List.map
                                     (\form -> { form = form, submitTime = Just (Effect.Time.millisToPosix 0) })
                                     forms
+                            , formMapping = NetworkModel.init formMapping
                           }
-                        , ReplaceFormsRequest forms |> Lamdera.sendToBackend
+                        , ReplaceFormsRequest ( forms, formMapping ) |> Lamdera.sendToBackend
                         )
 
                     Err _ ->
@@ -583,6 +586,9 @@ update msg model =
             ( { model | formMapping = NetworkModel.updateFromUser edit model.formMapping }
             , Lamdera.sendToBackend (EditFormMappingRequest edit)
             )
+
+        NoOp ->
+            ( model, Command.none )
 
 
 button : Bool -> msg -> String -> Element msg
@@ -1004,8 +1010,10 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             { width = 1920, height = 1080 }
             singleLine
             True
+            Percentage
             (DataEntry.fromForms comment question.choices answers)
             question
+            |> Element.map (\_ -> NoOp)
         ]
 
 
@@ -1113,7 +1121,11 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.freeText { width = 1920, height = 1080 } (DataEntry.fromFreeText answerMap answers) title
+        , SurveyResults.freeText
+            Percentage
+            { width = 1920, height = 1080 }
+            (DataEntry.fromFreeText answerMap answers)
+            title
         ]
 
 
@@ -1223,8 +1235,11 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         , SurveyResults.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
+            True
+            Percentage
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question
+            |> Element.map (\_ -> NoOp)
         ]
 
 

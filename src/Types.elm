@@ -48,7 +48,7 @@ type alias FormLoaded_ =
 
 type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , answerMap : FormMapping
+    , formMapping : FormMapping
     , adminLogin : Set SessionId
     }
 
@@ -65,6 +65,7 @@ type FrontendMsg
     | GotWindowSize Size
     | GotTime Effect.Time.Posix
     | AdminPageMsg AdminPage.Msg
+    | SurveyResultsMsg SurveyResults.Msg
 
 
 type ToBackend

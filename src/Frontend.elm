@@ -24,7 +24,7 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
-import SurveyResults
+import SurveyResults exposing (Mode(..), Segment(..))
 import Svg
 import Svg.Attributes
 import Types exposing (..)
@@ -238,6 +238,14 @@ update msg model =
                 _ ->
                     ( model, Command.none )
 
+        SurveyResultsMsg surveyResultsMsg ->
+            case model of
+                SurveyResultsLoaded surveyResultsModel ->
+                    ( SurveyResults.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded, Command.none )
+
+                _ ->
+                    ( model, Command.none )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
@@ -326,7 +334,7 @@ loadForm formStatus maybeWindowSize maybeTime =
             FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
 
         SurveyResults data ->
-            SurveyResultsLoaded { windowSize = windowSize, data = data }
+            SurveyResultsLoaded { windowSize = windowSize, data = data, mode = Total, segment = Users }
 
         AwaitingResultsData ->
             Loading maybeWindowSize maybeTime
@@ -407,7 +415,7 @@ view model =
                     AdminPage.adminView admin |> Element.map AdminPageMsg
 
                 SurveyResultsLoaded surveyResultsLoaded ->
-                    SurveyResults.view surveyResultsLoaded
+                    SurveyResults.view surveyResultsLoaded |> Element.map SurveyResultsMsg
             )
         ]
     }
@@ -619,38 +627,15 @@ githubLogo =
         |> Element.el []
 
 
-section : Size -> String -> List (Element msg) -> Element msg
-section windowSize text content =
-    Element.column
-        [ Element.spacing 24 ]
-        [ Element.paragraph
-            [ Element.Region.heading 2
-            , Element.Font.size 24
-            , Element.Font.bold
-            , Element.Font.color Ui.blue0
-            ]
-            [ Element.text text ]
-        , Element.column
-            [ Element.spacing (Ui.ifMobile windowSize 36 48) ]
-            content
-        ]
-
-
 formView : Size -> Form -> Element FrontendMsg
 formView windowSize form =
-    let
-        doesNotUseElm : Bool
-        doesNotUseElm =
-            Set.member NoButImCuriousAboutIt form.doYouUseElm
-                || Set.member NoAndIDontPlanTo form.doYouUseElm
-    in
     Element.column
         [ Element.spacing 64
         , Element.padding 8
         , Element.width (Element.maximum 800 Element.fill)
         , Element.centerX
         ]
-        [ section windowSize
+        [ Ui.section windowSize
             "About you"
             [ Ui.multiChoiceQuestion
                 windowSize
@@ -724,7 +709,7 @@ formView windowSize form =
                 Nothing
                 form.newsAndDiscussions
                 (\a -> FormChanged { form | newsAndDiscussions = a })
-            , if doesNotUseElm then
+            , if Form.doesNotUseElm form then
                 Element.none
 
               else
@@ -754,11 +739,11 @@ formView windowSize form =
                 form.emailAddress
                 (\a -> FormChanged { form | emailAddress = a })
             ]
-        , if doesNotUseElm then
+        , if Form.doesNotUseElm form then
             Element.none
 
           else
-            section windowSize
+            Ui.section windowSize
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
@@ -805,11 +790,11 @@ formView windowSize form =
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
                 ]
-        , if doesNotUseElm then
+        , if Form.doesNotUseElm form then
             Element.none
 
           else
-            section windowSize
+            Ui.section windowSize
                 "How do you use Elm?"
                 [ Ui.singleChoiceQuestion
                     windowSize

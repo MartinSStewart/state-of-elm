@@ -2,6 +2,7 @@ module FreeTextAnswerMap exposing
     ( FreeTextAnswerMap(..)
     , addGroup
     , allGroups
+    , codec
     , comment
     , init
     , otherAnswerMapsTo
@@ -14,6 +15,7 @@ module FreeTextAnswerMap exposing
 import AnswerMap exposing (Hotkey, OtherAnswer)
 import AssocSet as Set exposing (Set)
 import List.Extra as List
+import Serialize exposing (Codec)
 
 
 type FreeTextAnswerMap
@@ -21,6 +23,37 @@ type FreeTextAnswerMap
         { otherMapping : List { groupName : String, otherAnswers : Set String }
         , comment : String
         }
+
+
+codec : Codec e FreeTextAnswerMap
+codec =
+    Serialize.customType
+        (\a value ->
+            case value of
+                FreeTextAnswerMap data0 ->
+                    a data0
+        )
+        |> Serialize.variant1
+            FreeTextAnswerMap
+            (Serialize.record (\a b -> { otherMapping = a, comment = b })
+                |> Serialize.field
+                    .otherMapping
+                    (Serialize.list
+                        (Serialize.record (\a b -> { groupName = a, otherAnswers = b })
+                            |> Serialize.field .groupName Serialize.string
+                            |> Serialize.field .otherAnswers (assocSetCodec Serialize.string)
+                            |> Serialize.finishRecord
+                        )
+                    )
+                |> Serialize.field .comment Serialize.string
+                |> Serialize.finishRecord
+            )
+        |> Serialize.finishCustomType
+
+
+assocSetCodec : Codec e a -> Codec e (Set a)
+assocSetCodec a =
+    Serialize.list a |> Serialize.map Set.fromList Set.toList
 
 
 init : FreeTextAnswerMap

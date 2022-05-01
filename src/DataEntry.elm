@@ -1,6 +1,8 @@
 module DataEntry exposing
     ( DataEntry(..)
     , DataEntryWithOther(..)
+    , combineDataEntries
+    , combineDataEntriesWithOther
     , comment
     , fromForms
     , fromFreeText
@@ -23,8 +25,31 @@ type DataEntry a
     = DataEntry { data : Nonempty Int, comment : String }
 
 
+combineDataEntries : DataEntry a -> DataEntry a -> DataEntry a
+combineDataEntries (DataEntry a) (DataEntry b) =
+    { data = Nonempty.zip a.data b.data |> Nonempty.map (\( valueA, valueB ) -> valueA + valueB)
+    , comment = a.comment
+    }
+        |> DataEntry
+
+
 type DataEntryWithOther a
     = DataEntryWithOther { data : Dict String Int, comment : String }
+
+
+combineDataEntriesWithOther : DataEntryWithOther a -> DataEntryWithOther a -> DataEntryWithOther a
+combineDataEntriesWithOther (DataEntryWithOther a) (DataEntryWithOther b) =
+    { data =
+        Dict.merge
+            (\k v dict -> Dict.insert k v dict)
+            (\k v1 v2 dict -> Dict.insert k (v1 + v2) dict)
+            (\k v dict -> Dict.insert k v dict)
+            Dict.empty
+            a.data
+            b.data
+    , comment = a.comment
+    }
+        |> DataEntryWithOther
 
 
 comment : DataEntry a -> String

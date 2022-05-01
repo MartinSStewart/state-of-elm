@@ -1,14 +1,30 @@
-module SurveyResults exposing (Data, Model, freeText, multiChoiceWithOther, singleChoiceGraph, view)
+module SurveyResults exposing
+    ( Data
+    , DataEntrySegments
+    , DataEntryWithOtherSegments
+    , Mode(..)
+    , Model
+    , Msg
+    , Segment(..)
+    , freeText
+    , multiChoiceWithOther
+    , singleChoiceGraph
+    , update
+    , view
+    )
 
 import AssocList as Dict
+import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
 import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font
-import List.Nonempty as Nonempty
-import List.Nonempty.Ancillary as Nonempty
+import Element.Input
+import Html exposing (Html)
+import Html.Attributes
+import List.Nonempty as Nonempty exposing (Nonempty)
 import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
 import StringExtra
 import Ui exposing (Size)
@@ -17,17 +33,44 @@ import Ui exposing (Size)
 type alias Model =
     { windowSize : Size
     , data : Data
+    , mode : Mode
+    , segment : Segment
+    }
+
+
+type Msg
+    = PressedModeButton Mode
+    | PressedSegmentButton Segment
+
+
+type Segment
+    = AllUsers
+    | Users
+    | PotentialUsers
+
+
+type alias DataEntrySegments a =
+    { users : DataEntry a
+    , potentialUsers : DataEntry a
+    }
+
+
+type alias DataEntryWithOtherSegments a =
+    { users : DataEntryWithOther a
+    , potentialUsers : DataEntryWithOther a
     }
 
 
 type alias Data =
-    { doYouUseElm : DataEntry DoYouUseElm
-    , age : DataEntry Age
-    , functionalProgrammingExperience : DataEntry ExperienceLevel
-    , otherLanguages : DataEntryWithOther OtherLanguages
-    , newsAndDiscussions : DataEntryWithOther NewsAndDiscussions
-    , elmResources : DataEntryWithOther ElmResources
-    , countryLivingIn : DataEntry Country
+    { totalParticipants : Int
+    , doYouUseElm : DataEntry DoYouUseElm
+    , age : DataEntrySegments Age
+    , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
+    , otherLanguages : DataEntryWithOtherSegments OtherLanguages
+    , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
+    , elmResources : DataEntryWithOtherSegments ElmResources
+    , elmInitialInterest : DataEntryWithOtherSegments ()
+    , countryLivingIn : DataEntrySegments Country
     , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
     , applicationDomains : DataEntryWithOther ApplicationDomains
     , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
@@ -43,7 +86,6 @@ type alias Data =
     , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
     , testTools : DataEntryWithOther TestTools
     , testsWrittenFor : DataEntryWithOther TestsWrittenFor
-    , elmInitialInterest : DataEntryWithOther ()
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     }
@@ -76,22 +118,76 @@ container windowSize content =
         )
 
 
-view : Model -> Element msg
+css : Html msg
+css =
+    Html.node "style"
+        []
+        [ Html.text """
+.linkFocus:focus {
+    outline: solid #9bcbff !important;
+}
+"""
+        ]
+
+
+linkAttributes =
+    [ Element.Font.underline
+    , Element.mouseOver [ Element.Font.color lightBlue ]
+    , Element.htmlAttribute (Html.Attributes.class "linkFocus")
+    ]
+
+
+lightBlue : Element.Color
+lightBlue =
+    Element.rgb255 188 227 255
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        PressedModeButton mode ->
+            { model | mode = mode }
+
+        PressedSegmentButton segment ->
+            { model | segment = segment }
+
+
+view : Model -> Element Msg
 view model =
     let
         data =
             model.data
     in
     Element.column
-        [ Element.width Element.fill ]
+        [ Element.width Element.fill, Element.behindContent (Element.html css) ]
         [ Ui.headerContainer
             model.windowSize
             [ Element.paragraph
-                []
+                [ Element.Font.bold ]
                 [ Element.text "The survey results are in!" ]
             , Element.paragraph
                 []
-                [ Element.text "Thank you to everyone who participated!" ]
+                [ Element.text "Thank you to everyone who participated!"
+                ]
+            , Element.paragraph
+                []
+                [ Element.text "There was a 4 year hiatus for the State of Elm survey. Previously "
+                , Element.newTabLink linkAttributes
+                    { url = "https://www.brianthicks.com/post/2018/12/26/state-of-elm-2018-results/"
+                    , label = Element.text "Brian Hicks"
+                    }
+                , Element.text " ran this survey but going forward "
+                , Element.newTabLink linkAttributes
+                    { url = "https://github.com/MartinSStewart/state-of-elm"
+                    , label = Element.text "I'll be managing it"
+                    }
+                , Element.text ". Special thanks to "
+                , Element.newTabLink linkAttributes
+                    { url = "https://github.com/wolfadex"
+                    , label = Element.text "Wolfadex"
+                    }
+                , Element.text " for helping categorize all the free text answers."
+                ]
             ]
         , Element.column
             [ Element.width (Element.maximum 800 Element.fill)
@@ -99,35 +195,62 @@ view model =
             , Element.spacing 24
             , Element.paddingXY 8 16
             ]
-            [ singleChoiceGraph model.windowSize False False data.doYouUseElm Questions.doYouUseElm
-            , singleChoiceGraph model.windowSize False False data.age Questions.age
-            , singleChoiceGraph model.windowSize False False data.functionalProgrammingExperience Questions.experienceLevel
-            , multiChoiceWithOther model.windowSize True data.otherLanguages Questions.otherLanguages
-            , multiChoiceWithOther model.windowSize False data.newsAndDiscussions Questions.newsAndDiscussions
-            , multiChoiceWithOther model.windowSize False data.elmResources Questions.elmResources
-            , singleChoiceGraph model.windowSize True True data.countryLivingIn Questions.countryLivingIn
-            , singleChoiceGraph model.windowSize False True data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-            , multiChoiceWithOther model.windowSize False data.applicationDomains Questions.applicationDomains
-            , singleChoiceGraph model.windowSize False False data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-            , multiChoiceWithOther model.windowSize True data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-            , singleChoiceGraph model.windowSize False False data.howLong Questions.howLong
-            , multiChoiceWithOther model.windowSize False data.elmVersion Questions.elmVersion
-            , singleChoiceGraph model.windowSize False True data.doYouUseElmFormat Questions.doYouUseElmFormat
-            , multiChoiceWithOther model.windowSize False data.stylingTools Questions.stylingTools
-            , multiChoiceWithOther model.windowSize False data.buildTools Questions.buildTools
-            , multiChoiceWithOther model.windowSize False data.frameworks Questions.frameworks
-            , multiChoiceWithOther model.windowSize False data.editors Questions.editors
-            , singleChoiceGraph model.windowSize False True data.doYouUseElmReview Questions.doYouUseElmReview
-            , freeText model.windowSize data.elmInitialInterest Questions.initialInterestTitle
-            , freeText model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-            , freeText model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+            [ simpleGraph
+                model.windowSize
+                False
+                False
+                Total
+                "Number of participants"
+                Element.none
+                """Fewer people participated in the survey this year compared to 2018 and 2017.
+
+It's hard to say why that is. Maybe it's because this survey was open for 20 days and 2018's survey was open for 60 days (though the number of new submissions was increasing quite slowly by the 20 day mark). Maybe the community shrank in size? Maybe Brian Hicks is just better at spreading the word than I am. Or maybe it's some combination of those factors."""
+                [ { choice = "2022", count = data.totalParticipants }
+                , { choice = "2018", count = 1176 }
+                , { choice = "2017", count = 1170 }
+                ]
+            , singleChoiceGraph model.windowSize False False model.mode data.doYouUseElm Questions.doYouUseElm
+            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.age Questions.age
+            , singleChoiceSegmentGraph model.windowSize False False model.mode model.segment data.functionalProgrammingExperience Questions.experienceLevel
+            , multiChoiceWithOtherSegment model.windowSize True True model.mode model.segment data.otherLanguages Questions.otherLanguages
+            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.newsAndDiscussions Questions.newsAndDiscussions
+            , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.elmResources Questions.elmResources
+
+            --, freeText model.mode model.windowSize data.elmInitialInterest Questions.initialInterestTitle
+            , singleChoiceSegmentGraph model.windowSize True True model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+            , multiChoiceWithOther model.windowSize False True model.mode data.applicationDomains Questions.applicationDomains
+            , singleChoiceGraph model.windowSize False False model.mode data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+            , multiChoiceWithOther model.windowSize True True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+            , singleChoiceGraph model.windowSize False False model.mode data.howLong Questions.howLong
+            , multiChoiceWithOther model.windowSize False False model.mode data.elmVersion Questions.elmVersion
+            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmFormat Questions.doYouUseElmFormat
+            , multiChoiceWithOther model.windowSize False True model.mode data.stylingTools Questions.stylingTools
+            , multiChoiceWithOther model.windowSize False True model.mode data.buildTools Questions.buildTools
+            , multiChoiceWithOther model.windowSize False True model.mode data.frameworks Questions.frameworks
+            , multiChoiceWithOther model.windowSize False True model.mode data.editors Questions.editors
+            , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmReview Questions.doYouUseElmReview
+
+            --, freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+            --, freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
             ]
         ]
 
 
-multiChoiceWithOther : Size -> Bool -> DataEntryWithOther a -> Question a -> Element msg
-multiChoiceWithOther windowSize singleLine (DataEntryWithOther dataEntryWithOther) { title, choices, choiceToString } =
+multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
+multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title } =
     let
+        (DataEntryWithOther dataEntryWithOther) =
+            case segment of
+                AllUsers ->
+                    DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+
+                Users ->
+                    segmentData.users
+
+                PotentialUsers ->
+                    segmentData.potentialUsers
+
         otherKey =
             "Other"
 
@@ -137,79 +260,181 @@ multiChoiceWithOther windowSize singleLine (DataEntryWithOther dataEntryWithOthe
         maybeOther =
             Dict.get otherKey dataEntryWithOther.data
 
-        data =
-            Dict.toList dataEntry
-                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-                |> List.sortBy (\{ count } -> -count)
-                |> (\a ->
-                        case maybeOther of
-                            Just count ->
-                                a ++ [ { choice = otherKey, count = count } ]
-
-                            Nothing ->
-                                a
-                   )
-
-        maxCount =
-            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
-
-        total =
-            List.map .count data |> List.sum |> max 1
+        emptyChoices : Set String
+        emptyChoices =
+            DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
+                |> (\(DataEntryWithOther a) -> a.data)
+                |> Dict.filter (\_ count -> count == 0)
+                |> Dict.keys
+                |> Set.fromList
     in
-    container
-        windowSize
-        [ Ui.title title
-        , Ui.multipleChoiceIndicator
-        , if singleLine then
-            Element.table
-                [ Element.width Element.fill ]
-                { data = data
-                , columns =
-                    [ { header = Element.none
-                      , width = Element.shrink
-                      , view =
-                            \{ choice } ->
-                                Element.paragraph
-                                    [ Element.Font.size 16
-                                    , Element.Font.alignRight
-                                    , Element.paddingEach { left = 0, right = 4, top = 6, bottom = 6 }
-                                    ]
-                                    [ Element.text choice ]
-                      }
-                    , { header = Element.none
-                      , width = Element.fill
-                      , view =
-                            \{ count } ->
-                                Element.el
-                                    [ Element.width Element.fill
-                                    , Element.height (Element.px 24)
-                                    , Element.centerY
-                                    ]
-                                    (bar count total maxCount)
-                      }
-                    ]
-                }
+    Dict.toList dataEntry
+        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+        |> (if sortValues then
+                List.sortBy (\{ count } -> -count)
 
-          else
-            List.map
-                (\{ choice, count } -> barAndName choice count total maxCount)
-                data
-                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
-        , commentView dataEntryWithOther.comment
+            else
+                identity
+           )
+        |> (\a ->
+                case maybeOther of
+                    Just count ->
+                        a ++ [ { choice = otherKey, count = count } ]
+
+                    Nothing ->
+                        a
+           )
+        |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
+        |> simpleGraph
+            windowSize
+            singleLine
+            True
+            mode
+            title
+            (percentVsTotalAndSegment mode segment)
+            dataEntryWithOther.comment
+
+
+percentVsTotal : Mode -> Element Msg
+percentVsTotal mode =
+    Element.row
+        []
+        [ filterButton (mode == Percentage) Left (PressedModeButton Percentage) "% of answers"
+        , filterButton (mode == Total) Right (PressedModeButton Total) "Total"
         ]
+
+
+segmentFilter : Segment -> Element Msg
+segmentFilter segment =
+    Element.row
+        []
+        [ filterButton (segment == AllUsers) Left (PressedSegmentButton AllUsers) "All users"
+        , filterButton (segment == Users) Middle (PressedSegmentButton Users) "Use(d) Elm"
+        , filterButton (segment == PotentialUsers) Right (PressedSegmentButton PotentialUsers) "Potential users"
+        ]
+
+
+percentVsTotalAndSegment : Mode -> Segment -> Element Msg
+percentVsTotalAndSegment mode segment =
+    Element.wrappedRow
+        [ Element.spacingXY 16 8 ]
+        [ percentVsTotal mode, segmentFilter segment ]
+
+
+type Side
+    = Left
+    | Middle
+    | Right
+
+
+filterButton : Bool -> Side -> msg -> String -> Element msg
+filterButton isSelected side onPress label =
+    Element.Input.button
+        [ (case side of
+            Left ->
+                { topLeft = 4, bottomLeft = 4, topRight = 0, bottomRight = 0 }
+
+            Middle ->
+                { topLeft = 0, bottomLeft = 0, topRight = 0, bottomRight = 0 }
+
+            Right ->
+                { topLeft = 0, bottomLeft = 0, topRight = 4, bottomRight = 4 }
+          )
+            |> Element.Border.roundEach
+        , Element.Border.color Ui.black
+        , (case side of
+            Left ->
+                { left = 1, right = 1, top = 1, bottom = 1 }
+
+            Middle ->
+                { left = 0, right = 1, top = 1, bottom = 1 }
+
+            Right ->
+                { left = 0, right = 1, top = 1, bottom = 1 }
+          )
+            |> Element.Border.widthEach
+        , Element.mouseOver
+            (if isSelected then
+                []
+
+             else
+                [ Element.Background.color lightBlue ]
+            )
+        , Element.paddingXY 6 8
+        , Element.Font.size 16
+        , (if isSelected then
+            Ui.blue1
+
+           else
+            Element.rgba 0 0 0 0
+          )
+            |> Element.Background.color
+        , (if isSelected then
+            Ui.white
+
+           else
+            Ui.black
+          )
+            |> Element.Font.color
+        ]
+        { onPress = Just onPress
+        , label = Element.text label
+        }
+
+
+multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element Msg
+multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title } =
+    let
+        otherKey =
+            "Other"
+
+        dataEntry =
+            Dict.remove otherKey dataEntryWithOther.data
+
+        maybeOther =
+            Dict.get otherKey dataEntryWithOther.data
+    in
+    Dict.toList dataEntry
+        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+        |> (if sortValues then
+                List.sortBy (\{ count } -> -count)
+
+            else
+                identity
+           )
+        |> (\a ->
+                case maybeOther of
+                    Just count ->
+                        a ++ [ { choice = otherKey, count = count } ]
+
+                    Nothing ->
+                        a
+           )
+        |> simpleGraph windowSize singleLine True mode title (percentVsTotal mode) dataEntryWithOther.comment
 
 
 commentView : String -> Element msg
 commentView comment =
-    Element.paragraph
-        [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 }
-        , Element.Font.size 18
+    Html.div
+        [ Html.Attributes.style "white-space" "pre-wrap"
+        , Html.Attributes.style "line-height" "22px"
+        , Html.Attributes.style "font-size" "18px"
         ]
-        [ Element.text comment ]
+        [ Html.text comment ]
+        |> Element.html
+        |> Element.el [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 } ]
 
 
-freeText : Size -> DataEntryWithOther a -> String -> Element msg
-freeText windowSize (DataEntryWithOther dataEntryWithOther) title =
+
+--Element.paragraph
+--    [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 }
+--    , Element.Font.size 18
+--    ]
+--    [ Element.text comment ]
+
+
+freeText : Mode -> Size -> DataEntryWithOther a -> String -> Element msg
+freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
     let
         data =
             Dict.toList dataEntryWithOther.data
@@ -227,7 +452,7 @@ freeText windowSize (DataEntryWithOther dataEntryWithOther) title =
         [ Element.paragraph [] [ Element.text title ]
         , Ui.multipleChoiceIndicator
         , List.map
-            (\{ choice, count } -> barAndName choice count total maxCount)
+            (\{ choice, count } -> barAndName mode choice count total maxCount)
             data
             |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
         , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]
@@ -259,17 +484,17 @@ freeText windowSize (DataEntryWithOther dataEntryWithOther) title =
 --    ]
 
 
-barAndName : String -> Int -> Int -> Int -> Element msg
-barAndName name count total maxCount =
+barAndName : Mode -> String -> Int -> Int -> Int -> Element msg
+barAndName mode name count total maxCount =
     Element.column
         [ Element.width Element.fill, Element.spacing 1 ]
         [ Element.paragraph [ Element.Font.size 16 ] [ Element.text name ]
-        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar count total maxCount)
+        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar mode count total maxCount)
         ]
 
 
-bar : Int -> Int -> Int -> Element msg
-bar count total maxCount =
+bar : Mode -> Int -> Int -> Int -> Element msg
+bar mode count total maxCount =
     let
         a =
             10000
@@ -288,7 +513,13 @@ bar count total maxCount =
             , Element.height Element.fill
             , Element.Border.rounded 4
             , Element.Font.size 16
-            , (percentage ++ "%")
+            , (case mode of
+                Percentage ->
+                    percentage ++ "%"
+
+                Total ->
+                    String.fromInt count
+              )
                 |> Element.text
                 |> Element.el [ Element.moveRight 4, Element.centerY ]
                 |> Element.onRight
@@ -300,35 +531,36 @@ bar count total maxCount =
         ]
 
 
-singleChoiceGraph : Size -> Bool -> Bool -> DataEntry a -> Question a -> Element msg
-singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, choiceToString } =
-    let
-        data =
-            DataEntry.get choices dataEntry
+type Mode
+    = Percentage
+    | Total
 
+
+simpleGraph : Size -> Bool -> Bool -> Mode -> String -> Element msg -> String -> List { choice : String, count : Int } -> Element msg
+simpleGraph windowSize singleLine isMultiChoice mode title filterUi comment data =
+    let
         maxCount =
-            Nonempty.map .count data |> Nonempty.maximum |> max 1
+            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1
 
         total =
-            Nonempty.map .count data |> Nonempty.toList |> List.sum |> max 1
-
-        sorted =
-            Nonempty.toList data
-                |> (if sortValues then
-                        List.sortBy (\{ count } -> -count)
-
-                    else
-                        identity
-                   )
-                |> List.filter (\{ count } -> count > 0)
+            List.map .count data |> List.sum |> max 1
     in
     container
         windowSize
-        [ Ui.title title
+        [ Element.column
+            [ Element.spacing 8 ]
+            [ Ui.title title
+            , filterUi
+            ]
+        , if isMultiChoice then
+            Ui.multipleChoiceIndicator
+
+          else
+            Element.none
         , if singleLine then
             Element.table
                 [ Element.width Element.fill ]
-                { data = sorted
+                { data = data
                 , columns =
                     [ { header = Element.none
                       , width = Element.shrink
@@ -339,7 +571,7 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
                                     , Element.Font.alignRight
                                     , Element.paddingEach { left = 0, right = 4, top = 6, bottom = 6 }
                                     ]
-                                    [ Element.text (choiceToString choice) ]
+                                    [ Element.text choice ]
                       }
                     , { header = Element.none
                       , width = Element.fill
@@ -350,17 +582,107 @@ singleChoiceGraph windowSize singleLine sortValues dataEntry { title, choices, c
                                     , Element.height (Element.px 24)
                                     , Element.centerY
                                     ]
-                                    (bar count total maxCount)
+                                    (bar mode count total maxCount)
                       }
                     ]
                 }
 
           else
-            sorted
-                |> List.map
-                    (\{ choice, count } ->
-                        barAndName (choiceToString choice) count total maxCount
-                    )
+            List.map
+                (\{ choice, count } -> barAndName mode choice count total maxCount)
+                data
                 |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
-        , commentView (DataEntry.comment dataEntry)
+        , commentView comment
         ]
+
+
+singleChoiceSegmentGraph : Size -> Bool -> Bool -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
+singleChoiceSegmentGraph windowSize singleLine sortValues mode segment segmentData { title, choices, choiceToString } =
+    let
+        dataEntry : DataEntry a
+        dataEntry =
+            case segment of
+                AllUsers ->
+                    DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+
+                Users ->
+                    segmentData.users
+
+                PotentialUsers ->
+                    segmentData.potentialUsers
+
+        data : Nonempty { choice : a, count : Int }
+        data =
+            DataEntry.get choices dataEntry
+
+        emptyChoices : Set a
+        emptyChoices =
+            DataEntry.combineDataEntries segmentData.users segmentData.potentialUsers
+                |> DataEntry.get choices
+                |> Nonempty.toList
+                |> List.filterMap
+                    (\{ choice, count } ->
+                        if count == 0 then
+                            Just choice
+
+                        else
+                            Nothing
+                    )
+                |> Set.fromList
+    in
+    simpleGraph
+        windowSize
+        singleLine
+        False
+        mode
+        title
+        (percentVsTotalAndSegment mode segment)
+        (DataEntry.comment dataEntry)
+        ((if sortValues then
+            nonemptySortBy (\{ count } -> -count) data
+
+          else
+            data
+         )
+            |> Nonempty.toList
+            |> List.filterMap
+                (\a ->
+                    if Set.member a.choice emptyChoices then
+                        Nothing
+
+                    else
+                        Just { choice = choiceToString a.choice, count = a.count }
+                )
+        )
+
+
+singleChoiceGraph : Size -> Bool -> Bool -> Mode -> DataEntry a -> Question a -> Element Msg
+singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choices, choiceToString } =
+    let
+        data =
+            DataEntry.get choices dataEntry
+    in
+    simpleGraph
+        windowSize
+        singleLine
+        False
+        mode
+        title
+        (percentVsTotal mode)
+        (DataEntry.comment dataEntry)
+        ((if sortValues then
+            nonemptySortBy (\{ count } -> -count) data
+
+          else
+            data
+         )
+            |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
+            |> Nonempty.toList
+        )
+
+
+nonemptySortBy sortFunc nonempty =
+    Nonempty.toList nonempty
+        |> List.sortBy sortFunc
+        |> Nonempty.fromList
+        |> Maybe.withDefault (Nonempty.head nonempty |> Nonempty.singleton)
