@@ -362,8 +362,8 @@ loadForm isPreview formStatus loadingData =
             SurveyResultsLoaded
                 { windowSize = windowSize
                 , data = data
-                , mode = Total
-                , segment = Users
+                , mode = Percentage
+                , segment = AllUsers
                 , isPreview = isPreview
                 }
 
