@@ -35,6 +35,7 @@ type alias Model =
     , data : Data
     , mode : Mode
     , segment : Segment
+    , isPreview : Bool
     }
 
 

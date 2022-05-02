@@ -56,12 +56,23 @@ init url _ =
         AdminLogin { password = "", loginFailed = False }
 
       else
-        Loading Nothing Nothing
+        Loading { windowSize = Nothing, time = Nothing }
     , Command.batch
         [ Effect.Task.perform
             (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
             Effect.Browser.Dom.getViewport
         , Effect.Task.perform GotTime Effect.Time.now
+        , case url.query of
+            Just query ->
+                case String.split "=" query |> Debug.log "" of
+                    [ _, password ] ->
+                        Effect.Lamdera.sendToBackend (PreviewRequest password)
+
+                    _ ->
+                        Command.none
+
+            Nothing ->
+                Command.none
         ]
     )
 
@@ -79,7 +90,7 @@ update msg model =
                     in
                     ( FormLoaded newFormLoaded, cmd )
 
-                Loading _ _ ->
+                Loading _ ->
                     ( model, Command.none )
 
                 FormCompleted _ ->
@@ -99,7 +110,7 @@ update msg model =
                 FormLoaded _ ->
                     ( model, Command.none )
 
-                Loading _ _ ->
+                Loading _ ->
                     ( model, Command.none )
 
                 FormCompleted _ ->
@@ -184,8 +195,8 @@ update msg model =
 
         GotWindowSize windowSize ->
             ( case model of
-                Loading _ maybeTime ->
-                    Loading (Just windowSize) maybeTime
+                Loading loadingData ->
+                    Loading { loadingData | windowSize = Just windowSize }
 
                 FormLoaded formLoaded_ ->
                     FormLoaded { formLoaded_ | windowSize = windowSize }
@@ -206,8 +217,8 @@ update msg model =
 
         GotTime time ->
             ( case model of
-                Loading maybeSize _ ->
-                    Loading maybeSize (Just time)
+                Loading loadingData ->
+                    Loading { loadingData | time = Just time }
 
                 FormLoaded formLoaded_ ->
                     FormLoaded { formLoaded_ | time = time }
@@ -252,8 +263,8 @@ updateFromBackend msg model =
     ( case msg of
         LoadForm formStatus ->
             case model of
-                Loading maybeWindowSize maybeTime ->
-                    loadForm formStatus maybeWindowSize maybeTime
+                Loading loadingData ->
+                    loadForm formStatus loadingData
 
                 _ ->
                     model
@@ -285,7 +296,7 @@ updateFromBackend msg model =
         LogOutResponse formStatus ->
             case model of
                 Admin _ ->
-                    loadForm formStatus Nothing Nothing
+                    loadForm formStatus { windowSize = Nothing, time = Nothing }
 
                 _ ->
                     model
@@ -297,15 +308,23 @@ updateFromBackend msg model =
 
                 _ ->
                     model
+
+        PreviewResponse data ->
+            case model of
+                Loading loadingData ->
+                    loadForm (SurveyResults data) loadingData
+
+                _ ->
+                    model
     , Command.none
     )
 
 
-loadForm : LoadFormStatus -> Maybe Size -> Maybe Effect.Time.Posix -> FrontendModel
-loadForm formStatus maybeWindowSize maybeTime =
+loadForm : LoadFormStatus -> LoadingData -> FrontendModel
+loadForm formStatus loadingData =
     let
         windowSize =
-            Maybe.withDefault { width = 1920, height = 1080 } maybeWindowSize
+            Maybe.withDefault { width = 1920, height = 1080 } loadingData.windowSize
     in
     case formStatus of
         NoFormFound ->
@@ -316,7 +335,7 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
                 , windowSize = windowSize
-                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
+                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time
                 }
 
         FormAutoSaved form ->
@@ -327,17 +346,23 @@ loadForm formStatus maybeWindowSize maybeTime =
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
                 , windowSize = windowSize
-                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime
+                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time
                 }
 
         FormSubmitted ->
-            FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) maybeTime)
+            FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time)
 
         SurveyResults data ->
-            SurveyResultsLoaded { windowSize = windowSize, data = data, mode = Total, segment = Users }
+            SurveyResultsLoaded
+                { windowSize = windowSize
+                , data = data
+                , mode = Total
+                , segment = Users
+                , isPreview = False
+                }
 
         AwaitingResultsData ->
-            Loading maybeWindowSize maybeTime
+            Loading loadingData
 
 
 view : FrontendModel -> Browser.Document FrontendMsg
@@ -359,10 +384,10 @@ view model =
                         SurveyFinished ->
                             Element.none
 
-                Loading _ maybeTime ->
+                Loading loadingData ->
                     case Types.surveyStatus of
                         SurveyOpen ->
-                            case maybeTime of
+                            case loadingData.time of
                                 Just time ->
                                     if Env.surveyIsOpen time then
                                         Element.none
