@@ -1051,7 +1051,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                                 (Element.text ("(" ++ AnswerMap.hotkeyToString hotkey ++ ")"))
                             , if editable then
                                 Element.Input.text
-                                    [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                    [ Element.width (Element.px 400), Element.paddingXY 4 6 ]
                                     { text = groupName
                                     , onChange = TypedGroupName specificQuestion hotkey >> FormMappingEditMsg
                                     , placeholder = Nothing
@@ -1071,7 +1071,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                     ++ [ Element.row []
                             [ Element.el [ Element.Font.italic ] (Element.text "( ) ")
                             , Element.Input.text
-                                [ Element.width (Element.px 200), Element.paddingXY 4 6 ]
+                                [ Element.width (Element.px 400), Element.paddingXY 4 6 ]
                                 { text = ""
                                 , onChange = TypedNewGroupName specificQuestion >> FormMappingEditMsg
                                 , placeholder = Nothing
