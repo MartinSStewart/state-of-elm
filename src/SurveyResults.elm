@@ -263,6 +263,9 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.editors Questions.editors
                 , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions.whichElmReviewRulesDoYouUse
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
                 , freeText modeWithoutPerCapita model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
                 , freeText modeWithoutPerCapita model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
                 ]
