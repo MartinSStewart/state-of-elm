@@ -58,7 +58,7 @@ renderer =
                 , Border.widthEach { bottom = 0, left = 4, right = 0, top = 0 }
                 , Border.color Ui.black
                 , Font.color Ui.black
-                , padding 10
+                , paddingXY 10 6
                 ]
                 children
     , html = Markdown.Html.oneOf []
