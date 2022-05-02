@@ -696,15 +696,7 @@ simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title
             Element.none
         , if singleLine then
             Element.table
-                [ Element.width Element.fill
-                , (if customMaxCount == Nothing then
-                    Element.none
-
-                   else
-                    maxCountLine mode maxCount
-                  )
-                    |> Element.inFront
-                ]
+                [ Element.width Element.fill ]
                 { data = data
                 , columns =
                     [ { header = Element.none
@@ -739,49 +731,9 @@ simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title
                 |> Element.column
                     [ Element.width Element.fill
                     , Element.spacing 8
-                    , (if customMaxCount == Nothing then
-                        Element.none
-
-                       else
-                        maxCountLine mode maxCount
-                      )
-                        |> Element.inFront
                     ]
         , commentView comment
         ]
-
-
-maxCountLine : Mode -> Float -> Element msg
-maxCountLine mode maxCount =
-    Element.el
-        [ Element.Border.widthEach { left = 0, right = 2, top = 0, bottom = 0 }
-        , Element.moveLeft barRightPadding
-        , Element.Border.color Ui.blue0
-        , Element.height Element.fill
-        , Element.alignRight
-        , Element.Border.dashed
-        , Element.moveUp 8
-        , (case mode of
-            Percentage ->
-                StringExtra.removeTrailing0s 1 maxCount ++ "%"
-
-            Total ->
-                StringExtra.removeTrailing0s 0 maxCount
-
-            PerCapita ->
-                StringExtra.removeTrailing0s 2 maxCount
-          )
-            |> Element.text
-            |> Element.el
-                [ Element.centerX
-                , Element.Font.size 14
-                , Element.Font.color Ui.blue0
-                , Element.Background.color Ui.white
-                , Element.moveDown 8
-                ]
-            |> Element.above
-        ]
-        Element.none
 
 
 singleChoiceSegmentGraph : Size -> Bool -> Bool -> Maybe (a -> Int) -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
