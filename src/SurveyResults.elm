@@ -4,7 +4,7 @@ module SurveyResults exposing
     , DataEntryWithOtherSegments
     , Mode(..)
     , Model
-    , Msg
+    , Msg(..)
     , Segment(..)
     , freeText
     , multiChoiceWithOther
