@@ -216,7 +216,7 @@ view model =
         , Element.column
             [ Element.width (Element.maximum 800 Element.fill)
             , Element.centerX
-            , Element.spacing 24
+            , Element.spacing 64
             , Element.paddingXY 8 16
             ]
             [ simpleGraph
@@ -267,6 +267,23 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
                 , freeText modeWithoutPerCapita model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
                 ]
             ]
+        , Element.el
+            [ Element.Background.color Ui.blue0
+            , Element.width Element.fill
+            ]
+            (Element.column
+                [ Element.Font.color Ui.white
+                , Ui.ifMobile model.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
+                , Element.centerX
+                , Element.width (Element.maximum 800 Element.fill)
+                , Element.spacing 24
+                ]
+                [ Element.paragraph [ Element.Font.bold ] [ Element.text "That's all folks!" ]
+                , Element.paragraph [] [ Element.text "Thanks again for participating!" ]
+                , Element.paragraph [] [ Element.text "The plan is to start running State of Elm annually again. I'll make an announcement post on Elm Discourse and Elm Slack when the time comes for the next one." ]
+                , Ui.disclaimer
+                ]
+            )
         ]
 
 
