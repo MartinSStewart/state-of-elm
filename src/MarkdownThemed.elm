@@ -64,7 +64,15 @@ renderer =
     , html = Markdown.Html.oneOf []
     , text = \s -> el [] <| text s
     , codeSpan =
-        \content -> fromHtml <| Html.code [] [ Html.text content ]
+        \content ->
+            fromHtml <|
+                Html.code
+                    [ Html.Attributes.style "background-color" "rgb(235, 235, 235)"
+                    , Html.Attributes.style "border-radius" "4px"
+                    , Html.Attributes.style "padding" "1px 4px 1px 4px"
+                    , Html.Attributes.style "font-size" "0.9em"
+                    ]
+                    [ Html.text content ]
     , strong = \list -> paragraph [ Font.bold ] list
     , emphasis = \list -> paragraph [ Font.italic ] list
     , hardLineBreak = fromHtml <| Html.br [] []
