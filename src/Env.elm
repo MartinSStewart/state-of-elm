@@ -18,7 +18,7 @@ adminPasswordHash =
 
 presentSurveyResults_ : String
 presentSurveyResults_ =
-    "true"
+    "false"
 
 
 presentSurveyResults : Bool
@@ -44,3 +44,8 @@ surveyCloseTime =
 surveyIsOpen : Effect.Time.Posix -> Bool
 surveyIsOpen time =
     Duration.from time surveyCloseTime |> Quantity.greaterThanZero
+
+
+previewPassword : String
+previewPassword =
+    "abc"

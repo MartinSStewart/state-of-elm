@@ -13,12 +13,16 @@ import Ui exposing (Size)
 
 
 type FrontendModel
-    = Loading (Maybe Size) (Maybe Effect.Time.Posix)
+    = Loading LoadingData
     | FormLoaded FormLoaded_
     | FormCompleted Effect.Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
     | SurveyResultsLoaded SurveyResults.Model
+
+
+type alias LoadingData =
+    { windowSize : Maybe Size, time : Maybe Effect.Time.Posix }
 
 
 type SurveyStatus
@@ -73,6 +77,7 @@ type ToBackend
     | SubmitForm Form
     | AdminLoginRequest String
     | AdminToBackend AdminPage.ToBackend
+    | PreviewRequest String
 
 
 type BackendMsg
@@ -96,3 +101,4 @@ type ToFrontend
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus
     | AdminToFrontend AdminPage.ToFrontend
+    | PreviewResponse SurveyResults.Data

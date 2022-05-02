@@ -8,6 +8,7 @@ module DataEntry exposing
     , fromFreeText
     , fromMultiChoiceWithOther
     , get
+    , get_
     )
 
 import AnswerMap exposing (AnswerMap)
@@ -44,9 +45,9 @@ combineDataEntriesWithOther (DataEntryWithOther a) (DataEntryWithOther b) =
             (\k v dict -> Dict.insert k v dict)
             (\k v1 v2 dict -> Dict.insert k (v1 + v2) dict)
             (\k v dict -> Dict.insert k v dict)
-            Dict.empty
             a.data
             b.data
+            Dict.empty
     , comment = a.comment
     }
         |> DataEntryWithOther
@@ -61,6 +62,11 @@ get : Nonempty a -> DataEntry a -> Nonempty { choice : a, count : Int }
 get choices (DataEntry dataEntry) =
     Nonempty.zip choices dataEntry.data
         |> Nonempty.map (\( choice, count ) -> { choice = choice, count = count })
+
+
+get_ : DataEntryWithOther a -> { data : Dict String Int, comment : String }
+get_ (DataEntryWithOther dataEntryWithOther) =
+    dataEntryWithOther
 
 
 fromForms : String -> Nonempty a -> List a -> DataEntry a

@@ -1132,6 +1132,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             { width = 1920, height = 1080 }
             (DataEntry.fromFreeText answerMap answers)
             title
+            |> Element.map (\_ -> NoOp)
         ]
 
 
