@@ -64,7 +64,7 @@ init url _ =
         , Effect.Task.perform GotTime Effect.Time.now
         , case url.query of
             Just query ->
-                case String.split "=" query |> Debug.log "" of
+                case String.split "=" query of
                     [ _, password ] ->
                         Effect.Lamdera.sendToBackend (PreviewRequest password)
 
