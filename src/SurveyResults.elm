@@ -157,6 +157,17 @@ view model =
     let
         data =
             model.data
+
+        modeWithoutPerCapita =
+            case model.mode of
+                Percentage ->
+                    Percentage
+
+                PerCapita ->
+                    Percentage
+
+                Total ->
+                    Total
     in
     Element.column
         [ Element.width Element.fill, Element.behindContent (Element.html css) ]
@@ -196,49 +207,51 @@ view model =
             , Element.paddingXY 8 16
             ]
             [ simpleGraph
-                model.windowSize
-                False
-                False
-                Nothing
-                Total
-                "Number of participants"
-                Element.none
-                """Fewer people participated in the survey this year compared to 2018 and 2017.
-
+                { windowSize = model.windowSize
+                , singleLine = False
+                , isMultiChoice = False
+                , customMaxCount = Nothing
+                , mode = Total
+                , title = "Number of participants"
+                , filterUi = Element.none
+                , comment = """Fewer people participated in the survey this year compared to 2018 and 2017.
+                                
 It's hard to say why that is. Maybe it's because this survey was open for 20 days and 2018's survey was open for 60 days (though the number of new submissions was increasing quite slowly by the 20 day mark). Maybe the community shrank in size? Maybe Brian Hicks is just better at spreading the word than I am. Or maybe it's some combination of those factors."""
-                [ { choice = "2022", count = data.totalParticipants }
-                , { choice = "2018", count = 1176 }
-                , { choice = "2017", count = 1170 }
-                ]
+                , data =
+                    [ { choice = "2022", value = toFloat data.totalParticipants }
+                    , { choice = "2018", value = 1176 }
+                    , { choice = "2017", value = 1170 }
+                    ]
+                }
             , Ui.section
                 model.windowSize
                 "About you"
-                [ singleChoiceGraph model.windowSize False False model.mode data.doYouUseElm Questions.doYouUseElm
-                , singleChoiceSegmentGraph model.windowSize False False Nothing model.mode model.segment data.age Questions.age
-                , singleChoiceSegmentGraph model.windowSize False False Nothing model.mode model.segment data.functionalProgrammingExperience Questions.experienceLevel
-                , multiChoiceWithOtherSegment model.windowSize True True model.mode model.segment data.otherLanguages Questions.otherLanguages
-                , multiChoiceWithOtherSegment model.windowSize False True model.mode model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-                , freeTextSegment model.mode model.segment model.windowSize data.elmInitialInterest Questions.initialInterestTitle
+                [ singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
+                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
+                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
+                , multiChoiceWithOtherSegment model.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
+                , multiChoiceWithOtherSegment model.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
+                , freeTextSegment modeWithoutPerCapita model.segment model.windowSize data.elmInitialInterest Questions.initialInterestTitle
                 , singleChoiceSegmentGraph model.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
                 ]
             , Ui.section
                 model.windowSize
                 "Questions for people who use(d) Elm"
-                [ multiChoiceWithOther model.windowSize False True model.mode data.elmResources Questions.elmResources
-                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-                , multiChoiceWithOther model.windowSize False True model.mode data.applicationDomains Questions.applicationDomains
-                , singleChoiceGraph model.windowSize False False model.mode data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-                , multiChoiceWithOther model.windowSize True True model.mode data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-                , singleChoiceGraph model.windowSize False False model.mode data.howLong Questions.howLong
-                , multiChoiceWithOther model.windowSize False False model.mode data.elmVersion Questions.elmVersion
-                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmFormat Questions.doYouUseElmFormat
-                , multiChoiceWithOther model.windowSize False True model.mode data.stylingTools Questions.stylingTools
-                , multiChoiceWithOther model.windowSize False True model.mode data.buildTools Questions.buildTools
-                , multiChoiceWithOther model.windowSize False True model.mode data.frameworks Questions.frameworks
-                , multiChoiceWithOther model.windowSize False True model.mode data.editors Questions.editors
-                , singleChoiceGraph model.windowSize False True model.mode data.doYouUseElmReview Questions.doYouUseElmReview
-                , freeText model.mode model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-                , freeText model.mode model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                [ multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
+                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
+                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+                , multiChoiceWithOther model.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
+                , multiChoiceWithOther model.windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
+                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.editors Questions.editors
+                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
+                , freeText modeWithoutPerCapita model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+                , freeText modeWithoutPerCapita model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
                 ]
             ]
         ]
@@ -246,6 +259,11 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
 
 multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
 multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmentData { title } =
+    multiChoiceSegmentHelper windowSize singleLine sortValues mode segment segmentData title
+
+
+multiChoiceSegmentHelper : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> String -> Element Msg
+multiChoiceSegmentHelper windowSize singleLine sortValues mode segment segmentData title =
     let
         dataEntryWithOther =
             (case segment of
@@ -263,6 +281,9 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
         otherKey =
             "Other"
 
+        total =
+            Dict.values dataEntryWithOther.data |> List.sum
+
         dataEntry =
             Dict.remove otherKey dataEntryWithOther.data
 
@@ -277,32 +298,81 @@ multiChoiceWithOtherSegment windowSize singleLine sortValues mode segment segmen
                 |> Dict.keys
                 |> Set.fromList
     in
-    Dict.toList dataEntry
-        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-        |> (if sortValues then
-                List.sortBy (\{ count } -> -count)
+    simpleGraph
+        { windowSize = windowSize
+        , singleLine = singleLine
+        , isMultiChoice = True
+        , customMaxCount = maxCountSegment mode segmentData |> Just
+        , mode = mode
+        , title = title
+        , filterUi = percentVsTotalAndSegment False mode segment
+        , comment = dataEntryWithOther.comment
+        , data =
+            Dict.toList dataEntry
+                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+                |> (if sortValues then
+                        List.sortBy (\{ count } -> -count)
 
-            else
-                identity
-           )
-        |> (\a ->
-                case maybeOther of
-                    Just count ->
-                        a ++ [ { choice = otherKey, count = count } ]
+                    else
+                        identity
+                   )
+                |> (\a ->
+                        case maybeOther of
+                            Just count ->
+                                a ++ [ { choice = otherKey, count = count } ]
 
-                    Nothing ->
-                        a
-           )
-        |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
-        |> simpleGraph
-            windowSize
-            singleLine
-            True
-            (maxCountSegment mode segmentData |> Just)
-            mode
-            title
-            (percentVsTotalAndSegment False mode segment)
-            dataEntryWithOther.comment
+                            Nothing ->
+                                a
+                   )
+                |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
+                |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
+        }
+
+
+multiChoiceHelper : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> String -> Element Msg
+multiChoiceHelper windowSize singleLine sortValues mode dataEntryWithOther title =
+    let
+        otherKey =
+            "Other"
+
+        total =
+            Dict.values (DataEntry.get_ dataEntryWithOther).data |> List.sum
+
+        dataEntry =
+            Dict.remove otherKey (DataEntry.get_ dataEntryWithOther).data
+
+        maybeOther =
+            Dict.get otherKey (DataEntry.get_ dataEntryWithOther).data
+    in
+    simpleGraph
+        { windowSize = windowSize
+        , singleLine = singleLine
+        , isMultiChoice = True
+        , customMaxCount = Nothing
+        , mode = mode
+        , title = title
+        , filterUi = percentVsTotal mode
+        , comment = (DataEntry.get_ dataEntryWithOther).comment
+        , data =
+            Dict.toList dataEntry
+                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
+                |> List.reverse
+                |> (if sortValues then
+                        List.sortBy (\{ count } -> -count)
+
+                    else
+                        identity
+                   )
+                |> (\a ->
+                        case maybeOther of
+                            Just count ->
+                                a ++ [ { choice = otherKey, count = count } ]
+
+                            Nothing ->
+                                a
+                   )
+                |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
+        }
 
 
 percentVsTotal : Mode -> Element Msg
@@ -409,34 +479,8 @@ filterButton isSelected side onPress label =
 
 
 multiChoiceWithOther : Size -> Bool -> Bool -> Mode -> DataEntryWithOther a -> Question a -> Element Msg
-multiChoiceWithOther windowSize singleLine sortValues mode (DataEntryWithOther dataEntryWithOther) { title } =
-    let
-        otherKey =
-            "Other"
-
-        dataEntry =
-            Dict.remove otherKey dataEntryWithOther.data
-
-        maybeOther =
-            Dict.get otherKey dataEntryWithOther.data
-    in
-    Dict.toList dataEntry
-        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-        |> (if sortValues then
-                List.sortBy (\{ count } -> -count)
-
-            else
-                identity
-           )
-        |> (\a ->
-                case maybeOther of
-                    Just count ->
-                        a ++ [ { choice = otherKey, count = count } ]
-
-                    Nothing ->
-                        a
-           )
-        |> simpleGraph windowSize singleLine True Nothing mode title (percentVsTotal mode) dataEntryWithOther.comment
+multiChoiceWithOther windowSize singleLine sortValues mode dataEntryWithOther { title } =
+    multiChoiceHelper windowSize singleLine sortValues mode dataEntryWithOther title
 
 
 commentView : String -> Element msg
@@ -453,58 +497,7 @@ commentView comment =
 
 freeTextSegment : Mode -> Segment -> Size -> DataEntryWithOtherSegments () -> String -> Element Msg
 freeTextSegment mode segment windowSize segmentData title =
-    let
-        dataEntryWithOther =
-            (case segment of
-                AllUsers ->
-                    DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
-
-                Users ->
-                    segmentData.users
-
-                PotentialUsers ->
-                    segmentData.potentialUsers
-            )
-                |> DataEntry.get_
-
-        otherKey =
-            "Other"
-
-        dataEntry =
-            Dict.remove otherKey dataEntryWithOther.data
-
-        maybeOther =
-            Dict.get otherKey dataEntryWithOther.data
-
-        emptyChoices : Set String
-        emptyChoices =
-            DataEntry.combineDataEntriesWithOther segmentData.users segmentData.potentialUsers
-                |> (\(DataEntryWithOther a) -> a.data)
-                |> Dict.filter (\_ count -> count == 0)
-                |> Dict.keys
-                |> Set.fromList
-    in
-    Dict.toList dataEntry
-        |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-        |> List.sortBy (\{ count } -> -count)
-        |> (\a ->
-                case maybeOther of
-                    Just count ->
-                        a ++ [ { choice = otherKey, count = count } ]
-
-                    Nothing ->
-                        a
-           )
-        |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
-        |> simpleGraph
-            windowSize
-            False
-            True
-            (maxCountSegment mode segmentData |> Just)
-            mode
-            title
-            (percentVsTotalAndSegment False mode segment)
-            dataEntryWithOther.comment
+    multiChoiceSegmentHelper windowSize False True mode segment segmentData title
 
 
 maxCountSegment : Mode -> DataEntryWithOtherSegments a -> Float
@@ -544,30 +537,9 @@ maxCountSegment mode segmentData =
                 |> toFloat
 
 
-freeText : Mode -> Size -> DataEntryWithOther () -> String -> Element msg
-freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
-    let
-        data =
-            Dict.toList dataEntryWithOther.data
-                |> List.map (\( groupName, count ) -> { choice = groupName, count = count })
-                |> List.sortBy (\{ count } -> -count)
-
-        maxCount =
-            List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1 |> toFloat
-
-        total =
-            List.map .count data |> List.sum |> max 1
-    in
-    Element.column
-        [ Element.width Element.fill, Element.spacing 24 ]
-        [ Element.paragraph [] [ Element.text title ]
-        , Ui.multipleChoiceIndicator
-        , List.map
-            (\{ choice, count } -> barAndName mode choice count total maxCount)
-            data
-            |> Element.column [ Element.width Element.fill, Element.spacing 6 ]
-        , Element.paragraph [ Element.Font.size 18 ] [ Element.text dataEntryWithOther.comment ]
-        ]
+freeText : Mode -> Size -> DataEntryWithOther () -> String -> Element Msg
+freeText mode windowSize dataEntryWithOther title =
+    multiChoiceHelper windowSize False True mode dataEntryWithOther title
 
 
 
@@ -595,31 +567,41 @@ freeText mode _ (DataEntryWithOther dataEntryWithOther) title =
 --    ]
 
 
-barAndName : Mode -> String -> Int -> Int -> Float -> Element msg
-barAndName mode name count total maxCount =
+getValue : Mode -> Int -> Int -> Bool -> Float
+getValue mode count total includePerCapita =
+    case mode of
+        Percentage ->
+            100 * toFloat count / toFloat total
+
+        PerCapita ->
+            if includePerCapita then
+                toFloat count / 1000
+
+            else
+                100 * toFloat count / toFloat total
+
+        Total ->
+            toFloat count
+
+
+barAndName : Mode -> String -> Float -> Float -> Element msg
+barAndName mode name value maxCount =
     Element.column
         [ Element.width Element.fill, Element.spacing 1 ]
         [ Element.paragraph [ Element.Font.size 16 ] [ Element.text name ]
-        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar mode count total maxCount)
+        , Element.el [ Element.width Element.fill, Element.height (Element.px 24) ] (bar mode value maxCount)
         ]
 
 
-bar : Mode -> Int -> Int -> Float -> Element msg
-bar mode count total maxCount =
+barRightPadding =
+    40
+
+
+bar : Mode -> Float -> Float -> Element msg
+bar mode value maxCount =
     let
         a =
             100000
-
-        value =
-            case mode of
-                Percentage ->
-                    100 * toFloat count / toFloat total
-
-                PerCapita ->
-                    toFloat count / 1000
-
-                Total ->
-                    toFloat count
 
         textValue =
             case mode of
@@ -635,7 +617,7 @@ bar mode count total maxCount =
     Element.row
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.paddingEach { left = 0, right = 40, top = 0, bottom = 0 }
+        , Element.paddingEach { left = 0, right = barRightPadding, top = 0, bottom = 0 }
         ]
         [ Element.el
             [ Element.Background.color Ui.blue0
@@ -660,8 +642,19 @@ type Mode
     | Total
 
 
-simpleGraph : Size -> Bool -> Bool -> Maybe Float -> Mode -> String -> Element msg -> String -> List { choice : String, count : Int } -> Element msg
-simpleGraph windowSize singleLine isMultiChoice customMaxCount mode title filterUi comment data =
+simpleGraph :
+    { windowSize : Size
+    , singleLine : Bool
+    , isMultiChoice : Bool
+    , customMaxCount : Maybe Float
+    , mode : Mode
+    , title : String
+    , filterUi : Element msg
+    , comment : String
+    , data : List { choice : String, value : Float }
+    }
+    -> Element msg
+simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title, filterUi, comment, data } =
     let
         maxCount : Float
         maxCount =
@@ -670,10 +663,7 @@ simpleGraph windowSize singleLine isMultiChoice customMaxCount mode title filter
                     maxCount_
 
                 Nothing ->
-                    List.map .count data |> List.maximum |> Maybe.withDefault 1 |> max 1 |> toFloat
-
-        total =
-            List.map .count data |> List.sum |> max 1
+                    List.map .value data |> List.maximum |> Maybe.withDefault 1 |> max 1
     in
     container
         windowSize
@@ -689,7 +679,15 @@ simpleGraph windowSize singleLine isMultiChoice customMaxCount mode title filter
             Element.none
         , if singleLine then
             Element.table
-                [ Element.width Element.fill ]
+                [ Element.width Element.fill
+                , (if customMaxCount == Nothing then
+                    Element.none
+
+                   else
+                    maxCountLine mode maxCount
+                  )
+                    |> Element.inFront
+                ]
                 { data = data
                 , columns =
                     [ { header = Element.none
@@ -706,30 +704,72 @@ simpleGraph windowSize singleLine isMultiChoice customMaxCount mode title filter
                     , { header = Element.none
                       , width = Element.fill
                       , view =
-                            \{ count } ->
+                            \{ value } ->
                                 Element.el
                                     [ Element.width Element.fill
                                     , Element.height (Element.px 24)
                                     , Element.centerY
                                     ]
-                                    (bar mode count total maxCount)
+                                    (bar mode value maxCount)
                       }
                     ]
                 }
 
           else
             List.map
-                (\{ choice, count } -> barAndName mode choice count total maxCount)
+                (\{ choice, value } -> barAndName mode choice value maxCount)
                 data
-                |> Element.column [ Element.width Element.fill, Element.spacing 8 ]
+                |> Element.column
+                    [ Element.width Element.fill
+                    , Element.spacing 8
+                    , (if customMaxCount == Nothing then
+                        Element.none
+
+                       else
+                        maxCountLine mode maxCount
+                      )
+                        |> Element.inFront
+                    ]
         , commentView comment
         ]
+
+
+maxCountLine : Mode -> Float -> Element msg
+maxCountLine mode maxCount =
+    Element.el
+        [ Element.Border.widthEach { left = 0, right = 2, top = 0, bottom = 0 }
+        , Element.moveLeft barRightPadding
+        , Element.Border.color Ui.blue0
+        , Element.height Element.fill
+        , Element.alignRight
+        , Element.Border.dashed
+        , Element.moveUp 8
+        , (case mode of
+            Percentage ->
+                StringExtra.removeTrailing0s 1 maxCount ++ "%"
+
+            Total ->
+                StringExtra.removeTrailing0s 0 maxCount
+
+            PerCapita ->
+                StringExtra.removeTrailing0s 2 maxCount
+          )
+            |> Element.text
+            |> Element.el
+                [ Element.centerX
+                , Element.Font.size 14
+                , Element.Font.color Ui.blue0
+                , Element.Background.color Ui.white
+                , Element.moveDown 8
+                ]
+            |> Element.above
+        ]
+        Element.none
 
 
 singleChoiceSegmentGraph : Size -> Bool -> Bool -> Maybe (a -> Int) -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
 singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode segment segmentData { title, choices, choiceToString } =
     let
-        dataEntry : DataEntry a
         dataEntry =
             case segment of
                 AllUsers ->
@@ -744,6 +784,10 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
         data : Nonempty { choice : a, count : Int }
         data =
             DataEntry.get choices dataEntry
+
+        total : Int
+        total =
+            Nonempty.toList data |> List.map .count |> List.sum
 
         maxCount : Float
         maxCount =
@@ -760,10 +804,10 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
                                     data_ =
                                         DataEntry.get choices a |> Nonempty.toList |> List.map .count
 
-                                    total =
+                                    total_ =
                                         List.sum data_
                                 in
-                                List.map (\value -> 100 * toFloat value / toFloat total) data_
+                                List.map (\value -> 100 * toFloat value / toFloat total_) data_
                             )
                         |> List.maximum
                         |> Maybe.withDefault 1
@@ -816,39 +860,44 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
                 |> Set.fromList
     in
     simpleGraph
-        windowSize
-        singleLine
-        False
-        (Just maxCount)
-        mode
-        title
-        (percentVsTotalAndSegment (includePerCapita /= Nothing) mode segment)
-        (DataEntry.comment dataEntry)
-        (Nonempty.toList data
-            |> List.filterMap
-                (\a ->
-                    if Set.member a.choice emptyChoices then
-                        Nothing
+        { windowSize = windowSize
+        , singleLine = singleLine
+        , isMultiChoice = False
+        , customMaxCount = Just maxCount
+        , mode = mode
+        , title = title
+        , filterUi = percentVsTotalAndSegment (includePerCapita /= Nothing) mode segment
+        , comment = DataEntry.comment dataEntry
+        , data =
+            Nonempty.toList data
+                |> List.filterMap
+                    (\a ->
+                        if Set.member a.choice emptyChoices then
+                            Nothing
+
+                        else
+                            Just
+                                { choice = choiceToString a.choice
+                                , value =
+                                    let
+                                        count =
+                                            case ( includePerCapita, mode ) of
+                                                ( Just perCapitaFunction, PerCapita ) ->
+                                                    (1000000000 * a.count) // perCapitaFunction a.choice
+
+                                                _ ->
+                                                    a.count
+                                    in
+                                    getValue mode count total (includePerCapita /= Nothing)
+                                }
+                    )
+                |> (if sortValues then
+                        List.sortBy (\{ value } -> -value)
 
                     else
-                        Just
-                            { choice = choiceToString a.choice
-                            , count =
-                                case ( includePerCapita, mode ) of
-                                    ( Just perCapitaFunction, PerCapita ) ->
-                                        (1000000000 * a.count) // perCapitaFunction a.choice
-
-                                    _ ->
-                                        a.count
-                            }
-                )
-            |> (if sortValues then
-                    List.sortBy (\{ count } -> -count)
-
-                else
-                    identity
-               )
-        )
+                        identity
+                   )
+        }
 
 
 all =
@@ -1300,26 +1349,36 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
     let
         data =
             DataEntry.get choices dataEntry
+
+        total =
+            Nonempty.toList data |> List.map .count |> List.sum
     in
     simpleGraph
-        windowSize
-        singleLine
-        False
-        Nothing
-        mode
-        title
-        (percentVsTotal mode)
-        (DataEntry.comment dataEntry)
-        ((if sortValues then
-            nonemptySortBy (\{ count } -> -count) data
+        { windowSize = windowSize
+        , singleLine = singleLine
+        , isMultiChoice = False
+        , customMaxCount = Nothing
+        , mode = mode
+        , title = title
+        , filterUi = percentVsTotal mode
+        , comment = DataEntry.comment dataEntry
+        , data =
+            (if sortValues then
+                nonemptySortBy (\{ count } -> -count) data
 
-          else
-            data
-         )
-            |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
-            |> Nonempty.toList
-            |> List.filter (\{ count } -> count > 0)
-        )
+             else
+                data
+            )
+                |> Nonempty.map (\a -> { choice = choiceToString a.choice, count = a.count })
+                |> Nonempty.toList
+                |> List.filter (\{ count } -> count > 0)
+                |> List.map
+                    (\{ choice, count } ->
+                        { choice = choice
+                        , value = getValue mode count total False
+                        }
+                    )
+        }
 
 
 nonemptySortBy sortFunc nonempty =
