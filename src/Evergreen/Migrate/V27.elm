@@ -1891,7 +1891,35 @@ migrateFrontendMsg old =
 
 migrateSurveyResultMsg : Evergreen.V24.SurveyResults.Msg -> Evergreen.V27.SurveyResults.Msg
 migrateSurveyResultMsg old =
-    Debug.todo ""
+    case old of
+        Evergreen.V24.SurveyResults.PressedModeButton a ->
+            Evergreen.V27.SurveyResults.PressedModeButton (migrateMode a)
+
+        Evergreen.V24.SurveyResults.PressedSegmentButton a ->
+            Evergreen.V27.SurveyResults.PressedSegmentButton (migrateSegment a)
+
+
+migrateMode : Evergreen.V24.SurveyResults.Mode -> Evergreen.V27.SurveyResults.Mode
+migrateMode old =
+    case old of
+        Evergreen.V24.SurveyResults.Percentage ->
+            Evergreen.V27.SurveyResults.Percentage
+
+        Evergreen.V24.SurveyResults.Total ->
+            Evergreen.V27.SurveyResults.Total
+
+
+migrateSegment : Evergreen.V24.SurveyResults.Segment -> Evergreen.V27.SurveyResults.Segment
+migrateSegment old =
+    case old of
+        Evergreen.V24.SurveyResults.AllUsers ->
+            Evergreen.V27.SurveyResults.AllUsers
+
+        Evergreen.V24.SurveyResults.Users ->
+            Evergreen.V27.SurveyResults.Users
+
+        Evergreen.V24.SurveyResults.PotentialUsers ->
+            Evergreen.V27.SurveyResults.PotentialUsers
 
 
 migrateAdminPageMsg : Evergreen.V24.AdminPage.Msg -> Evergreen.V27.AdminPage.Msg
