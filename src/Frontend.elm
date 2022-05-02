@@ -264,7 +264,7 @@ updateFromBackend msg model =
         LoadForm formStatus ->
             case model of
                 Loading loadingData ->
-                    loadForm formStatus loadingData
+                    loadForm False formStatus loadingData
 
                 _ ->
                     model
@@ -296,7 +296,7 @@ updateFromBackend msg model =
         LogOutResponse formStatus ->
             case model of
                 Admin _ ->
-                    loadForm formStatus { windowSize = Nothing, time = Nothing }
+                    loadForm False formStatus { windowSize = Nothing, time = Nothing }
 
                 _ ->
                     model
@@ -311,8 +311,14 @@ updateFromBackend msg model =
 
         PreviewResponse data ->
             case model of
+                FormLoaded formLoaded ->
+                    loadForm
+                        True
+                        (SurveyResults data)
+                        { windowSize = Just formLoaded.windowSize, time = Just formLoaded.time }
+
                 Loading loadingData ->
-                    loadForm (SurveyResults data) loadingData
+                    loadForm True (SurveyResults data) loadingData
 
                 _ ->
                     model
@@ -320,8 +326,8 @@ updateFromBackend msg model =
     )
 
 
-loadForm : LoadFormStatus -> LoadingData -> FrontendModel
-loadForm formStatus loadingData =
+loadForm : Bool -> LoadFormStatus -> LoadingData -> FrontendModel
+loadForm isPreview formStatus loadingData =
     let
         windowSize =
             Maybe.withDefault { width = 1920, height = 1080 } loadingData.windowSize
@@ -358,7 +364,7 @@ loadForm formStatus loadingData =
                 , data = data
                 , mode = Total
                 , segment = Users
-                , isPreview = False
+                , isPreview = isPreview
                 }
 
         AwaitingResultsData ->

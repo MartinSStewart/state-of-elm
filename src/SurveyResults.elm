@@ -172,7 +172,18 @@ view model =
     in
     Element.column
         [ Element.width Element.fill, Element.behindContent (Element.html css) ]
-        [ Ui.headerContainer
+        [ if model.isPreview then
+            Element.paragraph
+                [ Element.Background.color (Element.rgb 1 1 0)
+                , Element.padding 4
+                , Element.width Element.fill
+                , Element.Font.center
+                ]
+                [ Element.text "Preview mode! Don't share this link. Some data might not be accurate." ]
+
+          else
+            Element.none
+        , Ui.headerContainer
             model.windowSize
             [ Element.paragraph
                 [ Element.Font.bold ]
