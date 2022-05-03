@@ -613,7 +613,7 @@ update msg model =
                 Sending ->
                     ( model, Command.none )
 
-                SendResult list ->
+                SendResult _ ->
                     ( model, Command.none )
 
 

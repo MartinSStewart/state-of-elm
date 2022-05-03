@@ -319,9 +319,26 @@ titleAndSubtitle title_ maybeSubtitle =
 
 title : String -> Element msg
 title title_ =
-    Element.paragraph
-        [ titleFontSize, Element.Font.bold, Element.Region.heading 3 ]
-        [ Element.text title_ ]
+    let
+        fragment =
+            String.replace " " "-" title_
+                |> String.toLower
+                |> String.filter (\char -> char == '-' || Char.isAlphaNum char)
+    in
+    Html.h3
+        [ Html.Attributes.style "margin" "0"
+        , Html.Attributes.id fragment
+        ]
+        [ Html.a
+            [ Html.Attributes.href ("#" ++ fragment)
+            , Html.Attributes.style "text-decoration" "none"
+            , Html.Attributes.style "color" "black"
+            ]
+            [ Html.text title_ ]
+        ]
+        |> Element.html
+        |> List.singleton
+        |> Element.paragraph [ titleFontSize, Element.Font.bold, Element.spacing 10 ]
 
 
 white : Element.Color
