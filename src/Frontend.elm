@@ -25,8 +25,6 @@ import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
 import SurveyResults exposing (Mode(..), Segment(..))
-import Svg
-import Svg.Attributes
 import Types exposing (..)
 import Ui exposing (Size)
 import Url
