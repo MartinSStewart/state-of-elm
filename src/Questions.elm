@@ -1128,6 +1128,10 @@ whichElmReviewRulesDoYouUse =
     }
 
 
+dummyChange =
+    0
+
+
 testTools : Question TestTools
 testTools =
     { title = "What tools do you use to test your Elm projects?"
