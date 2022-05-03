@@ -461,19 +461,7 @@ formCompletedView =
         , Element.inFront
             (Element.column
                 [ Element.alignBottom, Element.spacing 16, Element.paddingXY 22 24 ]
-                [ Element.link
-                    [ Element.Font.color Ui.white
-                    ]
-                    { url = "https://github.com/MartinSStewart/state-of-elm"
-                    , label =
-                        Element.row
-                            [ Element.Font.size 32
-                            , Element.spacing 8
-                            ]
-                            [ githubLogo
-                            , Element.el [ Element.moveDown 2 ] (Element.text "Source")
-                            ]
-                    }
+                [ Ui.sourceCodeLink
                 , Element.el [] Ui.disclaimer
                 ]
             )
@@ -608,10 +596,10 @@ awaitingResultsView =
                     { url = "https://github.com/MartinSStewart/state-of-elm"
                     , label =
                         Element.row
-                            [ Element.Font.size 32
+                            [ Element.Font.size 24
                             , Element.spacing 8
                             ]
-                            [ githubLogo
+                            [ Ui.githubLogo
                             , Element.el [ Element.moveDown 2 ] (Element.text "Source")
                             ]
                     }
@@ -638,24 +626,6 @@ awaitingResultsView =
                 [ Element.text "The survey is now closed and the results are being tallied. They should be released on this website in a few days." ]
             ]
         )
-
-
-githubLogo : Element msg
-githubLogo =
-    Svg.svg
-        [ Svg.Attributes.width "32px"
-        , Svg.Attributes.height "32px"
-        , Svg.Attributes.viewBox "0 0 1024 1024"
-        , Svg.Attributes.version "1.1"
-        ]
-        [ Svg.path
-            [ Svg.Attributes.d "M511.957333 12.650667C229.248 12.650667 0 241.877333 0 524.672c0 226.197333 146.688 418.090667 350.165333 485.802667 25.6 4.693333 34.944-11.093333 34.944-24.682667 0-12.16-0.426667-44.352-0.682666-87.082667-142.421333 30.933333-172.48-68.629333-172.48-68.629333C188.672 770.944 155.093333 755.2 155.093333 755.2c-46.485333-31.786667 3.52-31.146667 3.52-31.146667 51.392 3.626667 78.421333 52.778667 78.421334 52.778667 45.674667 78.229333 119.829333 55.637333 149.013333 42.538667 4.650667-33.066667 17.877333-55.658667 32.512-68.437334-113.706667-12.928-233.216-56.853333-233.216-253.056 0-55.893333 19.946667-101.589333 52.693333-137.386666-5.269333-12.949333-22.826667-65.002667 5.013334-135.509334 0 0 42.986667-13.76 140.8 52.48 40.832-11.349333 84.629333-17.024 128.170666-17.216 43.477333 0.213333 87.296 5.866667 128.192 17.237334 97.749333-66.261333 140.650667-52.48 140.650667-52.48 27.946667 70.485333 10.368 122.538667 5.098667 135.466666 32.810667 35.818667 52.629333 81.514667 52.629333 137.408 0 196.693333-119.701333 239.978667-233.770667 252.650667 18.389333 15.786667 34.773333 47.061333 34.773334 94.805333 0 68.458667-0.64 123.669333-0.64 140.458667 0 13.696 9.216 29.632 35.2 24.618667C877.44 942.570667 1024 750.784 1024 524.672 1024 241.877333 794.730667 12.650667 511.957333 12.650667z"
-            , Svg.Attributes.fill "currentColor"
-            ]
-            []
-        ]
-        |> Element.html
-        |> Element.el []
 
 
 formView : Size -> Form -> Element FrontendMsg

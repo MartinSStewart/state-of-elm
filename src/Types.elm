@@ -6,8 +6,10 @@ import AssocSet exposing (Set)
 import Browser
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
+import EmailAddress exposing (EmailAddress)
 import Env
 import Form exposing (Form, FormMapping)
+import SendGrid
 import SurveyResults
 import Ui exposing (Size)
 
@@ -54,6 +56,7 @@ type alias BackendModel =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , adminLogin : Set SessionId
+    , sendEmailsStatus : AdminPage.SendEmailsStatus
     }
 
 
@@ -84,6 +87,7 @@ type BackendMsg
     = UserConnected SessionId ClientId
     | GotTimeWithLoadFormData SessionId ClientId Effect.Time.Posix
     | GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
+    | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
 
 
 type LoadFormStatus

@@ -7,14 +7,20 @@ import AssocSet as Set
 import DataEntry
 import Effect.Command as Command exposing (BackendOnly, Command)
 import Effect.Lamdera exposing (ClientId, SessionId)
-import Effect.Task
+import Effect.Task as Task
 import Effect.Time
+import Email.Html as Html
+import Email.Html.Attributes as Attributes
+import EmailAddress
 import Env
 import Form exposing (Form, FormMapping)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Lamdera
+import List.Nonempty exposing (Nonempty(..))
 import Questions exposing (Question)
+import SendGrid
 import Sha256
+import String.Nonempty exposing (NonemptyString(..))
 import SurveyResults
 import Types exposing (..)
 import Ui exposing (MultiChoiceWithOther)
@@ -62,18 +68,21 @@ init =
             , biggestPainPoint = FreeTextAnswerMap.init
             , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
+
+        model : BackendModel
+        model =
+            { forms = Dict.empty
+            , formMapping = answerMap
+            , adminLogin = Set.empty
+            , sendEmailsStatus = AdminPage.EmailsNotSent
+            }
     in
-    ( { forms = Dict.empty
-      , formMapping = answerMap
-      , adminLogin = Set.empty
-      }
-    , Command.none
-    )
+    ( model, Command.none )
 
 
 getAdminData : BackendModel -> AdminLoginData
 getAdminData model =
-    { forms = Dict.values model.forms, formMapping = model.formMapping }
+    { forms = Dict.values model.forms, formMapping = model.formMapping, sendEmailsStatus = model.sendEmailsStatus }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -85,7 +94,7 @@ update msg model =
                 LoadAdmin (getAdminData model) |> Effect.Lamdera.sendToFrontend clientId
 
               else
-                Effect.Time.now |> Effect.Task.perform (GotTimeWithLoadFormData sessionId clientId)
+                Effect.Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
             )
 
         GotTimeWithLoadFormData sessionId clientId time ->
@@ -93,6 +102,11 @@ update msg model =
 
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
+
+        EmailsSent clientId list ->
+            ( { model | sendEmailsStatus = AdminPage.SendResult list }
+            , AdminPage.SendEmailsResponse list |> AdminToFrontend |> Effect.Lamdera.sendToFrontend clientId
+            )
 
 
 loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> LoadFormStatus
@@ -289,7 +303,7 @@ formData model =
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Command restriction toMsg BackendMsg )
 updateFromFrontend sessionId clientId msg model =
-    ( model, Effect.Time.now |> Effect.Task.perform (GotTimeWithUpdate sessionId clientId msg) )
+    ( model, Effect.Time.now |> Task.perform (GotTimeWithUpdate sessionId clientId msg) )
 
 
 updateFromFrontendWithTime : Effect.Time.Posix -> SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -411,6 +425,57 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
             else
                 ( model, Command.none )
+
+        AdminToBackend AdminPage.SendEmailsRequest ->
+            case ( model.sendEmailsStatus, EmailAddress.fromString "no-reply@state-of-elm.app" ) of
+                ( AdminPage.EmailsNotSent, Just senderEmailAddress ) ->
+                    let
+                        emailAddresses =
+                            List.filterMap
+                                (\{ form, submitTime } ->
+                                    case submitTime of
+                                        Just _ ->
+                                            EmailAddress.fromString form.emailAddress
+
+                                        Nothing ->
+                                            Nothing
+                                )
+                                (Dict.values model.forms)
+                    in
+                    ( { model | sendEmailsStatus = AdminPage.Sending }
+                    , List.map
+                        (\emailAddress ->
+                            SendGrid.sendEmailTask
+                                Env.sendGridKey
+                                (SendGrid.htmlEmail
+                                    { subject = NonemptyString 'T' "he State of Elm results are out!"
+                                    , content =
+                                        Html.div
+                                            []
+                                            [ Html.text "The State of Elm survey results are ready. You can view them here "
+                                            , Html.a
+                                                [ Attributes.href "https://state-of-elm.lamdera.app/" ]
+                                                [ Html.text "https://state-of-elm.lamdera.app/" ]
+                                            ]
+                                    , to = Nonempty emailAddress []
+                                    , nameOfSender = "State of Elm"
+                                    , emailAddressOfSender = senderEmailAddress
+                                    }
+                                )
+                                |> Task.map (\ok -> { emailAddress = emailAddress, result = Ok ok })
+                                |> Task.onError
+                                    (\error ->
+                                        { emailAddress = emailAddress, result = Err error }
+                                            |> Task.succeed
+                                    )
+                        )
+                        emailAddresses
+                        |> Task.sequence
+                        |> Task.perform (EmailsSent clientId)
+                    )
+
+                _ ->
+                    ( model, Command.none )
 
         PreviewRequest password ->
             if password == Env.previewPassword then

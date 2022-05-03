@@ -3,6 +3,7 @@ module Env exposing (..)
 import Duration
 import Effect.Time
 import Quantity
+import SendGrid
 import Sha256
 
 
@@ -49,3 +50,13 @@ surveyIsOpen time =
 previewPassword : String
 previewPassword =
     "abc"
+
+
+sendGridKey_ : String
+sendGridKey_ =
+    ""
+
+
+sendGridKey : SendGrid.ApiKey
+sendGridKey =
+    SendGrid.apiKey sendGridKey_

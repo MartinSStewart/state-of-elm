@@ -3,6 +3,7 @@ module AdminPage exposing
     , FormMappingEdit(..)
     , Model
     , Msg(..)
+    , SendEmailsStatus(..)
     , ToBackend(..)
     , ToFrontend(..)
     , adminView
@@ -22,11 +23,13 @@ import Element.Background
 import Element.Border
 import Element.Font
 import Element.Input
+import EmailAddress exposing (EmailAddress)
 import Env
 import Form exposing (Form, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
+import SendGrid
 import Serialize
 import SurveyResults exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
@@ -39,21 +42,25 @@ type Msg
     | PressedQuestionWithOther SpecificQuestion
     | PressedToggleShowEncodedState
     | NoOp
+    | PressedSendEmails
 
 
 type ToBackend
     = ReplaceFormsRequest ( List Form, FormMapping )
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
+    | SendEmailsRequest
 
 
 type ToFrontend
     = EditFormMappingResponse FormMappingEdit
+    | SendEmailsResponse (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
 
 
 type alias AdminLoginData =
     { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
+    , sendEmailsStatus : SendEmailsStatus
     }
 
 
@@ -70,7 +77,14 @@ type alias Model =
     , formMapping : NetworkModel FormMappingEdit FormMapping
     , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
+    , sendEmailsStatus : SendEmailsStatus
     }
+
+
+type SendEmailsStatus
+    = EmailsNotSent
+    | Sending
+    | SendResult (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
 
 
 init : AdminLoginData -> Model
@@ -79,6 +93,7 @@ init loginData =
     , formMapping = NetworkModel.init loginData.formMapping
     , selectedMapping = OtherLanguagesQuestion
     , showEncodedState = False
+    , sendEmailsStatus = loginData.sendEmailsStatus
     }
 
 
@@ -590,6 +605,17 @@ update msg model =
         NoOp ->
             ( model, Command.none )
 
+        PressedSendEmails ->
+            case model.sendEmailsStatus of
+                EmailsNotSent ->
+                    ( { model | sendEmailsStatus = Sending }, Lamdera.sendToBackend SendEmailsRequest )
+
+                Sending ->
+                    ( model, Command.none )
+
+                SendResult list ->
+                    ( model, Command.none )
+
 
 button : Bool -> msg -> String -> Element msg
 button isSelected onPress text =
@@ -637,6 +663,27 @@ adminView model =
         , Element.row [ Element.spacing 16 ]
             [ button False PressedLogOut "Log out"
             , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
+            , case model.sendEmailsStatus of
+                EmailsNotSent ->
+                    button False PressedSendEmails "Send emails"
+
+                Sending ->
+                    button False PressedSendEmails "Sending..."
+
+                SendResult list ->
+                    List.filterMap
+                        (\{ emailAddress, result } ->
+                            case result of
+                                Ok _ ->
+                                    Nothing
+
+                                Err _ ->
+                                    Just (EmailAddress.toString emailAddress)
+                        )
+                        list
+                        |> String.join ", "
+                        |> (++) "Failed to send to the following emails: "
+                        |> Element.text
             ]
         , if model.showEncodedState then
             Element.Input.text
@@ -684,6 +731,9 @@ updateFromBackend toFrontend model =
     case toFrontend of
         EditFormMappingResponse formMappingEdit ->
             { model | formMapping = NetworkModel.updateFromBackend networkUpdate formMappingEdit model.formMapping }
+
+        SendEmailsResponse list ->
+            { model | sendEmailsStatus = SendResult list }
 
 
 answerMapView : Model -> Element Msg
