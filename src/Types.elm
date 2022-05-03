@@ -57,6 +57,7 @@ type alias BackendModel =
     , formMapping : FormMapping
     , adminLogin : Set SessionId
     , sendEmailsStatus : AdminPage.SendEmailsStatus
+    , cachedSurveyResults : Maybe SurveyResults.Data
     }
 
 
