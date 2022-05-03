@@ -337,7 +337,8 @@ title title_ =
             [ Html.text title_ ]
         ]
         |> Element.html
-        |> Element.el [ titleFontSize, Element.Font.bold ]
+        |> List.singleton
+        |> Element.paragraph [ titleFontSize, Element.Font.bold, Element.spacing 10 ]
 
 
 white : Element.Color

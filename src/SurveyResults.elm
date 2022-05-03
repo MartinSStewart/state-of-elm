@@ -436,7 +436,7 @@ segmentFilter segment =
         []
         [ filterButton (segment == AllUsers) Left (PressedSegmentButton AllUsers) "All users"
         , filterButton (segment == Users) Middle (PressedSegmentButton Users) "Use(d) Elm"
-        , filterButton (segment == PotentialUsers) Right (PressedSegmentButton PotentialUsers) "Potential users"
+        , filterButton (segment == PotentialUsers) Right (PressedSegmentButton PotentialUsers) "Considering Elm"
         ]
 
 
