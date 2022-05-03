@@ -708,7 +708,7 @@ simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title
     container
         windowSize
         [ Element.column
-            [ Element.spacing 8 ]
+            [ Element.spacing 12 ]
             [ Ui.title title
             , filterUi
             ]
