@@ -227,9 +227,11 @@ view model =
                 , mode = Total
                 , title = "Number of participants"
                 , filterUi = Element.none
-                , comment = """Fewer people participated in the survey this year compared to 2018 and 2017.
-                                
-It's hard to say why that is. Maybe it's because this survey was open for 20 days and 2018's survey was open for 60 days (though the number of new submissions was increasing quite slowly by the 20 day mark). Maybe the community shrank in size? Maybe Brian Hicks is just better at spreading the word than I am. Or maybe it's some combination of those factors."""
+                , comment = """Fewer people participated in the survey this year compared to 2018 and 2017. I spoke with Brian Hicks about this and it's likely because:
+* This survey was only open for 20 days in contrast to the 2018 survey which was open for 60 days (though it's worth noting that by the 20 day mark, there weren't many new participants)
+* Brian promoted the survey via additional channels such as mailing lists and external communities (I only linked this years survey on Elm Slack, Incremental Elm, and Elm Discourse)
+* People likely formed a habit of filling out the surveys when they were occurring annually.
+"""
                 , data =
                     [ { choice = "2022", value = toFloat data.totalParticipants }
                     , { choice = "2018", value = 1176 }
