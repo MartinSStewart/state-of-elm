@@ -284,6 +284,7 @@ It's hard to say why that is. Maybe it's because this survey was open for 20 day
                 [ Element.paragraph [ Element.Font.bold ] [ Element.text "That's all folks!" ]
                 , Element.paragraph [] [ Element.text "Thanks again for participating!" ]
                 , Element.paragraph [] [ Element.text "The plan is to start running State of Elm annually again. I'll make an announcement post on Elm Discourse and Elm Slack when the time comes for the next one." ]
+                , Ui.sourceCodeLink
                 , Ui.disclaimer
                 ]
             )
