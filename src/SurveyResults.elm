@@ -236,6 +236,7 @@ view model =
                     [ { choice = "2022", value = toFloat data.totalParticipants }
                     , { choice = "2018", value = 1176 }
                     , { choice = "2017", value = 1170 }
+                    , { choice = "2016", value = 644 }
                     ]
                 }
             , Ui.section

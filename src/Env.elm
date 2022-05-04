@@ -19,7 +19,7 @@ adminPasswordHash =
 
 presentSurveyResults_ : String
 presentSurveyResults_ =
-    "false"
+    "true"
 
 
 presentSurveyResults : Bool
