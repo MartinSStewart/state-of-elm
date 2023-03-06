@@ -7,6 +7,7 @@ import AssocSet as Set
 import DataEntry
 import Effect.Command as Command exposing (BackendOnly, Command)
 import Effect.Lamdera exposing (ClientId, SessionId)
+import Effect.Subscription as Subscription
 import Effect.Task as Task
 import Effect.Time
 import Email.Html as Html
@@ -33,12 +34,22 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \_ -> Effect.Lamdera.onConnect UserConnected
+        , subscriptions = \_ -> Subscription.none
         }
 
 
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
+    ( { adminLogin = Set.empty
+      , survey2022 = initSurvey
+      , survey2023 = initSurvey
+      }
+    , Command.none
+    )
+
+
+initSurvey : BackendSurvey
+initSurvey =
     let
         answerMap : FormMapping
         answerMap =
@@ -68,20 +79,28 @@ init =
             , biggestPainPoint = FreeTextAnswerMap.init
             , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
-
-        model : BackendModel
-        model =
-            { forms = Dict.empty
-            , formMapping = answerMap
-            , adminLogin = Set.empty
-            , sendEmailsStatus = AdminPage.EmailsNotSent
-            , cachedSurveyResults = Nothing
-            }
     in
-    ( model, Command.none )
+    { forms = Dict.empty
+    , formMapping = answerMap
+    , sendEmailsStatus = AdminPage.EmailsNotSent
+    , cachedSurveyResults = Nothing
+    }
 
 
-getAdminData : BackendModel -> AdminLoginData
+getCurrentSurvey : { a | survey2023 : BackendSurvey } -> BackendSurvey
+getCurrentSurvey =
+    .survey2023
+
+
+setCurrentSurvey :
+    (BackendSurvey -> BackendSurvey)
+    -> { a | survey2023 : BackendSurvey }
+    -> { a | survey2023 : BackendSurvey }
+setCurrentSurvey updateFunc model =
+    { model | survey2023 = updateFunc model.survey2023 }
+
+
+getAdminData : BackendSurvey -> AdminLoginData
 getAdminData model =
     { forms = Dict.values model.forms, formMapping = model.formMapping, sendEmailsStatus = model.sendEmailsStatus }
 
@@ -89,23 +108,21 @@ getAdminData model =
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
 update msg model =
     case msg of
-        UserConnected sessionId clientId ->
-            ( model
-            , if isAdmin sessionId model then
-                LoadAdmin (getAdminData model) |> Effect.Lamdera.sendToFrontend clientId
-
-              else
-                Effect.Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
-            )
-
-        GotTimeWithLoadFormData sessionId clientId time ->
-            loadFormData sessionId time model |> Tuple.mapSecond (LoadForm >> Effect.Lamdera.sendToFrontend clientId)
-
+        --UserConnected sessionId clientId ->
+        --    ( model
+        --    , if isAdmin sessionId model then
+        --        LoadAdmin (getAdminData (getCurrentSurvey model)) |> Effect.Lamdera.sendToFrontend clientId
+        --
+        --      else
+        --        Effect.Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
+        --    )
+        --GotTimeWithLoadFormData sessionId clientId time ->
+        --    loadFormData sessionId time model |> Tuple.mapSecond (LoadForm >> Effect.Lamdera.sendToFrontend clientId)
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
 
         EmailsSent clientId list ->
-            ( { model | sendEmailsStatus = AdminPage.SendResult list }
+            ( setCurrentSurvey (\survey -> { survey | sendEmailsStatus = AdminPage.SendResult list }) model
             , AdminPage.SendEmailsResponse list |> AdminToFrontend |> Effect.Lamdera.sendToFrontend clientId
             )
 
@@ -136,7 +153,7 @@ loadFormData sessionId time model =
             formData model |> Tuple.mapSecond SurveyResults
 
 
-formData : BackendModel -> ( BackendModel, SurveyResults.Data )
+formData : BackendSurvey -> ( BackendSurvey, SurveyResults.Data )
 formData model =
     case model.cachedSurveyResults of
         Just cache ->

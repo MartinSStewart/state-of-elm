@@ -9,6 +9,7 @@ import Effect.Time
 import EmailAddress exposing (EmailAddress)
 import Env
 import Form exposing (Form, FormMapping)
+import Route exposing (Route, SurveyYear)
 import SendGrid
 import SurveyResults
 import Ui exposing (Size)
@@ -24,7 +25,7 @@ type FrontendModel
 
 
 type alias LoadingData =
-    { windowSize : Maybe Size, time : Maybe Effect.Time.Posix }
+    { windowSize : Maybe Size, time : Maybe Effect.Time.Posix, surveyYear : SurveyYear }
 
 
 type SurveyStatus
@@ -53,9 +54,15 @@ type alias FormLoaded_ =
 
 
 type alias BackendModel =
+    { adminLogin : Set SessionId
+    , survey2022 : BackendSurvey
+    , survey2023 : BackendSurvey
+    }
+
+
+type alias BackendSurvey =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
-    , adminLogin : Set SessionId
     , sendEmailsStatus : AdminPage.SendEmailsStatus
     , cachedSurveyResults : Maybe SurveyResults.Data
     }
@@ -82,12 +89,12 @@ type ToBackend
     | AdminLoginRequest String
     | AdminToBackend AdminPage.ToBackend
     | PreviewRequest String
+    | RequestFormData SurveyYear
+    | RequestAdminFormData
 
 
 type BackendMsg
-    = UserConnected SessionId ClientId
-    | GotTimeWithLoadFormData SessionId ClientId Effect.Time.Posix
-    | GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
+    = GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
     | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
 
 

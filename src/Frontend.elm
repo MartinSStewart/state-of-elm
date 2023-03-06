@@ -24,6 +24,7 @@ import Lamdera
 import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
+import Route exposing (Route(..), SurveyYear(..))
 import SurveyResults exposing (Mode(..), Segment(..))
 import Types exposing (..)
 import Ui exposing (Size)
@@ -50,29 +51,22 @@ app =
 
 init : Url.Url -> Effect.Browser.Navigation.Key -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 init url _ =
-    ( if url.path == "/admin" then
-        AdminLogin { password = "", loginFailed = False }
+    case Route.decode url of
+        AdminRoute ->
+            ( AdminLogin { password = "", loginFailed = False }
+            , Effect.Lamdera.sendToBackend RequestAdminFormData
+            )
 
-      else
-        Loading { windowSize = Nothing, time = Nothing }
-    , Command.batch
-        [ Effect.Task.perform
-            (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
-            Effect.Browser.Dom.getViewport
-        , Effect.Task.perform GotTime Effect.Time.now
-        , case url.query of
-            Just query ->
-                case String.split "=" query of
-                    [ _, password ] ->
-                        Effect.Lamdera.sendToBackend (PreviewRequest password)
-
-                    _ ->
-                        Command.none
-
-            Nothing ->
-                Command.none
-        ]
-    )
+        SurveyRoute surveyYear ->
+            ( Loading { windowSize = Nothing, time = Nothing, surveyYear = surveyYear }
+            , Command.batch
+                [ Effect.Task.perform
+                    (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
+                    Effect.Browser.Dom.getViewport
+                , Effect.Task.perform GotTime Effect.Time.now
+                , Effect.Lamdera.sendToBackend (RequestFormData surveyYear)
+                ]
+            )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
@@ -294,7 +288,10 @@ updateFromBackend msg model =
         LogOutResponse formStatus ->
             case model of
                 Admin _ ->
-                    loadForm False formStatus { windowSize = Nothing, time = Nothing }
+                    loadForm
+                        False
+                        formStatus
+                        { windowSize = Nothing, time = Nothing, surveyYear = Route.currentSurvey }
 
                 _ ->
                     model
@@ -313,7 +310,10 @@ updateFromBackend msg model =
                     loadForm
                         True
                         (SurveyResults data)
-                        { windowSize = Just formLoaded.windowSize, time = Just formLoaded.time }
+                        { windowSize = Just formLoaded.windowSize
+                        , time = Just formLoaded.time
+                        , surveyYear = Route.currentSurvey
+                        }
 
                 Loading loadingData ->
                     loadForm True (SurveyResults data) loadingData
