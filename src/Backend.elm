@@ -127,13 +127,13 @@ update msg model =
             )
 
 
-loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendModel, LoadFormStatus )
+loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey, LoadFormStatus )
 loadFormData sessionId time model =
     case Types.surveyStatus of
         SurveyOpen ->
-            ( model
+            ( getCurrentSurvey model
             , if Env.surveyIsOpen time then
-                case Dict.get sessionId model.forms of
+                case Dict.get sessionId (getCurrentSurvey model).forms of
                     Just value ->
                         case value.submitTime of
                             Just _ ->
@@ -150,7 +150,7 @@ loadFormData sessionId time model =
             )
 
         SurveyFinished ->
-            formData model |> Tuple.mapSecond SurveyResults
+            formData (getCurrentSurvey model) |> Tuple.mapSecond SurveyResults
 
 
 formData : BackendSurvey -> ( BackendSurvey, SurveyResults.Data )
@@ -341,25 +341,29 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             case Types.surveyStatus of
                 SurveyOpen ->
                     ( if Env.surveyIsOpen time then
-                        { model
-                            | forms =
-                                Dict.update
-                                    sessionId
-                                    (\maybeValue ->
-                                        case maybeValue of
-                                            Just value ->
-                                                case value.submitTime of
-                                                    Just _ ->
-                                                        maybeValue
+                        setCurrentSurvey
+                            (\survey ->
+                                { survey
+                                    | forms =
+                                        Dict.update
+                                            sessionId
+                                            (\maybeValue ->
+                                                case maybeValue of
+                                                    Just value ->
+                                                        case value.submitTime of
+                                                            Just _ ->
+                                                                maybeValue
+
+                                                            Nothing ->
+                                                                Just { value | form = form }
 
                                                     Nothing ->
-                                                        Just { value | form = form }
-
-                                            Nothing ->
-                                                Just { form = form, submitTime = Nothing }
-                                    )
-                                    model.forms
-                        }
+                                                        Just { form = form, submitTime = Nothing }
+                                            )
+                                            survey.forms
+                                }
+                            )
+                            model
 
                       else
                         model
@@ -373,25 +377,29 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             case Types.surveyStatus of
                 SurveyOpen ->
                     if Env.surveyIsOpen time then
-                        ( { model
-                            | forms =
-                                Dict.update
-                                    sessionId
-                                    (\maybeValue ->
-                                        case maybeValue of
-                                            Just value ->
-                                                case value.submitTime of
-                                                    Just _ ->
-                                                        maybeValue
+                        ( setCurrentSurvey
+                            (\survey ->
+                                { survey
+                                    | forms =
+                                        Dict.update
+                                            sessionId
+                                            (\maybeValue ->
+                                                case maybeValue of
+                                                    Just value ->
+                                                        case value.submitTime of
+                                                            Just _ ->
+                                                                maybeValue
+
+                                                            Nothing ->
+                                                                Just { value | form = form, submitTime = Just time }
 
                                                     Nothing ->
-                                                        Just { value | form = form, submitTime = Just time }
-
-                                            Nothing ->
-                                                Just { form = form, submitTime = Just time }
-                                    )
-                                    model.forms
-                          }
+                                                        Just { form = form, submitTime = Just time }
+                                            )
+                                            survey.forms
+                                }
+                            )
+                            model
                         , Effect.Lamdera.sendToFrontend clientId SubmitConfirmed
                         )
 
@@ -404,7 +412,10 @@ updateFromFrontendWithTime time sessionId clientId msg model =
         AdminLoginRequest password ->
             if Env.adminPasswordHash == Sha256.sha256 password then
                 ( { model | adminLogin = Set.insert sessionId model.adminLogin }
-                , getAdminData model |> Ok |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId
+                , getAdminData (getCurrentSurvey model)
+                    |> Ok
+                    |> AdminLoginResponse
+                    |> Effect.Lamdera.sendToFrontend clientId
                 )
 
             else
@@ -412,18 +423,22 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminToBackend (AdminPage.ReplaceFormsRequest ( forms, formMapping )) ->
             ( if not Env.isProduction && isAdmin sessionId model then
-                { model
-                    | forms =
-                        List.indexedMap
-                            (\index form ->
-                                ( Char.fromCode index |> String.fromChar |> Effect.Lamdera.sessionIdFromString
-                                , { form = form, submitTime = Just (Effect.Time.millisToPosix 0) }
-                                )
-                            )
-                            forms
-                            |> Dict.fromList
-                    , formMapping = formMapping
-                }
+                setCurrentSurvey
+                    (\survey ->
+                        { survey
+                            | forms =
+                                List.indexedMap
+                                    (\index form ->
+                                        ( Char.fromCode index |> String.fromChar |> Effect.Lamdera.sessionIdFromString
+                                        , { form = form, submitTime = Just (Effect.Time.millisToPosix 0) }
+                                        )
+                                    )
+                                    forms
+                                    |> Dict.fromList
+                            , formMapping = formMapping
+                        }
+                    )
+                    model
 
               else
                 model
@@ -432,18 +447,27 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminToBackend AdminPage.LogOutRequest ->
             if isAdmin sessionId model then
-                loadFormData sessionId time { model | adminLogin = Set.remove sessionId model.adminLogin }
-                    |> Tuple.mapSecond (LogOutResponse >> Effect.Lamdera.sendToFrontend clientId)
+                let
+                    ( survey, surveyStatus ) =
+                        loadFormData sessionId time model
+                in
+                ( setCurrentSurvey (\_ -> survey) { model | adminLogin = Set.remove sessionId model.adminLogin }
+                , Effect.Lamdera.sendToFrontend clientId (LogOutResponse surveyStatus)
+                )
 
             else
                 ( model, Command.none )
 
         AdminToBackend (AdminPage.EditFormMappingRequest edit) ->
             if isAdmin sessionId model then
-                ( { model
-                    | formMapping = AdminPage.networkUpdate edit model.formMapping
-                    , cachedSurveyResults = Nothing
-                  }
+                ( setCurrentSurvey
+                    (\survey ->
+                        { survey
+                            | formMapping = AdminPage.networkUpdate edit survey.formMapping
+                            , cachedSurveyResults = Nothing
+                        }
+                    )
+                    model
                 , Set.toList model.adminLogin
                     |> List.map
                         (\sessionId_ ->
@@ -457,7 +481,11 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                 ( model, Command.none )
 
         AdminToBackend AdminPage.SendEmailsRequest ->
-            case ( model.sendEmailsStatus, EmailAddress.fromString "no-reply@state-of-elm.app" ) of
+            let
+                survey =
+                    getCurrentSurvey model
+            in
+            case ( survey.sendEmailsStatus, EmailAddress.fromString "no-reply@state-of-elm.app" ) of
                 ( AdminPage.EmailsNotSent, Just senderEmailAddress ) ->
                     let
                         emailAddresses =
@@ -470,9 +498,9 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                                         Nothing ->
                                             Nothing
                                 )
-                                (Dict.values model.forms)
+                                (Dict.values survey.forms)
                     in
-                    ( { model | sendEmailsStatus = AdminPage.Sending }
+                    ( setCurrentSurvey (\_ -> { survey | sendEmailsStatus = AdminPage.Sending }) model
                     , List.map
                         (\emailAddress ->
                             SendGrid.sendEmailTask
@@ -509,10 +537,18 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         PreviewRequest password ->
             if password == Env.previewPassword then
-                formData model |> Tuple.mapSecond (PreviewResponse >> Effect.Lamdera.sendToFrontend clientId)
+                Debug.todo ""
+                --formData (getCurrentSurvey model)
+                --    |> Tuple.mapSecond (PreviewResponse >> Effect.Lamdera.sendToFrontend clientId)
 
             else
                 ( model, Command.none )
+
+        RequestFormData surveyYear ->
+            Debug.todo ""
+
+        RequestAdminFormData ->
+            Debug.todo ""
 
 
 isAdmin : SessionId -> BackendModel -> Bool
