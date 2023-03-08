@@ -19,7 +19,7 @@ adminPasswordHash =
 
 presentSurveyResults_ : String
 presentSurveyResults_ =
-    "true"
+    "false"
 
 
 presentSurveyResults : Bool
@@ -39,7 +39,7 @@ isProduction =
 
 surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
-    Effect.Time.millisToPosix 1650286800000
+    Effect.Time.millisToPosix 1680504853000
 
 
 surveyIsOpen : Effect.Time.Posix -> Bool

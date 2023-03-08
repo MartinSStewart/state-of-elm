@@ -1,4 +1,4 @@
-module Route exposing (Route(..), SurveyYear(..), currentSurvey, decode, encode)
+module Route exposing (Route(..), SurveyYear(..), currentSurvey, decode, encode, yearToString)
 
 import Url exposing (Url)
 import Url.Builder
@@ -18,6 +18,16 @@ type SurveyYear
 currentSurvey : SurveyYear
 currentSurvey =
     Year2023
+
+
+yearToString : SurveyYear -> String
+yearToString surveyYear =
+    case surveyYear of
+        Year2022 ->
+            "2022"
+
+        Year2023 ->
+            "2023"
 
 
 encode : Route -> String

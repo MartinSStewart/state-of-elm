@@ -1,4 +1,4 @@
-module SurveyResults exposing
+module SurveyResults2022 exposing
     ( Data
     , DataEntrySegments
     , DataEntryWithOtherSegments
@@ -27,6 +27,7 @@ import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
 import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
+import Route exposing (SurveyYear(..))
 import StringExtra
 import Ui exposing (Size)
 
@@ -186,6 +187,7 @@ view model =
             Element.none
         , Ui.headerContainer
             model.windowSize
+            Year2022
             [ Element.paragraph
                 [ Element.Font.bold ]
                 [ Element.text "The survey results are in!" ]
@@ -263,7 +265,7 @@ view model =
                 , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks
+                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks2022
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.editors Questions.editors
                 , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
                 , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions.whichElmReviewRulesDoYouUse

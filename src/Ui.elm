@@ -37,6 +37,7 @@ import Html.Attributes
 import Html.Events
 import List.Nonempty
 import Questions exposing (Question)
+import Route exposing (SurveyYear)
 import Simple.Animation
 import Simple.Animation.Animated
 import Simple.Animation.Property
@@ -278,8 +279,8 @@ multiChoiceWithOtherInit =
     }
 
 
-headerContainer : Size -> List (Element msg) -> Element msg
-headerContainer windowSize contents =
+headerContainer : Size -> SurveyYear -> List (Element msg) -> Element msg
+headerContainer windowSize surveyYear contents =
     Element.el
         [ Element.Background.color blue0
         , Element.width Element.fill
@@ -296,7 +297,7 @@ headerContainer windowSize contents =
                 , Element.Font.bold
                 , Element.Font.center
                 ]
-                [ Element.text "State of Elm 2022" ]
+                [ Element.text ("State of Elm " ++ Route.yearToString surveyYear) ]
                 :: contents
                 ++ [ disclaimer ]
             )

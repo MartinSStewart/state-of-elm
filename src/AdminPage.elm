@@ -31,7 +31,7 @@ import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
 import SendGrid
 import Serialize
-import SurveyResults exposing (Mode(..))
+import SurveyResults2022 exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -820,7 +820,7 @@ answerMapView model =
             answerMappingView
                 model.selectedMapping
                 False
-                Questions.frameworks
+                Questions.frameworks2023
                 .frameworks
                 formMapping.frameworks
                 model
@@ -1062,7 +1062,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             , label = Element.Input.labelAbove [] (Element.text "Comment")
             , spellcheck = True
             }
-        , SurveyResults.singleChoiceGraph
+        , SurveyResults2022.singleChoiceGraph
             { width = 1920, height = 1080 }
             singleLine
             True
@@ -1177,7 +1177,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.freeText
+        , SurveyResults2022.freeText
             Percentage
             { width = 1920, height = 1080 }
             (DataEntry.fromFreeText answerMap answers)
@@ -1289,7 +1289,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.multiChoiceWithOther
+        , SurveyResults2022.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
             True

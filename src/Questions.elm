@@ -34,7 +34,8 @@ module Questions exposing
     , elmResources
     , elmVersion
     , experienceLevel
-    , frameworks
+    , frameworks2022
+    , frameworks2023
     , howLargeIsTheCompany
     , howLong
     , initialInterestTitle
@@ -250,6 +251,8 @@ type Frameworks
     | ElmSpa
     | ElmPages
     | ElmPlayground
+    | NoFramework
+    | ElmLand
 
 
 type Editors
@@ -1013,8 +1016,8 @@ buildTools =
     }
 
 
-frameworks : Question Frameworks
-frameworks =
+frameworks2022 : Question Frameworks
+frameworks2022 =
     { title = "What frameworks do you use?"
     , choices = Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa ]
     , choiceToString =
@@ -1031,6 +1034,39 @@ frameworks =
 
                 ElmPlayground ->
                     "elm-playground"
+
+                NoFramework ->
+                    "None"
+
+                ElmLand ->
+                    "elm-land"
+    }
+
+
+frameworks2023 : Question Frameworks
+frameworks2023 =
+    { title = "What frameworks do you use?"
+    , choices = Nonempty NoFramework [ Lamdera_, ElmPages, ElmPlayground, ElmSpa, ElmLand ]
+    , choiceToString =
+        \a ->
+            case a of
+                Lamdera_ ->
+                    "Lamdera"
+
+                ElmSpa ->
+                    "elm-spa"
+
+                ElmPages ->
+                    "elm-pages"
+
+                ElmPlayground ->
+                    "elm-playground"
+
+                NoFramework ->
+                    "None"
+
+                ElmLand ->
+                    "elm-land"
     }
 
 
@@ -1126,10 +1162,6 @@ whichElmReviewRulesDoYouUse =
                 ElmReviewCognitiveComplexity ->
                     "elm-review-cognitive-complexity"
     }
-
-
-dummyChange =
-    0
 
 
 testTools : Question TestTools

@@ -11,7 +11,7 @@ import Env
 import Form exposing (Form, FormMapping)
 import Route exposing (Route, SurveyYear)
 import SendGrid
-import SurveyResults
+import SurveyResults2022
 import Ui exposing (Size)
 
 
@@ -21,7 +21,7 @@ type FrontendModel
     | FormCompleted Effect.Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
-    | SurveyResultsLoaded SurveyResults.Model
+    | SurveyResultsLoaded SurveyResults2022.Model
 
 
 type alias LoadingData =
@@ -55,16 +55,24 @@ type alias FormLoaded_ =
 
 type alias BackendModel =
     { adminLogin : Set SessionId
-    , survey2022 : BackendSurvey
-    , survey2023 : BackendSurvey
+    , survey2022 : BackendSurvey2022
+    , survey2023 : BackendSurvey2023
     }
 
 
-type alias BackendSurvey =
+type alias BackendSurvey2022 =
     { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
-    , cachedSurveyResults : Maybe SurveyResults.Data
+    , cachedSurveyResults : Maybe SurveyResults2022.Data
+    }
+
+
+type alias BackendSurvey2023 =
+    { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
+    , formMapping : FormMapping
+    , sendEmailsStatus : AdminPage.SendEmailsStatus
+    , cachedSurveyResults : Maybe SurveyResults2022.Data
     }
 
 
@@ -80,7 +88,7 @@ type FrontendMsg
     | GotWindowSize Size
     | GotTime Effect.Time.Posix
     | AdminPageMsg AdminPage.Msg
-    | SurveyResultsMsg SurveyResults.Msg
+    | SurveyResultsMsg SurveyResults2022.Msg
 
 
 type ToBackend
@@ -89,7 +97,8 @@ type ToBackend
     | AdminLoginRequest String
     | AdminToBackend AdminPage.ToBackend
     | PreviewRequest String
-    | RequestFormData SurveyYear
+    | RequestFormData2023
+    | RequestFormData2022
     | RequestAdminFormData
 
 
@@ -102,7 +111,7 @@ type LoadFormStatus
     = NoFormFound
     | FormAutoSaved Form
     | FormSubmitted
-    | SurveyResults SurveyResults.Data
+    | SurveyResults SurveyResults2022.Data
     | AwaitingResultsData
 
 
@@ -113,4 +122,4 @@ type ToFrontend
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus
     | AdminToFrontend AdminPage.ToFrontend
-    | PreviewResponse SurveyResults.Data
+    | PreviewResponse SurveyResults2022.Data

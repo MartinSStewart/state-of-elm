@@ -25,7 +25,7 @@ import List.Extra as List
 import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
 import Route exposing (Route(..), SurveyYear(..))
-import SurveyResults exposing (Mode(..), Segment(..))
+import SurveyResults2022 exposing (Mode(..), Segment(..))
 import Types exposing (..)
 import Ui exposing (Size)
 import Url
@@ -64,7 +64,14 @@ init url _ =
                     (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
                     Effect.Browser.Dom.getViewport
                 , Effect.Task.perform GotTime Effect.Time.now
-                , Effect.Lamdera.sendToBackend (RequestFormData surveyYear)
+                , Effect.Lamdera.sendToBackend
+                    (case surveyYear of
+                        Year2023 ->
+                            RequestFormData2023
+
+                        Year2022 ->
+                            RequestFormData2022
+                    )
                 ]
             )
 
@@ -244,7 +251,7 @@ update msg model =
         SurveyResultsMsg surveyResultsMsg ->
             case model of
                 SurveyResultsLoaded surveyResultsModel ->
-                    ( SurveyResults.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded, Command.none )
+                    ( SurveyResults2022.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded, Command.none )
 
                 _ ->
                     ( model, Command.none )
@@ -444,7 +451,7 @@ view model =
                     AdminPage.adminView admin |> Element.map AdminPageMsg
 
                 SurveyResultsLoaded surveyResultsLoaded ->
-                    SurveyResults.view surveyResultsLoaded |> Element.map SurveyResultsMsg
+                    SurveyResults2022.view surveyResultsLoaded |> Element.map SurveyResultsMsg
             )
         ]
     }
@@ -493,10 +500,8 @@ answerSurveyView formLoaded =
         ]
         [ Ui.headerContainer
             formLoaded.windowSize
+            Route.currentSurvey
             [ Element.paragraph
-                [ Ui.titleFontSize, Element.Font.bold ]
-                [ Element.text "After a 4 year hiatus, State of Elm is back!" ]
-            , Element.paragraph
                 []
                 [ Element.text "This is a survey to better understand the Elm community." ]
             , Element.paragraph
@@ -815,7 +820,7 @@ formView windowSize form =
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.frameworks
+                    Questions.frameworks2023
                     Nothing
                     form.frameworks
                     (\a -> FormChanged { form | frameworks = a })
@@ -831,31 +836,12 @@ formView windowSize form =
                     Nothing
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
-                , if
-                    (form.doYouUseElmReview == Just NeverHeardOfElmReview)
-                        || (form.doYouUseElmReview == Just HeardOfItButNeverTriedElmReview)
-                  then
-                    Element.none
-
-                  else
-                    Ui.multiChoiceQuestionWithOther
-                        windowSize
-                        Questions.whichElmReviewRulesDoYouUse
-                        (Just "If you have custom unpublished rules, select \"Other\" and describe what they do")
-                        form.whichElmReviewRulesDoYouUse
-                        (\a -> FormChanged { form | whichElmReviewRulesDoYouUse = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
                     Questions.testTools
                     Nothing
                     form.testTools
                     (\a -> FormChanged { form | testTools = a })
-                , Ui.multiChoiceQuestionWithOther
-                    windowSize
-                    Questions.testsWrittenFor
-                    Nothing
-                    form.testsWrittenFor
-                    (\a -> FormChanged { form | testsWrittenFor = a })
                 , Ui.textInput
                     windowSize
                     Questions.biggestPainPointTitle
