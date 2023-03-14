@@ -307,7 +307,7 @@ headerContainer windowSize surveyYear contents =
 titleAndSubtitle : String -> Maybe String -> Element msg
 titleAndSubtitle title_ maybeSubtitle =
     Element.column
-        [ Element.spacing 8 ]
+        [ Element.spacing 12 ]
         [ title title_
         , case maybeSubtitle of
             Just subtitle ->
@@ -333,7 +333,7 @@ title title_ =
         [ Html.a
             [ Html.Attributes.href ("#" ++ fragment)
             , Html.Attributes.style "text-decoration" "none"
-            , Html.Attributes.style "color" "black"
+            , Html.Attributes.style "color" "inherit"
             ]
             [ Html.text title_ ]
         ]

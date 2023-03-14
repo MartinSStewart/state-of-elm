@@ -378,7 +378,7 @@ loadForm isPreview formStatus loadingData =
 
 view : FrontendModel -> Browser.Document FrontendMsg
 view model =
-    { title = "State of Elm 2022"
+    { title = "State of Elm " ++ Route.yearToString Route.currentSurvey
     , body =
         [ Element.layout
             [ Element.Region.mainContent ]
@@ -487,7 +487,11 @@ formCompletedView =
                 [ Element.text "Survey submitted!" ]
             , Element.paragraph
                 [ Element.Font.center ]
-                [ Element.text "Thanks for participating in the State of Elm 2022 survey. The results will be presented in a few weeks on this website." ]
+                [ "Thanks for participating in the State of Elm "
+                    ++ Route.yearToString Route.currentSurvey
+                    ++ " survey. The results will be presented in a few weeks on this website."
+                    |> Element.text
+                ]
             ]
         )
 
