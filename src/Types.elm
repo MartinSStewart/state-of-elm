@@ -4,6 +4,7 @@ import AdminPage exposing (AdminLoginData)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser
+import Effect.Browser.Navigation
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import EmailAddress exposing (EmailAddress)
@@ -13,11 +14,25 @@ import Route exposing (Route, SurveyYear)
 import SendGrid
 import SurveyResults2022
 import Ui exposing (Size)
+import Url exposing (Url)
 
 
 type FrontendModel
     = Loading LoadingData
-    | FormLoaded FormLoaded_
+    | Loaded LoadedData
+
+
+type alias LoadedData =
+    { page : Page
+    , windowSize : Size
+    , time : Effect.Time.Posix
+    , navKey : Effect.Browser.Navigation.Key
+    , route : Route
+    }
+
+
+type Page
+    = FormLoaded FormLoaded_
     | FormCompleted Effect.Time.Posix
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
@@ -25,7 +40,11 @@ type FrontendModel
 
 
 type alias LoadingData =
-    { windowSize : Maybe Size, time : Maybe Effect.Time.Posix, surveyYear : SurveyYear }
+    { windowSize : Maybe Size
+    , time : Maybe Effect.Time.Posix
+    , navKey : Effect.Browser.Navigation.Key
+    , route : Route
+    }
 
 
 type SurveyStatus
@@ -78,7 +97,7 @@ type alias BackendSurvey2023 =
 
 type FrontendMsg
     = UrlClicked Browser.UrlRequest
-    | UrlChanged
+    | UrlChanged Url
     | FormChanged Form
     | PressedAcceptTosAnswer Bool
     | PressedSubmitSurvey

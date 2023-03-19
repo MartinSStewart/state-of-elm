@@ -60,3 +60,7 @@ sendGridKey_ =
 sendGridKey : SendGrid.ApiKey
 sendGridKey =
     SendGrid.apiKey sendGridKey_
+
+
+domain =
+    "http://localhost:8000"

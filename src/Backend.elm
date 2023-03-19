@@ -35,8 +35,12 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \_ -> Subscription.none
+        , subscriptions = subscriptions
         }
+
+
+subscriptions _ =
+    Subscription.none
 
 
 init : ( BackendModel, Command restriction toMsg BackendMsg )

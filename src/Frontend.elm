@@ -36,98 +36,147 @@ app =
         Lamdera.sendToBackend
         { init = init
         , onUrlRequest = UrlClicked
-        , onUrlChange = \_ -> UrlChanged
+        , onUrlChange = UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions =
-            \_ ->
-                Subscription.batch
-                    [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
-                    , Effect.Time.every Duration.second GotTime
-                    ]
+        , subscriptions = subscriptions
         , view = view
         }
 
 
+subscriptions _ =
+    Subscription.batch
+        [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })
+        , Effect.Time.every Duration.second GotTime
+        ]
+
+
 init : Url.Url -> Effect.Browser.Navigation.Key -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
-init url _ =
-    case Route.decode url of
-        AdminRoute ->
-            ( AdminLogin { password = "", loginFailed = False }
-            , Effect.Lamdera.sendToBackend RequestAdminFormData
-            )
+init url key =
+    let
+        route =
+            Route.decode url
+    in
+    ( Loading { windowSize = Nothing, time = Nothing, route = route, navKey = key }
+    , Command.batch
+        [ Effect.Task.perform
+            (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
+            Effect.Browser.Dom.getViewport
+        , Effect.Task.perform GotTime Effect.Time.now
+        , Effect.Lamdera.sendToBackend
+            (case route of
+                SurveyRoute Year2023 ->
+                    RequestFormData2023
 
-        SurveyRoute surveyYear ->
-            ( Loading { windowSize = Nothing, time = Nothing, surveyYear = surveyYear }
-            , Command.batch
-                [ Effect.Task.perform
-                    (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
-                    Effect.Browser.Dom.getViewport
-                , Effect.Task.perform GotTime Effect.Time.now
-                , Effect.Lamdera.sendToBackend
-                    (case surveyYear of
-                        Year2023 ->
-                            RequestFormData2023
+                SurveyRoute Year2022 ->
+                    RequestFormData2022
 
-                        Year2022 ->
-                            RequestFormData2022
-                    )
-                ]
+                AdminRoute ->
+                    RequestAdminFormData
             )
+        ]
+    )
+
+
+tryLoading : LoadingData -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
+tryLoading loading =
+    Maybe.map2
+        (\windowSize time ->
+            ( Loaded
+                { page =
+                    case loading.route of
+                        AdminRoute ->
+                            AdminLogin { password = "", loginFailed = False }
+
+                        SurveyRoute surveyYear ->
+                            if surveyYear == Route.currentSurvey then
+                                Debug.todo ""
+
+                            else
+                                Debug.todo ""
+                , windowSize = windowSize
+                , time = time
+                , navKey = loading.navKey
+                , route = loading.route
+                }
+            , Command.none
+            )
+        )
+        loading.windowSize
+        loading.time
+        |> Maybe.withDefault ( Loading loading, Command.none )
 
 
 update : FrontendMsg -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 update msg model =
-    let
-        updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Command FrontendOnly ToBackend FrontendMsg )) -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
-        updateFormLoaded func =
-            case model of
-                FormLoaded formLoaded ->
-                    let
-                        ( newFormLoaded, cmd ) =
-                            func formLoaded
-                    in
-                    ( FormLoaded newFormLoaded, cmd )
+    case model of
+        Loading loading ->
+            case msg of
+                GotWindowSize windowSize ->
+                    tryLoading { loading | windowSize = Just windowSize }
 
-                Loading _ ->
+                GotTime time ->
+                    tryLoading { loading | time = Just time }
+
+                _ ->
                     ( model, Command.none )
 
-                FormCompleted _ ->
-                    ( model, Command.none )
+        Loaded loaded ->
+            updateLoaded msg loaded |> Tuple.mapFirst Loaded
 
-                Admin _ ->
-                    ( model, Command.none )
 
-                AdminLogin _ ->
-                    ( model, Command.none )
-
-                SurveyResultsLoaded _ ->
-                    ( model, Command.none )
-
-        updateAdminLogin func =
-            case model of
-                FormLoaded _ ->
-                    ( model, Command.none )
-
-                Loading _ ->
-                    ( model, Command.none )
-
-                FormCompleted _ ->
-                    ( model, Command.none )
-
-                Admin _ ->
-                    ( model, Command.none )
-
-                AdminLogin adminLogin ->
-                    let
-                        ( newAdminLogin, cmd ) =
-                            func adminLogin
-                    in
-                    ( AdminLogin newAdminLogin, cmd )
-
-                SurveyResultsLoaded _ ->
-                    ( model, Command.none )
-    in
+updateLoaded : FrontendMsg -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
+updateLoaded msg model =
+    --let
+    --    updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Command FrontendOnly ToBackend FrontendMsg )) -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
+    --    updateFormLoaded func =
+    --        case model of
+    --            FormLoaded formLoaded ->
+    --                let
+    --                    ( newFormLoaded, cmd ) =
+    --                        func formLoaded
+    --                in
+    --                ( FormLoaded newFormLoaded, cmd )
+    --
+    --            Loading _ ->
+    --                ( model, Command.none )
+    --
+    --            FormCompleted _ ->
+    --                ( model, Command.none )
+    --
+    --            Admin _ ->
+    --                ( model, Command.none )
+    --
+    --            AdminLogin _ ->
+    --                ( model, Command.none )
+    --
+    --            SurveyResultsLoaded _ ->
+    --                ( model, Command.none )
+    --
+    --    updateAdminLogin func =
+    --        case model of
+    --            FormLoaded _ ->
+    --                ( model, Command.none )
+    --
+    --            Loading _ ->
+    --                ( model, Command.none )
+    --
+    --            FormCompleted _ ->
+    --                ( model, Command.none )
+    --
+    --            Admin _ ->
+    --                ( model, Command.none )
+    --
+    --            AdminLogin adminLogin ->
+    --                let
+    --                    ( newAdminLogin, cmd ) =
+    --                        func adminLogin
+    --                in
+    --                ( AdminLogin newAdminLogin, cmd )
+    --
+    --            SurveyResultsLoaded _ ->
+    --                ( model, Command.none )
+    --in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
@@ -141,8 +190,12 @@ update msg model =
                     , Effect.Browser.Navigation.load url
                     )
 
-        UrlChanged ->
-            ( model, Command.none )
+        UrlChanged url ->
+            let
+                route =
+                    Route.decode url
+            in
+            ( model, Effect.Browser.Navigation.replaceUrl (Route.encode route) )
 
         FormChanged form ->
             updateFormLoaded
@@ -192,49 +245,11 @@ update msg model =
             updateAdminLogin
                 (\adminLogin -> ( adminLogin, Effect.Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
 
-        GotWindowSize windowSize ->
-            ( case model of
-                Loading loadingData ->
-                    Loading { loadingData | windowSize = Just windowSize }
+        GotWindowSize _ ->
+            ( model, Command.none )
 
-                FormLoaded formLoaded_ ->
-                    FormLoaded { formLoaded_ | windowSize = windowSize }
-
-                FormCompleted time ->
-                    FormCompleted time
-
-                AdminLogin record ->
-                    AdminLogin record
-
-                Admin adminLoginData ->
-                    Admin adminLoginData
-
-                SurveyResultsLoaded data ->
-                    SurveyResultsLoaded { data | windowSize = windowSize }
-            , Command.none
-            )
-
-        GotTime time ->
-            ( case model of
-                Loading loadingData ->
-                    Loading { loadingData | time = Just time }
-
-                FormLoaded formLoaded_ ->
-                    FormLoaded { formLoaded_ | time = time }
-
-                FormCompleted _ ->
-                    FormCompleted time
-
-                AdminLogin _ ->
-                    model
-
-                Admin _ ->
-                    model
-
-                SurveyResultsLoaded _ ->
-                    model
-            , Command.none
-            )
+        GotTime _ ->
+            ( model, Command.none )
 
         AdminPageMsg adminMsg ->
             case model of
@@ -257,8 +272,19 @@ update msg model =
                     ( model, Command.none )
 
 
-updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
+    case model of
+        Loading loading ->
+            case msg of
+                _ ->
+                    ( model, Command.none )
+
+        Loaded loaded ->
+            updateFromBackendLoaded msg loaded |> Tuple.mapFirst Loaded
+
+
+updateFromBackendLoaded : ToFrontend -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
+updateFromBackendLoaded msg model =
     ( case msg of
         LoadForm formStatus ->
             case model of
@@ -383,78 +409,71 @@ view model =
         [ Element.layout
             [ Element.Region.mainContent ]
             (case model of
-                FormLoaded formLoaded ->
-                    case Types.surveyStatus of
-                        SurveyOpen ->
-                            if Env.surveyIsOpen formLoaded.time then
-                                answerSurveyView formLoaded
+                Loading _ ->
+                    Element.text "Loading..."
 
-                            else
-                                awaitingResultsView
-
-                        SurveyFinished ->
-                            Element.none
-
-                Loading loadingData ->
-                    case Types.surveyStatus of
-                        SurveyOpen ->
-                            case loadingData.time of
-                                Just time ->
-                                    if Env.surveyIsOpen time then
-                                        Element.none
-
-                                    else
-                                        awaitingResultsView
-
-                                Nothing ->
-                                    Element.none
-
-                        SurveyFinished ->
-                            Element.none
-
-                FormCompleted time ->
-                    case Types.surveyStatus of
-                        SurveyOpen ->
-                            if Env.surveyIsOpen time then
-                                formCompletedView
-
-                            else
-                                awaitingResultsView
-
-                        SurveyFinished ->
-                            Element.none
-
-                AdminLogin { password, loginFailed } ->
-                    Element.column
-                        [ Element.centerX, Element.centerY, Element.spacing 16 ]
-                        [ Element.Input.currentPassword
-                            []
-                            { onChange = TypedPassword
-                            , text = password
-                            , placeholder = Nothing
-                            , show = False
-                            , label =
-                                Element.Input.labelAbove []
-                                    (if loginFailed then
-                                        Element.el
-                                            [ Element.Font.color <| Element.rgb 0.8 0 0 ]
-                                            (Element.text "Incorrect password")
-
-                                     else
-                                        Element.text "Enter password"
-                                    )
-                            }
-                        , Ui.button PressedLogin "Login"
-                        ]
-
-                Admin admin ->
-                    AdminPage.adminView admin |> Element.map AdminPageMsg
-
-                SurveyResultsLoaded surveyResultsLoaded ->
-                    SurveyResults2022.view surveyResultsLoaded |> Element.map SurveyResultsMsg
+                Loaded loaded ->
+                    loadedView loaded
             )
         ]
     }
+
+
+loadedView : LoadedData -> Element FrontendMsg
+loadedView model =
+    case model.page of
+        FormLoaded formLoaded ->
+            case Types.surveyStatus of
+                SurveyOpen ->
+                    if Env.surveyIsOpen formLoaded.time then
+                        answerSurveyView formLoaded
+
+                    else
+                        awaitingResultsView
+
+                SurveyFinished ->
+                    Element.none
+
+        FormCompleted time ->
+            case Types.surveyStatus of
+                SurveyOpen ->
+                    if Env.surveyIsOpen time then
+                        formCompletedView
+
+                    else
+                        awaitingResultsView
+
+                SurveyFinished ->
+                    Element.none
+
+        AdminLogin { password, loginFailed } ->
+            Element.column
+                [ Element.centerX, Element.centerY, Element.spacing 16 ]
+                [ Element.Input.currentPassword
+                    []
+                    { onChange = TypedPassword
+                    , text = password
+                    , placeholder = Nothing
+                    , show = False
+                    , label =
+                        Element.Input.labelAbove []
+                            (if loginFailed then
+                                Element.el
+                                    [ Element.Font.color <| Element.rgb 0.8 0 0 ]
+                                    (Element.text "Incorrect password")
+
+                             else
+                                Element.text "Enter password"
+                            )
+                    }
+                , Ui.button PressedLogin "Login"
+                ]
+
+        Admin admin ->
+            AdminPage.adminView admin |> Element.map AdminPageMsg
+
+        SurveyResultsLoaded surveyResultsLoaded ->
+            SurveyResults2022.view surveyResultsLoaded |> Element.map SurveyResultsMsg
 
 
 formCompletedView : Element msg

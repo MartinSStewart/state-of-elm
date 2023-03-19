@@ -1,8 +1,9 @@
 module Tests exposing (..)
 
+import Effect.Test as TF
+import EndToEndTests
 import Test exposing (Test)
 
 
-suite : Test
-suite =
-    Test.todo "Implement the first test. See https://package.elm-lang.org/packages/elm-explorations/test/latest for how to do this!"
+appTests =
+    Test.describe "App tests" (List.map TF.toTest EndToEndTests.tests)
