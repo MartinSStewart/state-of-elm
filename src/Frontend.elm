@@ -57,7 +57,7 @@ init url key =
         route =
             Route.decode url
     in
-    ( Loading { windowSize = Nothing, time = Nothing, route = route, navKey = key }
+    ( Loading { windowSize = Nothing, time = Nothing, route = route, navKey = key, responseData = Nothing }
     , Command.batch
         [ Effect.Task.perform
             (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
@@ -80,30 +80,30 @@ init url key =
 
 tryLoading : LoadingData -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 tryLoading loading =
-    Maybe.map2
-        (\windowSize time ->
+    Maybe.map3
+        (\windowSize time responseData ->
             ( Loaded
                 { page =
-                    case loading.route of
-                        AdminRoute ->
+                    case responseData of
+                        LoadAdmin adminData ->
                             AdminLogin { password = "", loginFailed = False }
 
-                        SurveyRoute surveyYear ->
-                            if surveyYear == Route.currentSurvey then
-                                Debug.todo ""
+                        LoadForm loadFormStatus ->
+                            loadForm loadFormStatus
 
-                            else
-                                Debug.todo ""
-                , windowSize = windowSize
+                        PreviewResponse data ->
+                            Debug.todo ""
                 , time = time
                 , navKey = loading.navKey
                 , route = loading.route
+                , windowSize = windowSize
                 }
             , Command.none
             )
         )
         loading.windowSize
         loading.time
+        loading.responseData
         |> Maybe.withDefault ( Loading loading, Command.none )
 
 
@@ -127,56 +127,49 @@ update msg model =
 
 updateLoaded : FrontendMsg -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
 updateLoaded msg model =
-    --let
-    --    updateFormLoaded : (FormLoaded_ -> ( FormLoaded_, Command FrontendOnly ToBackend FrontendMsg )) -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
-    --    updateFormLoaded func =
-    --        case model of
-    --            FormLoaded formLoaded ->
-    --                let
-    --                    ( newFormLoaded, cmd ) =
-    --                        func formLoaded
-    --                in
-    --                ( FormLoaded newFormLoaded, cmd )
-    --
-    --            Loading _ ->
-    --                ( model, Command.none )
-    --
-    --            FormCompleted _ ->
-    --                ( model, Command.none )
-    --
-    --            Admin _ ->
-    --                ( model, Command.none )
-    --
-    --            AdminLogin _ ->
-    --                ( model, Command.none )
-    --
-    --            SurveyResultsLoaded _ ->
-    --                ( model, Command.none )
-    --
-    --    updateAdminLogin func =
-    --        case model of
-    --            FormLoaded _ ->
-    --                ( model, Command.none )
-    --
-    --            Loading _ ->
-    --                ( model, Command.none )
-    --
-    --            FormCompleted _ ->
-    --                ( model, Command.none )
-    --
-    --            Admin _ ->
-    --                ( model, Command.none )
-    --
-    --            AdminLogin adminLogin ->
-    --                let
-    --                    ( newAdminLogin, cmd ) =
-    --                        func adminLogin
-    --                in
-    --                ( AdminLogin newAdminLogin, cmd )
-    --
-    --            SurveyResultsLoaded _ ->
-    --                ( model, Command.none )
-    --in
+    let
+        updateFormLoaded func =
+            case model.page of
+                FormLoaded formLoaded ->
+                    let
+                        ( newFormLoaded, cmd ) =
+                            func formLoaded
+                    in
+                    ( { model | page = FormLoaded newFormLoaded }, cmd )
+
+                FormCompleted ->
+                    ( model, Command.none )
+
+                Admin _ ->
+                    ( model, Command.none )
+
+                AdminLogin _ ->
+                    ( model, Command.none )
+
+                SurveyResultsLoaded _ ->
+                    ( model, Command.none )
+
+        updateAdminLogin func =
+            case model.page of
+                FormLoaded _ ->
+                    ( model, Command.none )
+
+                FormCompleted ->
+                    ( model, Command.none )
+
+                Admin _ ->
+                    ( model, Command.none )
+
+                AdminLogin adminLogin ->
+                    let
+                        ( newAdminLogin, cmd ) =
+                            func adminLogin
+                    in
+                    ( { model | page = AdminLogin newAdminLogin }, cmd )
+
+                SurveyResultsLoaded _ ->
+                    ( model, Command.none )
+    in
     case msg of
         UrlClicked urlRequest ->
             case urlRequest of
@@ -195,7 +188,7 @@ updateLoaded msg model =
                 route =
                     Route.decode url
             in
-            ( model, Effect.Browser.Navigation.replaceUrl (Route.encode route) )
+            ( model, Effect.Browser.Navigation.replaceUrl model.navKey (Route.encode route) )
 
         FormChanged form ->
             updateFormLoaded
@@ -245,37 +238,46 @@ updateLoaded msg model =
             updateAdminLogin
                 (\adminLogin -> ( adminLogin, Effect.Lamdera.sendToBackend (AdminLoginRequest adminLogin.password) ))
 
-        GotWindowSize _ ->
-            ( model, Command.none )
+        GotWindowSize windowSize ->
+            ( { model | windowSize = windowSize }, Command.none )
 
-        GotTime _ ->
-            ( model, Command.none )
+        GotTime time ->
+            ( { model | time = time }, Command.none )
 
         AdminPageMsg adminMsg ->
-            case model of
+            case model.page of
                 Admin admin ->
                     let
                         ( newAdmin, cmd ) =
                             AdminPage.update adminMsg admin
                     in
-                    ( Admin newAdmin, Command.map AdminToBackend AdminPageMsg cmd )
+                    ( { model | page = Admin newAdmin }, Command.map AdminToBackend AdminPageMsg cmd )
 
                 _ ->
                     ( model, Command.none )
 
         SurveyResultsMsg surveyResultsMsg ->
-            case model of
+            case model.page of
                 SurveyResultsLoaded surveyResultsModel ->
-                    ( SurveyResults2022.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded, Command.none )
+                    ( { model
+                        | page =
+                            SurveyResults2022.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded
+                      }
+                    , Command.none
+                    )
 
                 _ ->
                     ( model, Command.none )
 
 
+updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
     case model of
         Loading loading ->
             case msg of
+                ResponseData responseData ->
+                    tryLoading { loading | responseData = Just responseData }
+
                 _ ->
                     ( model, Command.none )
 
@@ -286,70 +288,78 @@ updateFromBackend msg model =
 updateFromBackendLoaded : ToFrontend -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackendLoaded msg model =
     ( case msg of
-        LoadForm formStatus ->
-            case model of
-                Loading loadingData ->
-                    loadForm False formStatus loadingData
+        ResponseData responseData ->
+            case responseData of
+                LoadForm loadFormStatus ->
+                    --case model.page of
+                    --    Loading loadingData ->
+                    --        loadForm False formStatus loadingData
+                    --
+                    --    _ ->
+                    --        model
+                    Debug.todo ""
 
-                _ ->
-                    model
+                LoadAdmin adminLoginData ->
+                    --{ model | page = AdminPage.init adminData |> Admin }
+                    Debug.todo ""
+
+                PreviewResponse data ->
+                    --case model.page of
+                    --    FormLoaded formLoaded ->
+                    --        loadForm
+                    --            True
+                    --            (SurveyResults data)
+                    --            { windowSize = Just formLoaded.windowSize
+                    --            , time = Just formLoaded.time
+                    --            , surveyYear = Route.currentSurvey
+                    --            }
+                    --
+                    --    Loading loadingData ->
+                    --        loadForm True (SurveyResults data) loadingData
+                    --
+                    --    _ ->
+                    --        model
+                    Debug.todo ""
 
         SubmitConfirmed ->
-            case model of
-                FormLoaded formLoaded ->
-                    FormCompleted formLoaded.time
-
-                _ ->
-                    model
-
-        LoadAdmin adminData ->
-            AdminPage.init adminData |> Admin
+            --case model.page of
+            --    FormLoaded formLoaded ->
+            --        FormCompleted formLoaded.time
+            --
+            --    _ ->
+            --        model
+            Debug.todo ""
 
         AdminLoginResponse result ->
-            case model of
-                AdminLogin adminLogin ->
-                    case result of
-                        Ok adminLoginData ->
-                            AdminPage.init adminLoginData |> Admin
-
-                        Err () ->
-                            AdminLogin { adminLogin | loginFailed = True }
-
-                _ ->
-                    model
+            --case model.page of
+            --    AdminLogin adminLogin ->
+            --        case result of
+            --            Ok adminLoginData ->
+            --                AdminPage.init adminLoginData |> Admin
+            --
+            --            Err () ->
+            --                AdminLogin { adminLogin | loginFailed = True }
+            --
+            --    _ ->
+            --        model
+            Debug.todo ""
 
         LogOutResponse formStatus ->
-            case model of
-                Admin _ ->
-                    loadForm
-                        False
-                        formStatus
-                        { windowSize = Nothing, time = Nothing, surveyYear = Route.currentSurvey }
-
-                _ ->
-                    model
+            --case model.page of
+            --    Admin _ ->
+            --        loadForm
+            --            False
+            --            formStatus
+            --            { windowSize = Nothing, time = Nothing, surveyYear = Route.currentSurvey }
+            --
+            --    _ ->
+            --        model
+            Debug.todo ""
 
         AdminToFrontend toFrontend ->
-            case model of
+            case model.page of
                 Admin adminModel ->
-                    AdminPage.updateFromBackend toFrontend adminModel |> Admin
-
-                _ ->
-                    model
-
-        PreviewResponse data ->
-            case model of
-                FormLoaded formLoaded ->
-                    loadForm
-                        True
-                        (SurveyResults data)
-                        { windowSize = Just formLoaded.windowSize
-                        , time = Just formLoaded.time
-                        , surveyYear = Route.currentSurvey
-                        }
-
-                Loading loadingData ->
-                    loadForm True (SurveyResults data) loadingData
+                    { model | page = AdminPage.updateFromBackend toFrontend adminModel |> Admin }
 
                 _ ->
                     model
@@ -357,12 +367,8 @@ updateFromBackendLoaded msg model =
     )
 
 
-loadForm : Bool -> LoadFormStatus -> LoadingData -> FrontendModel
-loadForm isPreview formStatus loadingData =
-    let
-        windowSize =
-            Maybe.withDefault { width = 1920, height = 1080 } loadingData.windowSize
-    in
+loadForm : LoadFormStatus -> Page
+loadForm formStatus =
     case formStatus of
         NoFormFound ->
             FormLoaded
@@ -371,8 +377,6 @@ loadForm isPreview formStatus loadingData =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = windowSize
-                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time
                 }
 
         FormAutoSaved form ->
@@ -382,24 +386,17 @@ loadForm isPreview formStatus loadingData =
                 , submitting = False
                 , pressedSubmitCount = 0
                 , debounceCounter = 0
-                , windowSize = windowSize
-                , time = Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time
                 }
 
         FormSubmitted ->
-            FormCompleted (Maybe.withDefault (Effect.Time.millisToPosix 0) loadingData.time)
+            FormCompleted
 
         SurveyResults data ->
             SurveyResultsLoaded
-                { windowSize = windowSize
-                , data = data
-                , mode = Percentage
-                , segment = AllUsers
-                , isPreview = isPreview
-                }
+                { data = data, mode = Percentage, segment = AllUsers }
 
         AwaitingResultsData ->
-            Loading loadingData
+            Debug.todo ""
 
 
 view : FrontendModel -> Browser.Document FrontendMsg
@@ -425,8 +422,8 @@ loadedView model =
         FormLoaded formLoaded ->
             case Types.surveyStatus of
                 SurveyOpen ->
-                    if Env.surveyIsOpen formLoaded.time then
-                        answerSurveyView formLoaded
+                    if Env.surveyIsOpen model.time then
+                        answerSurveyView model formLoaded
 
                     else
                         awaitingResultsView
@@ -434,10 +431,10 @@ loadedView model =
                 SurveyFinished ->
                     Element.none
 
-        FormCompleted time ->
+        FormCompleted ->
             case Types.surveyStatus of
                 SurveyOpen ->
-                    if Env.surveyIsOpen time then
+                    if Env.surveyIsOpen model.time then
                         formCompletedView
 
                     else
@@ -473,7 +470,7 @@ loadedView model =
             AdminPage.adminView admin |> Element.map AdminPageMsg
 
         SurveyResultsLoaded surveyResultsLoaded ->
-            SurveyResults2022.view surveyResultsLoaded |> Element.map SurveyResultsMsg
+            SurveyResults2022.view model surveyResultsLoaded |> Element.map SurveyResultsMsg
 
 
 formCompletedView : Element msg
@@ -515,14 +512,14 @@ formCompletedView =
         )
 
 
-answerSurveyView : FormLoaded_ -> Element FrontendMsg
-answerSurveyView formLoaded =
+answerSurveyView : LoadedData -> FormLoaded_ -> Element FrontendMsg
+answerSurveyView model formLoaded =
     Element.column
         [ Element.spacing 24
         , Element.width Element.fill
         ]
         [ Ui.headerContainer
-            formLoaded.windowSize
+            model.windowSize
             Route.currentSurvey
             [ Element.paragraph
                 []
@@ -532,11 +529,11 @@ answerSurveyView formLoaded =
                 [ Element.text "Feel free to fill in as many or as few questions as you are comfortable with. Press submit at the bottom of the page when you are finished." ]
             , Element.paragraph
                 [ Ui.titleFontSize, Element.Font.bold ]
-                [ "Survey closes in " ++ timeLeft Env.surveyCloseTime formLoaded.time |> Element.text ]
+                [ "Survey closes in " ++ timeLeft Env.surveyCloseTime model.time |> Element.text ]
             ]
-        , formView formLoaded.windowSize formLoaded.form
+        , formView model.windowSize formLoaded.form
         , Ui.acceptTosQuestion
-            formLoaded.windowSize
+            model.windowSize
             formLoaded.acceptedTos
             PressedAcceptTosAnswer
             PressedSubmitSurvey

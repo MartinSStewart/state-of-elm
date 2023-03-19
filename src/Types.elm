@@ -13,6 +13,7 @@ import Form exposing (Form, FormMapping)
 import Route exposing (Route, SurveyYear)
 import SendGrid
 import SurveyResults2022
+import SurveyResults2023
 import Ui exposing (Size)
 import Url exposing (Url)
 
@@ -33,7 +34,7 @@ type alias LoadedData =
 
 type Page
     = FormLoaded FormLoaded_
-    | FormCompleted Effect.Time.Posix
+    | FormCompleted
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
     | SurveyResultsLoaded SurveyResults2022.Model
@@ -44,7 +45,14 @@ type alias LoadingData =
     , time : Maybe Effect.Time.Posix
     , navKey : Effect.Browser.Navigation.Key
     , route : Route
+    , responseData : Maybe ResponseData
     }
+
+
+type ResponseData
+    = LoadForm LoadFormStatus
+    | LoadAdmin AdminLoginData
+    | PreviewResponse SurveyResults2022.Data
 
 
 type SurveyStatus
@@ -67,8 +75,6 @@ type alias FormLoaded_ =
     , submitting : Bool
     , pressedSubmitCount : Int
     , debounceCounter : Int
-    , windowSize : Size
-    , time : Effect.Time.Posix
     }
 
 
@@ -130,15 +136,13 @@ type LoadFormStatus
     = NoFormFound
     | FormAutoSaved Form
     | FormSubmitted
-    | SurveyResults SurveyResults2022.Data
+    | SurveyResults SurveyResults2023.Data
     | AwaitingResultsData
 
 
 type ToFrontend
-    = LoadForm LoadFormStatus
-    | LoadAdmin AdminLoginData
-    | AdminLoginResponse (Result () AdminLoginData)
+    = AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus
     | AdminToFrontend AdminPage.ToFrontend
-    | PreviewResponse SurveyResults2022.Data
+    | ResponseData ResponseData

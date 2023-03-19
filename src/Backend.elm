@@ -770,7 +770,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                     loadFormData sessionId time model
             in
             ( setCurrentSurvey (\_ -> survey) model
-            , Effect.Lamdera.sendToFrontend clientId (LoadForm surveyStatus)
+            , LoadForm surveyStatus |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
             )
 
         RequestFormData2022 ->
