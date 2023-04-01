@@ -1,22 +1,30 @@
 module EndToEndTests exposing (tests)
 
+import AssocList
 import Backend
 import Bytes exposing (Bytes)
 import Bytes.Encode
 import Dict as RegularDict
 import Duration
+import Effect.Browser.Dom as Dom
 import Effect.Http as Http
+import Effect.Lamdera
 import Effect.Test as TF
 import EmailAddress exposing (EmailAddress)
 import Env
 import Frontend
 import Html.Parser
 import Json.Decode
-import Route exposing (Route)
+import List.Nonempty
+import Quantity
+import Questions exposing (Question)
+import Route exposing (Route(..))
 import Time exposing (Month(..))
 import Types exposing (BackendModel, BackendMsg, FrontendModel(..), FrontendMsg(..), ToBackend(..), ToFrontend)
+import Ui
 import Unsafe
 import Url
+import Url.Builder
 
 
 main : Program () (TF.Model FrontendModel) TF.Msg
@@ -149,9 +157,95 @@ findNodesByTag tagName nodes =
         nodes
 
 
+sessionId0 =
+    Effect.Lamdera.sessionIdFromString "sessionId0"
+
+
+sessionId1 =
+    Effect.Lamdera.sessionIdFromString "sessionId1"
+
+
+url =
+    Unsafe.url Env.domain
+
+
+adminUrl =
+    Env.domain ++ Route.encode AdminRoute |> Unsafe.url
+
+
+clickCheckbox : { a | clickButton : Dom.HtmlId -> c -> b } -> Question d -> c -> b
+clickCheckbox clientActions question instructions =
+    clientActions.clickButton
+        (List.Nonempty.head question.choices
+            |> question.choiceToString
+            |> checkboxId
+            |> Dom.id
+        )
+        instructions
+
+
+checkboxId text =
+    "checkbox_" ++ text
+
+
+clickRadio : { a | clickButton : Dom.HtmlId -> c -> b } -> Question d -> c -> b
+clickRadio clientActions question instructions =
+    clientActions.clickButton
+        (List.Nonempty.head question.choices
+            |> question.choiceToString
+            |> (++) ("radio_" ++ question.title ++ "_")
+            |> Dom.id
+        )
+        instructions
+
+
+userEmailAddress =
+    Unsafe.emailAddress "a@a.se"
+
+
 tests : List (TF.Instructions ToBackend FrontendMsg FrontendModel ToFrontend BackendMsg BackendModel)
 tests =
-    []
+    [ TF.start config "Happy path"
+        |> TF.fastForward (Duration.from TF.startTime Env.surveyCloseTime |> Quantity.minus Duration.minute)
+        |> TF.connectFrontend
+            sessionId0
+            url
+            windowSize
+            (\( instructions, client ) ->
+                instructions
+                    |> shortWait
+                    |> clickCheckbox client Questions.doYouUseElm
+                    |> shortWait
+                    |> clickRadio client Questions.age
+                    |> shortWait
+                    |> clickRadio client Questions.experienceLevel
+                    |> client.inputText Ui.emailAddressInputId (EmailAddress.toString userEmailAddress)
+                    |> shortWait
+                    |> client.clickButton (checkboxId "I accept" |> Dom.id)
+                    |> shortWait
+                    |> client.clickButton Ui.submitSurveyButtonId
+                    |> shortWait
+                    |> TF.checkBackend
+                        (\backend ->
+                            case AssocList.toList backend.subscribedEmails of
+                                [ ( _, data ) ] ->
+                                    if data.emailAddress == userEmailAddress then
+                                        Ok ()
+
+                                    else
+                                        Err "Wrong email address found"
+
+                                _ ->
+                                    Err "Email address not found"
+                        )
+                    |> TF.simulateTime Duration.minute
+            )
+        |> TF.connectFrontend
+            sessionId1
+            adminUrl
+            windowSize
+            (\( instructions, client ) -> instructions |> shortWait)
+    ]
 
 
 shortWait =

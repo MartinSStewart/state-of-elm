@@ -1,13 +1,27 @@
-module Route exposing (Route(..), SurveyYear(..), currentSurvey, decode, encode, yearToString)
+module Route exposing
+    ( Route(..)
+    , SurveyYear(..)
+    , UnsubscribeId
+    , currentSurvey
+    , decode
+    , encode
+    , yearToString
+    )
 
+import Id exposing (Id)
 import Url exposing (Url)
 import Url.Builder
-import Url.Parser
+import Url.Parser exposing ((</>))
 
 
 type Route
     = SurveyRoute SurveyYear
     | AdminRoute
+    | UnsubscribeRoute (Id UnsubscribeId)
+
+
+type UnsubscribeId
+    = UnsubscribeToken Never
 
 
 type SurveyYear
@@ -42,6 +56,13 @@ encode route =
         AdminRoute ->
             Url.Builder.absolute [ pathAdmin ] []
 
+        UnsubscribeRoute token ->
+            Url.Builder.absolute [ pathUnsubscribe, Id.toString token ] []
+
+
+pathUnsubscribe =
+    "unsubscribe"
+
 
 path2022 =
     "2022"
@@ -63,6 +84,9 @@ decode url =
             , Url.Parser.s path2022 |> Url.Parser.map (SurveyRoute Year2022)
             , Url.Parser.s path2023 |> Url.Parser.map (SurveyRoute Year2023)
             , Url.Parser.s pathAdmin |> Url.Parser.map AdminRoute
+            , Url.Parser.s pathUnsubscribe
+                </> Url.Parser.string
+                |> Url.Parser.map (\token -> UnsubscribeRoute (Id.fromString token))
             ]
         )
         url

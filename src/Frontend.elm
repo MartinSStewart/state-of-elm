@@ -4,7 +4,7 @@ import AdminPage
 import AssocSet as Set
 import Browser
 import Duration exposing (Duration)
-import Effect.Browser.Dom
+import Effect.Browser.Dom as Dom
 import Effect.Browser.Events
 import Effect.Browser.Navigation
 import Effect.Command as Command exposing (Command, FrontendOnly)
@@ -56,12 +56,16 @@ init url key =
     let
         route =
             Route.decode url
+
+        url2 =
+            Route.encode route
     in
     ( Loading { windowSize = Nothing, time = Nothing, route = route, navKey = key, responseData = Nothing }
     , Command.batch
-        [ Effect.Task.perform
+        [ Effect.Browser.Navigation.replaceUrl key url2
+        , Effect.Task.perform
             (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
-            Effect.Browser.Dom.getViewport
+            Dom.getViewport
         , Effect.Task.perform GotTime Effect.Time.now
         , Effect.Lamdera.sendToBackend
             (case route of
@@ -73,6 +77,9 @@ init url key =
 
                 AdminRoute ->
                     RequestAdminFormData
+
+                UnsubscribeRoute id ->
+                    UnsubscribeRequest id
             )
         ]
     )
@@ -93,6 +100,9 @@ tryLoading loading =
 
                         PreviewResponse data ->
                             Debug.todo ""
+
+                        UnsubscribeResponse ->
+                            UnsubscribePage
                 , time = time
                 , navKey = loading.navKey
                 , route = loading.route
@@ -137,29 +147,11 @@ updateLoaded msg model =
                     in
                     ( { model | page = FormLoaded newFormLoaded }, cmd )
 
-                FormCompleted ->
-                    ( model, Command.none )
-
-                Admin _ ->
-                    ( model, Command.none )
-
-                AdminLogin _ ->
-                    ( model, Command.none )
-
-                SurveyResultsLoaded _ ->
+                _ ->
                     ( model, Command.none )
 
         updateAdminLogin func =
             case model.page of
-                FormLoaded _ ->
-                    ( model, Command.none )
-
-                FormCompleted ->
-                    ( model, Command.none )
-
-                Admin _ ->
-                    ( model, Command.none )
-
                 AdminLogin adminLogin ->
                     let
                         ( newAdminLogin, cmd ) =
@@ -167,7 +159,7 @@ updateLoaded msg model =
                     in
                     ( { model | page = AdminLogin newAdminLogin }, cmd )
 
-                SurveyResultsLoaded _ ->
+                _ ->
                     ( model, Command.none )
     in
     case msg of
@@ -321,6 +313,9 @@ updateFromBackendLoaded msg model =
                     --        model
                     Debug.todo ""
 
+                UnsubscribeResponse ->
+                    model
+
         SubmitConfirmed ->
             --case model.page of
             --    FormLoaded formLoaded ->
@@ -328,7 +323,12 @@ updateFromBackendLoaded msg model =
             --
             --    _ ->
             --        model
-            Debug.todo ""
+            case model.page of
+                FormLoaded _ ->
+                    { model | page = FormCompleted }
+
+                _ ->
+                    model
 
         AdminLoginResponse result ->
             --case model.page of
@@ -463,7 +463,7 @@ loadedView model =
                                 Element.text "Enter password"
                             )
                     }
-                , Ui.button PressedLogin "Login"
+                , Ui.button loginButtonId PressedLogin "Login"
                 ]
 
         Admin admin ->
@@ -471,6 +471,26 @@ loadedView model =
 
         SurveyResultsLoaded surveyResultsLoaded ->
             SurveyResults2022.view model surveyResultsLoaded |> Element.map SurveyResultsMsg
+
+        UnsubscribePage ->
+            Element.el
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                , Element.Background.color Ui.blue0
+                , Element.padding 24
+                ]
+                (Element.paragraph
+                    [ Element.centerY
+                    , Element.Font.center
+                    , Element.Font.size 36
+                    , Element.Font.color Ui.white
+                    ]
+                    [ Element.text "Unsubscribe successful!" ]
+                )
+
+
+loginButtonId =
+    Dom.id "loginButtonId"
 
 
 formCompletedView : Element msg

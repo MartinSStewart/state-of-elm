@@ -8,6 +8,7 @@ module Ui exposing
     , button
     , disclaimer
     , emailAddressInput
+    , emailAddressInputId
     , githubLogo
     , headerContainer
     , ifMobile
@@ -18,6 +19,7 @@ module Ui exposing
     , section
     , singleChoiceQuestion
     , sourceCodeLink
+    , submitSurveyButtonId
     , textInput
     , title
     , titleFontSize
@@ -25,6 +27,7 @@ module Ui exposing
     )
 
 import AssocSet as Set exposing (Set)
+import Effect.Browser.Dom as Dom exposing (HtmlId)
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -82,13 +85,18 @@ emailAddressInput windowSize emailAddress updateModel =
             "What is your email address?"
             (Just "This is optional. We will only use it to notify you when the survey results are released and when future surveys happen.")
         , Element.Input.email
-            multilineAttributes
+            (Element.htmlAttribute (Dom.idToAttribute emailAddressInputId) :: multilineAttributes)
             { onChange = updateModel
             , text = emailAddress
             , label = Element.Input.labelHidden "What is your email address?"
             , placeholder = Nothing
             }
         ]
+
+
+emailAddressInputId : HtmlId
+emailAddressInputId =
+    Dom.id "emailAddressInput"
 
 
 singleChoiceQuestion :
@@ -126,13 +134,20 @@ radioButton groupName text isChecked =
         , Html.Attributes.style "line-height" "24px"
         ]
         [ Html.input
-            [ Html.Attributes.type_ "radio"
-            , Html.Attributes.checked isChecked
-            , Html.Attributes.name groupName
-            , Html.Events.onClick ()
-            , Html.Attributes.style "transform" "translateY(-2px)"
-            , Html.Attributes.style "margin" "0 8px 0 0"
-            ]
+            ([ Html.Attributes.type_ "radio"
+             , Html.Attributes.name groupName
+             , Html.Events.onClick ()
+             , Html.Attributes.style "transform" "translateY(-2px)"
+             , Html.Attributes.style "margin" "0 8px 0 0"
+             , Html.Attributes.id ("radio_" ++ groupName ++ "_" ++ text)
+             ]
+                ++ (if isChecked then
+                        [ Html.Attributes.checked isChecked ]
+
+                    else
+                        []
+                   )
+            )
             []
         , Html.text text
         ]
@@ -148,12 +163,19 @@ checkButton text isChecked =
         , Html.Attributes.style "line-height" "24px"
         ]
         [ Html.input
-            [ Html.Attributes.type_ "checkbox"
-            , Html.Attributes.checked isChecked
-            , Html.Events.onClick ()
-            , Html.Attributes.style "transform" "translateY(-2px)"
-            , Html.Attributes.style "margin" "0 8px 0 0"
-            ]
+            ([ Html.Attributes.type_ "checkbox"
+             , Html.Events.onClick ()
+             , Html.Attributes.style "transform" "translateY(-2px)"
+             , Html.Attributes.style "margin" "0 8px 0 0"
+             , Html.Attributes.id ("checkbox_" ++ text)
+             ]
+                ++ (if isChecked then
+                        [ Html.Attributes.checked isChecked ]
+
+                    else
+                        []
+                   )
+            )
             []
         , Html.text text
         ]
@@ -221,19 +243,25 @@ acceptTosQuestion windowSize acceptedTos toggledIAccept pressedSubmit pressSubmi
                     |> Element.map (\() -> not acceptedTos |> toggledIAccept)
               )
             , ( "submit"
-              , button pressedSubmit "Submit survey"
+              , button submitSurveyButtonId pressedSubmit "Submit survey"
               )
             ]
         )
 
 
-button : msg -> String -> Element msg
-button onPress text =
+submitSurveyButtonId : HtmlId
+submitSurveyButtonId =
+    Dom.id "submitSurveyId"
+
+
+button : HtmlId -> msg -> String -> Element msg
+button htmlId onPress text =
     Element.Input.button
         [ Element.Background.color white
         , Element.Font.color black
         , Element.Font.bold
         , Element.padding 16
+        , Element.htmlAttribute (Dom.idToAttribute htmlId)
         ]
         { onPress = Just onPress
         , label = Element.text text

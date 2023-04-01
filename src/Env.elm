@@ -64,3 +64,7 @@ sendGridKey =
 
 domain =
     "http://localhost:8000"
+
+
+secretKey =
+    ""

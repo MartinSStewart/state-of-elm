@@ -12,18 +12,23 @@ import Effect.Task as Task
 import Effect.Time
 import Email.Html as Html
 import Email.Html.Attributes as Attributes
-import EmailAddress
+import EmailAddress exposing (EmailAddress)
 import Env
 import Form exposing (Form, FormMapping)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
+import Id exposing (Id)
 import Lamdera
+import List.Extra as List
 import List.Nonempty exposing (Nonempty(..))
+import Postmark
 import Questions exposing (Question)
+import Route exposing (Route(..), UnsubscribeId)
 import SendGrid
 import Sha256
 import String.Nonempty exposing (NonemptyString(..))
 import SurveyResults2022
 import SurveyResults2023
+import Time
 import Types exposing (..)
 import Ui exposing (MultiChoiceWithOther)
 
@@ -48,6 +53,8 @@ init =
     ( { adminLogin = Set.empty
       , survey2022 = initSurvey2022
       , survey2023 = initSurvey2023
+      , subscribedEmails = Dict.empty
+      , secretCounter = 0
       }
     , Command.none
     )
@@ -619,7 +626,13 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                                             survey.forms
                                 }
                             )
-                            model
+                            (case EmailAddress.fromString form.emailAddress of
+                                Just emailAddress ->
+                                    updateEmailSubscription time emailAddress model
+
+                                Nothing ->
+                                    model
+                            )
                         , Effect.Lamdera.sendToFrontend clientId SubmitConfirmed
                         )
 
@@ -779,7 +792,137 @@ updateFromFrontendWithTime time sessionId clientId msg model =
         RequestAdminFormData ->
             Debug.todo ""
 
+        UnsubscribeRequest unsubscribeId ->
+            ( { model | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails }
+            , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse)
+            )
+
+
+updateEmailSubscription : Time.Posix -> EmailAddress -> BackendModel -> BackendModel
+updateEmailSubscription time emailAddress model =
+    let
+        ( model2, id ) =
+            Id.getUniqueId time model
+    in
+    { model2
+        | subscribedEmails =
+            if Dict.toList model2.subscribedEmails |> List.any (\( _, a ) -> emailAddress == a.emailAddress) then
+                model2.subscribedEmails
+
+            else
+                Dict.insert id
+                    { emailAddress = emailAddress
+                    , announcementEmail = Dict.empty
+                    }
+                    model2.subscribedEmails
+    }
+
 
 isAdmin : SessionId -> BackendModel -> Bool
 isAdmin sessionId model =
     Set.member sessionId model.adminLogin
+
+
+announce2023SurveyEmail : Id UnsubscribeId -> Postmark.PostmarkEmailBody
+announce2023SurveyEmail unsubscribeToken =
+    let
+        unsubscribeUrl =
+            Env.domain ++ Route.encode (UnsubscribeRoute unsubscribeToken)
+
+        year : String
+        year =
+            Route.yearToString Route.currentSurvey
+    in
+    Postmark.BodyBoth
+        (Html.div
+            []
+            [ Html.div []
+                [ Html.text ("The State of Elm " ++ year ++ " survey is now open! ")
+                , Html.a [ Attributes.href Env.domain ] [ Html.text "Click here to fill it out." ]
+                , Html.text ("The survey will be open until " ++ closeTimeText)
+                ]
+            , Html.div []
+                [ Html.text "If you want to unsubscribe from event updates, "
+                , Html.a
+                    [ Attributes.href unsubscribeUrl ]
+                    [ Html.text "click here" ]
+                , Html.text "."
+                ]
+            ]
+        )
+        (("The State of Elm " ++ year ++ " survey is now open! Click here to fill it out: " ++ Env.domain ++ "\n\n")
+            ++ ("The survey will be open until " ++ closeTimeText ++ "\n\n")
+            ++ ("If you want to unsubscribe from event updates, click here: " ++ unsubscribeUrl)
+        )
+
+
+closeTimeText : String
+closeTimeText =
+    let
+        closeDay =
+            Time.toDay Time.utc Env.surveyCloseTime
+    in
+    (case Time.toMonth Time.utc Env.surveyCloseTime of
+        Time.Jan ->
+            "January"
+
+        Time.Feb ->
+            "February"
+
+        Time.Mar ->
+            "March"
+
+        Time.Apr ->
+            "April"
+
+        Time.May ->
+            "May"
+
+        Time.Jun ->
+            "Jun"
+
+        Time.Jul ->
+            "July"
+
+        Time.Aug ->
+            "August"
+
+        Time.Sep ->
+            "September"
+
+        Time.Oct ->
+            "October"
+
+        Time.Nov ->
+            "November"
+
+        Time.Dec ->
+            "December"
+    )
+        ++ " "
+        ++ String.fromInt closeDay
+        ++ (case closeDay of
+                1 ->
+                    "st"
+
+                2 ->
+                    "nd"
+
+                3 ->
+                    "rd"
+
+                21 ->
+                    "st"
+
+                22 ->
+                    "nd"
+
+                23 ->
+                    "rd"
+
+                31 ->
+                    "st"
+
+                _ ->
+                    "th"
+           )

@@ -5,12 +5,15 @@ import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser
 import Effect.Browser.Navigation
+import Effect.Http as Http
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import EmailAddress exposing (EmailAddress)
 import Env
 import Form exposing (Form, FormMapping)
-import Route exposing (Route, SurveyYear)
+import Id exposing (Id)
+import Postmark exposing (PostmarkSendResponse)
+import Route exposing (Route, SurveyYear, UnsubscribeId)
 import SendGrid
 import SurveyResults2022
 import SurveyResults2023
@@ -38,6 +41,7 @@ type Page
     | AdminLogin { password : String, loginFailed : Bool }
     | Admin AdminPage.Model
     | SurveyResultsLoaded SurveyResults2022.Model
+    | UnsubscribePage
 
 
 type alias LoadingData =
@@ -53,6 +57,7 @@ type ResponseData
     = LoadForm LoadFormStatus
     | LoadAdmin AdminLoginData
     | PreviewResponse SurveyResults2022.Data
+    | UnsubscribeResponse
 
 
 type SurveyStatus
@@ -82,6 +87,13 @@ type alias BackendModel =
     { adminLogin : Set SessionId
     , survey2022 : BackendSurvey2022
     , survey2023 : BackendSurvey2023
+    , subscribedEmails :
+        Dict
+            (Id UnsubscribeId)
+            { emailAddress : EmailAddress
+            , announcementEmail : Dict SurveyYear (Result Http.Error PostmarkSendResponse)
+            }
+    , secretCounter : Int
     }
 
 
@@ -125,6 +137,7 @@ type ToBackend
     | RequestFormData2023
     | RequestFormData2022
     | RequestAdminFormData
+    | UnsubscribeRequest (Id UnsubscribeId)
 
 
 type BackendMsg
