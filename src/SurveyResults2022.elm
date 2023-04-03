@@ -17,6 +17,7 @@ import AssocList as Dict
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
+import Effect.Browser.Dom as Dom
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -33,7 +34,7 @@ import Ui exposing (Size)
 
 
 type alias Model =
-    { data : Data, mode : Mode, segment : Segment }
+    { mode : Mode, segment : Segment }
 
 
 type Msg
@@ -150,12 +151,9 @@ update msg model =
             { model | segment = segment }
 
 
-view : { a | windowSize : Size } -> Model -> Element Msg
-view config model =
+view : { a | windowSize : Size } -> Data -> Model -> Element Msg
+view config data model =
     let
-        data =
-            model.data
-
         modeWithoutPerCapita =
             case model.mode of
                 Percentage ->
@@ -449,7 +447,8 @@ type Side
 filterButton : Bool -> Side -> msg -> String -> Element msg
 filterButton isSelected side onPress label =
     Element.Input.button
-        [ (case side of
+        [ Element.htmlAttribute (Dom.idToAttribute (Dom.id label))
+        , (case side of
             Left ->
                 { topLeft = 4, bottomLeft = 4, topRight = 0, bottomRight = 0 }
 

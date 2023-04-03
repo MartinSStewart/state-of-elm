@@ -10,6 +10,7 @@ import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import EmailAddress exposing (EmailAddress)
 import Env
+import Form2022 exposing (Form2022)
 import Form2023 exposing (Form2023, FormMapping)
 import Id exposing (Id)
 import Postmark exposing (PostmarkSendResponse)
@@ -32,16 +33,19 @@ type alias LoadedData =
     , time : Effect.Time.Posix
     , navKey : Effect.Browser.Navigation.Key
     , route : Route
+    , surveyResults2022 : SurveyResults2022.Data
     }
 
 
 type Page
-    = FormLoaded FormLoaded_
+    = FormLoaded Form2023Loaded_
     | FormCompleted
     | AdminLogin { password : String, loginFailed : Bool }
     | AdminPage AdminPage.Model
-    | SurveyResultsLoaded SurveyResults2022.Model
+    | SurveyResults2023Page SurveyResults2023.Model
+    | SurveyResults2022Page SurveyResults2022.Model
     | UnsubscribePage
+    | ErrorPage
 
 
 type alias LoadingData =
@@ -49,13 +53,12 @@ type alias LoadingData =
     , time : Maybe Effect.Time.Posix
     , navKey : Effect.Browser.Navigation.Key
     , route : Route
-    , responseData : Maybe ResponseData
+    , responseData : Maybe ( ResponseData, SurveyResults2022.Data )
     }
 
 
 type ResponseData
-    = LoadForm2022 SurveyResults2022.Data
-    | LoadForm2023 LoadFormStatus2023
+    = LoadForm2023 LoadFormStatus2023
     | LoadAdmin (Maybe AdminLoginData)
     | UnsubscribeResponse
 
@@ -74,7 +77,7 @@ surveyStatus =
         SurveyOpen
 
 
-type alias FormLoaded_ =
+type alias Form2023Loaded_ =
     { form : Form2023
     , acceptedTos : Bool
     , submitting : Bool
@@ -109,7 +112,7 @@ type alias BackendSurvey2023 =
     { forms : Dict SessionId { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
-    , cachedSurveyResults : Maybe SurveyResults2022.Data
+    , cachedSurveyResults : Maybe SurveyResults2023.Data
     }
 
 
@@ -125,7 +128,8 @@ type FrontendMsg
     | GotWindowSize Size
     | GotTime Effect.Time.Posix
     | AdminPageMsg AdminPage.Msg
-    | SurveyResultsMsg SurveyResults2022.Msg
+    | SurveyResults2022Msg SurveyResults2022.Msg
+    | SurveyResults2023Msg SurveyResults2023.Msg
 
 
 type ToBackend
@@ -134,7 +138,6 @@ type ToBackend
     | AdminLoginRequest String
     | AdminToBackend AdminPage.ToBackend
     | RequestFormData2023
-    | RequestFormData2022
     | RequestAdminFormData
     | UnsubscribeRequest (Id UnsubscribeId)
 
@@ -148,7 +151,7 @@ type LoadFormStatus2023
     = NoFormFound
     | FormAutoSaved Form2023
     | FormSubmitted
-    | SurveyResults SurveyResults2023.Data
+    | SurveyResults2023 SurveyResults2023.Data
     | AwaitingResultsData
 
 
@@ -157,4 +160,4 @@ type ToFrontend
     | SubmitConfirmed
     | LogOutResponse LoadFormStatus2023
     | AdminToFrontend AdminPage.ToFrontend
-    | ResponseData ResponseData
+    | ResponseData ResponseData SurveyResults2022.Data

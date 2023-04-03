@@ -26,6 +26,7 @@ import Quantity
 import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
 import Route exposing (Route(..), SurveyYear(..))
 import SurveyResults2022 exposing (Mode(..), Segment(..))
+import SurveyResults2023
 import Types exposing (..)
 import Ui exposing (Size)
 import Url
@@ -73,7 +74,7 @@ init url key =
                     RequestFormData2023
 
                 SurveyRoute Year2022 ->
-                    RequestFormData2022
+                    RequestFormData2023
 
                 AdminRoute ->
                     RequestAdminFormData
@@ -88,7 +89,7 @@ init url key =
 tryLoading : LoadingData -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 tryLoading loading =
     Maybe.map3
-        (\windowSize time responseData ->
+        (\windowSize time ( responseData, surveyResults2022 ) ->
             ( Loaded
                 { page =
                     case responseData of
@@ -101,7 +102,7 @@ tryLoading loading =
                                     AdminLogin { password = "", loginFailed = False }
 
                         LoadForm2023 loadFormStatus ->
-                            loadForm loadFormStatus
+                            loadForm loading.route loadFormStatus
 
                         UnsubscribeResponse ->
                             UnsubscribePage
@@ -109,6 +110,7 @@ tryLoading loading =
                 , navKey = loading.navKey
                 , route = loading.route
                 , windowSize = windowSize
+                , surveyResults2022 = surveyResults2022
                 }
             , Command.none
             )
@@ -250,12 +252,25 @@ updateLoaded msg model =
                 _ ->
                     ( model, Command.none )
 
-        SurveyResultsMsg surveyResultsMsg ->
+        SurveyResults2022Msg surveyResultsMsg ->
             case model.page of
-                SurveyResultsLoaded surveyResultsModel ->
+                SurveyResults2022Page surveyResultsModel ->
                     ( { model
                         | page =
-                            SurveyResults2022.update surveyResultsMsg surveyResultsModel |> SurveyResultsLoaded
+                            SurveyResults2022.update surveyResultsMsg surveyResultsModel |> SurveyResults2022Page
+                      }
+                    , Command.none
+                    )
+
+                _ ->
+                    ( model, Command.none )
+
+        SurveyResults2023Msg surveyResultsMsg ->
+            case model.page of
+                SurveyResults2023Page surveyResultsModel ->
+                    ( { model
+                        | page =
+                            SurveyResults2023.update surveyResultsMsg surveyResultsModel |> SurveyResults2023Page
                       }
                     , Command.none
                     )
@@ -269,8 +284,8 @@ updateFromBackend msg model =
     case model of
         Loading loading ->
             case msg of
-                ResponseData responseData ->
-                    tryLoading { loading | responseData = Just responseData }
+                ResponseData responseData surveyResults2022 ->
+                    tryLoading { loading | responseData = Just ( responseData, surveyResults2022 ) }
 
                 _ ->
                     ( model, Command.none )
@@ -282,7 +297,8 @@ updateFromBackend msg model =
 updateFromBackendLoaded : ToFrontend -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackendLoaded msg model =
     ( case msg of
-        ResponseData _ ->
+        ResponseData _ _ ->
+            -- We shouldn't get response data after we've loaded
             model
 
         SubmitConfirmed ->
@@ -312,7 +328,7 @@ updateFromBackendLoaded msg model =
         LogOutResponse formStatus ->
             case model.page of
                 AdminPage _ ->
-                    { model | page = loadForm formStatus }
+                    { model | page = loadForm model.route formStatus }
 
                 _ ->
                     model
@@ -328,36 +344,47 @@ updateFromBackendLoaded msg model =
     )
 
 
-loadForm : LoadFormStatus2023 -> Page
-loadForm formStatus =
-    case formStatus of
-        NoFormFound ->
-            FormLoaded
-                { form = Form2023.emptyForm
-                , acceptedTos = False
-                , submitting = False
-                , pressedSubmitCount = 0
-                , debounceCounter = 0
+loadForm : Route -> LoadFormStatus2023 -> Page
+loadForm route formStatus =
+    case route of
+        SurveyRoute Year2022 ->
+            SurveyResults2022Page
+                { mode = SurveyResults2022.Percentage
+                , segment = SurveyResults2022.AllUsers
                 }
 
-        FormAutoSaved form ->
-            FormLoaded
-                { form = form
-                , acceptedTos = False
-                , submitting = False
-                , pressedSubmitCount = 0
-                , debounceCounter = 0
-                }
+        _ ->
+            case formStatus of
+                NoFormFound ->
+                    FormLoaded
+                        { form = Form2023.emptyForm
+                        , acceptedTos = False
+                        , submitting = False
+                        , pressedSubmitCount = 0
+                        , debounceCounter = 0
+                        }
 
-        FormSubmitted ->
-            FormCompleted
+                FormAutoSaved form ->
+                    FormLoaded
+                        { form = form
+                        , acceptedTos = False
+                        , submitting = False
+                        , pressedSubmitCount = 0
+                        , debounceCounter = 0
+                        }
 
-        SurveyResults data ->
-            SurveyResultsLoaded
-                { data = data, mode = Percentage, segment = AllUsers }
+                FormSubmitted ->
+                    FormCompleted
 
-        AwaitingResultsData ->
-            FormCompleted
+                SurveyResults2023 data ->
+                    SurveyResults2023Page
+                        { data = data
+                        , mode = SurveyResults2023.Percentage
+                        , segment = SurveyResults2023.AllUsers
+                        }
+
+                AwaitingResultsData ->
+                    FormCompleted
 
 
 view : FrontendModel -> Browser.Document FrontendMsg
@@ -430,8 +457,9 @@ loadedView model =
         AdminPage admin ->
             AdminPage.adminView admin |> Element.map AdminPageMsg
 
-        SurveyResultsLoaded surveyResultsLoaded ->
-            SurveyResults2022.view model surveyResultsLoaded |> Element.map SurveyResultsMsg
+        SurveyResults2022Page surveyResultsLoaded ->
+            SurveyResults2022.view model model.surveyResults2022 surveyResultsLoaded
+                |> Element.map SurveyResults2022Msg
 
         UnsubscribePage ->
             Element.el
@@ -448,6 +476,12 @@ loadedView model =
                     ]
                     [ Element.text "Unsubscribe successful!" ]
                 )
+
+        SurveyResults2023Page surveyResultsLoaded ->
+            SurveyResults2023.view model surveyResultsLoaded |> Element.map SurveyResults2023Msg
+
+        ErrorPage ->
+            Element.paragraph [] [ Element.text "Something went wrong. Try reloading the page I guess?" ]
 
 
 passwordInputId : Dom.HtmlId
@@ -499,7 +533,7 @@ formCompletedView =
         )
 
 
-answerSurveyView : LoadedData -> FormLoaded_ -> Element FrontendMsg
+answerSurveyView : LoadedData -> Form2023Loaded_ -> Element FrontendMsg
 answerSurveyView model formLoaded =
     Element.column
         [ Element.spacing 24

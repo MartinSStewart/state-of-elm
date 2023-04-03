@@ -33,11 +33,9 @@ import Ui exposing (Size)
 
 
 type alias Model =
-    { windowSize : Size
-    , data : Data
+    { data : Data
     , mode : Mode
     , segment : Segment
-    , isPreview : Bool
     }
 
 
@@ -86,7 +84,6 @@ type alias Data =
     , frameworks : DataEntryWithOther Frameworks
     , editors : DataEntryWithOther Editors
     , doYouUseElmReview : DataEntry DoYouUseElmReview
-    , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
     , testTools : DataEntryWithOther TestTools
     , testsWrittenFor : DataEntryWithOther TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
@@ -155,9 +152,12 @@ update msg model =
             { model | segment = segment }
 
 
-view : Model -> Element Msg
-view model =
+view : { a | windowSize : Size } -> Model -> Element Msg
+view config model =
     let
+        windowSize =
+            config.windowSize
+
         data =
             model.data
 
@@ -174,19 +174,8 @@ view model =
     in
     Element.column
         [ Element.width Element.fill, Element.behindContent (Element.html css) ]
-        [ if model.isPreview then
-            Element.paragraph
-                [ Element.Background.color (Element.rgb 1 1 0)
-                , Element.padding 4
-                , Element.width Element.fill
-                , Element.Font.center
-                ]
-                [ Element.text "Preview mode! Don't share this link. Some data might not be accurate." ]
-
-          else
-            Element.none
-        , Ui.headerContainer
-            model.windowSize
+        [ Ui.headerContainer
+            windowSize
             Year2022
             [ Element.paragraph
                 [ Element.Font.bold ]
@@ -222,7 +211,7 @@ view model =
             , Element.paddingXY 8 16
             ]
             [ simpleGraph
-                { windowSize = model.windowSize
+                { windowSize = windowSize
                 , singleLine = False
                 , isMultiChoice = False
                 , customMaxCount = Nothing
@@ -242,37 +231,36 @@ view model =
                     ]
                 }
             , Ui.section
-                model.windowSize
+                windowSize
                 "About you"
-                [ multiChoiceGraph model.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
-                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
-                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
-                , multiChoiceWithOtherSegment model.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
-                , multiChoiceWithOtherSegment model.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-                , freeTextSegment modeWithoutPerCapita model.segment model.windowSize data.elmInitialInterest Questions.initialInterestTitle
-                , singleChoiceSegmentGraph model.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+                [ multiChoiceGraph windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
+                , multiChoiceWithOtherSegment windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
+                , multiChoiceWithOtherSegment windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
+                , freeTextSegment modeWithoutPerCapita model.segment windowSize data.elmInitialInterest Questions.initialInterestTitle
+                , singleChoiceSegmentGraph windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
                 ]
             , Ui.section
-                model.windowSize
+                windowSize
                 "Questions for people who use(d) Elm"
-                [ multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
-                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-                , multiChoiceWithOther model.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
-                , multiChoiceWithOther model.windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks2022
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.editors Questions.editors
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions.whichElmReviewRulesDoYouUse
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
-                , freeText modeWithoutPerCapita model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-                , freeText modeWithoutPerCapita model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                [ multiChoiceWithOther windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
+                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
+                , multiChoiceWithOther windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
+                , multiChoiceWithOther windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks2022
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions.editors
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
+                , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions.biggestPainPointTitle
+                , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
                 ]
             ]
         , Element.el
@@ -281,7 +269,7 @@ view model =
             ]
             (Element.column
                 [ Element.Font.color Ui.white
-                , Ui.ifMobile model.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
+                , Ui.ifMobile windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
                 , Element.centerX
                 , Element.width (Element.maximum 800 Element.fill)
                 , Element.spacing 24

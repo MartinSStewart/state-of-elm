@@ -18,7 +18,7 @@ import Json.Decode
 import List.Nonempty
 import Quantity
 import Questions exposing (Question)
-import Route exposing (Route(..))
+import Route exposing (Route(..), SurveyYear(..))
 import Time exposing (Month(..))
 import Types exposing (BackendModel, BackendMsg, FrontendModel(..), FrontendMsg(..), ToBackend(..), ToFrontend)
 import Ui
@@ -173,6 +173,10 @@ adminUrl =
     Env.domain ++ Route.encode AdminRoute |> Unsafe.url
 
 
+url2022 =
+    Env.domain ++ Route.encode (SurveyRoute Year2022) |> Unsafe.url
+
+
 clickCheckbox : { a | clickButton : Dom.HtmlId -> c -> b } -> Question d -> c -> b
 clickCheckbox clientActions question instructions =
     clientActions.clickButton
@@ -250,6 +254,17 @@ tests =
                     |> client.inputText Frontend.passwordInputId Env.adminPassword
                     |> shortWait
                     |> client.clickButton Frontend.loginButtonId
+                    |> shortWait
+            )
+    , TF.start config "View 2022 results"
+        |> TF.connectFrontend
+            sessionId0
+            url2022
+            windowSize
+            (\( instructions, client ) ->
+                instructions
+                    |> shortWait
+                    |> client.clickButton (Dom.id "Per capita")
                     |> shortWait
             )
     ]

@@ -178,7 +178,7 @@ update msg model =
             )
 
 
-loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2022, LoadFormStatus2023 )
+loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2023, LoadFormStatus2023 )
 loadFormData sessionId time model =
     case Types.surveyStatus of
         SurveyOpen ->
@@ -201,7 +201,7 @@ loadFormData sessionId time model =
             )
 
         SurveyFinished ->
-            formData2022 (getCurrentSurvey model) |> Tuple.mapSecond SurveyResults
+            formData2023 (getCurrentSurvey model) |> Tuple.mapSecond SurveyResults2023
 
 
 formData2022 : BackendSurvey2022 -> ( BackendSurvey2022, SurveyResults2022.Data )
@@ -536,9 +536,6 @@ formData2023 model =
                     , doYouUseElmReview =
                         List.filterMap .doYouUseElmReview formsWithoutNoInterestedInElm
                             |> DataEntry.fromForms model.formMapping.doYouUseElmReview Questions.doYouUseElmReview.choices
-                    , whichElmReviewRulesDoYouUse =
-                        List.map .whichElmReviewRulesDoYouUse formsWithoutNoInterestedInElm
-                            |> DataEntry.fromMultiChoiceWithOther Questions.whichElmReviewRulesDoYouUse model.formMapping.whichElmReviewRulesDoYouUse
                     , testTools =
                         List.map .testTools formsWithoutNoInterestedInElm
                             |> DataEntry.fromMultiChoiceWithOther Questions.testTools model.formMapping.testTools
@@ -770,38 +767,49 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         RequestFormData2023 ->
             let
-                ( survey, surveyStatus ) =
+                ( survey2023, surveyStatus ) =
                     loadFormData sessionId time model
-            in
-            ( setCurrentSurvey (\_ -> survey) model
-            , LoadForm2023 surveyStatus |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
-            )
 
-        RequestFormData2022 ->
-            let
-                ( survey, data ) =
+                ( survey2022, surveyResults2022 ) =
                     formData2022 model.survey2022
             in
-            ( { model | survey2022 = survey }
-            , LoadForm2022 data |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
+            ( setCurrentSurvey (\_ -> survey2023) { model | survey2022 = survey2022 }
+            , ResponseData (LoadForm2023 surveyStatus) surveyResults2022
+                |> Effect.Lamdera.sendToFrontend clientId
             )
 
         RequestAdminFormData ->
-            ( model
-            , (if isAdmin sessionId model then
-                getAdminData model.survey2023 |> Just
+            let
+                ( survey2022, surveyResults2022 ) =
+                    formData2022 model.survey2022
 
-               else
-                Nothing
-              )
-                |> LoadAdmin
-                |> ResponseData
+                model2 =
+                    { model | survey2022 = survey2022 }
+
+                adminData =
+                    (if isAdmin sessionId model2 then
+                        getAdminData model2.survey2023 |> Just
+
+                     else
+                        Nothing
+                    )
+                        |> LoadAdmin
+            in
+            ( model2
+            , ResponseData adminData surveyResults2022
                 |> Effect.Lamdera.sendToFrontend clientId
             )
 
         UnsubscribeRequest unsubscribeId ->
-            ( { model | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails }
-            , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse)
+            let
+                ( survey2022, surveyResults2022 ) =
+                    formData2022 model.survey2022
+            in
+            ( { model
+                | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails
+                , survey2022 = survey2022
+              }
+            , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse surveyResults2022)
             )
 
 
