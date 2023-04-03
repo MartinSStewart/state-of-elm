@@ -14,7 +14,7 @@ import Email.Html as Html
 import Email.Html.Attributes as Attributes
 import EmailAddress exposing (EmailAddress)
 import Env
-import Form exposing (Form, FormMapping)
+import Form2023 exposing (Form2023, FormMapping)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Id exposing (Id)
 import Lamdera
@@ -178,7 +178,7 @@ update msg model =
             )
 
 
-loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2022, LoadFormStatus )
+loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2022, LoadFormStatus2023 )
 loadFormData sessionId time model =
     case Types.surveyStatus of
         SurveyOpen ->
@@ -212,7 +212,7 @@ formData2022 model =
 
         Nothing ->
             let
-                submittedForms : List Form
+                submittedForms : List Form2023
                 submittedForms =
                     Dict.values model.forms
                         |> List.filterMap
@@ -225,12 +225,12 @@ formData2022 model =
                                         Nothing
                             )
 
-                formsWithoutNoInterestedInElm : List Form
+                formsWithoutNoInterestedInElm : List Form2023
                 formsWithoutNoInterestedInElm =
-                    List.filter (Form.notInterestedInElm >> not) submittedForms
+                    List.filter (Form2023.notInterestedInElm >> not) submittedForms
 
                 segmentWithOther :
-                    (Form -> MultiChoiceWithOther a)
+                    (Form2023 -> MultiChoiceWithOther a)
                     -> (FormMapping -> AnswerMap a)
                     -> Question a
                     -> SurveyResults2022.DataEntryWithOtherSegments a
@@ -238,7 +238,7 @@ formData2022 model =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -249,7 +249,7 @@ formData2022 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Just (formField form)
 
                                 else
@@ -259,12 +259,12 @@ formData2022 model =
                             |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.formMapping)
                     }
 
-                segment : (Form -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults2022.DataEntrySegments a
+                segment : (Form2023 -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults2022.DataEntrySegments a
                 segment formField answerMapField question =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -275,7 +275,7 @@ formData2022 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     formField form
 
                                 else
@@ -285,12 +285,12 @@ formData2022 model =
                             |> DataEntry.fromForms (answerMapField model.formMapping) question.choices
                     }
 
-                segmentFreeText : (Form -> String) -> (FormMapping -> FreeTextAnswerMap) -> SurveyResults2022.DataEntryWithOtherSegments a
+                segmentFreeText : (Form2023 -> String) -> (FormMapping -> FreeTextAnswerMap) -> SurveyResults2022.DataEntryWithOtherSegments a
                 segmentFreeText formField answerMapField =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -301,7 +301,7 @@ formData2022 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form && not (Form.notInterestedInElm form) then
+                                if Form2023.doesNotUseElm form && not (Form2023.notInterestedInElm form) then
                                     Just (formField form)
 
                                 else
@@ -388,7 +388,7 @@ formData2023 model =
 
         Nothing ->
             let
-                submittedForms : List Form
+                submittedForms : List Form2023
                 submittedForms =
                     Dict.values model.forms
                         |> List.filterMap
@@ -401,12 +401,12 @@ formData2023 model =
                                         Nothing
                             )
 
-                formsWithoutNoInterestedInElm : List Form
+                formsWithoutNoInterestedInElm : List Form2023
                 formsWithoutNoInterestedInElm =
-                    List.filter (Form.notInterestedInElm >> not) submittedForms
+                    List.filter (Form2023.notInterestedInElm >> not) submittedForms
 
                 segmentWithOther :
-                    (Form -> MultiChoiceWithOther a)
+                    (Form2023 -> MultiChoiceWithOther a)
                     -> (FormMapping -> AnswerMap a)
                     -> Question a
                     -> SurveyResults2022.DataEntryWithOtherSegments a
@@ -414,7 +414,7 @@ formData2023 model =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -425,7 +425,7 @@ formData2023 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Just (formField form)
 
                                 else
@@ -435,12 +435,12 @@ formData2023 model =
                             |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.formMapping)
                     }
 
-                segment : (Form -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults2022.DataEntrySegments a
+                segment : (Form2023 -> Maybe a) -> (FormMapping -> String) -> Question a -> SurveyResults2022.DataEntrySegments a
                 segment formField answerMapField question =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -451,7 +451,7 @@ formData2023 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     formField form
 
                                 else
@@ -461,12 +461,12 @@ formData2023 model =
                             |> DataEntry.fromForms (answerMapField model.formMapping) question.choices
                     }
 
-                segmentFreeText : (Form -> String) -> (FormMapping -> FreeTextAnswerMap) -> SurveyResults2022.DataEntryWithOtherSegments a
+                segmentFreeText : (Form2023 -> String) -> (FormMapping -> FreeTextAnswerMap) -> SurveyResults2022.DataEntryWithOtherSegments a
                 segmentFreeText formField answerMapField =
                     { users =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form then
+                                if Form2023.doesNotUseElm form then
                                     Nothing
 
                                 else
@@ -477,7 +477,7 @@ formData2023 model =
                     , potentialUsers =
                         List.filterMap
                             (\form ->
-                                if Form.doesNotUseElm form && not (Form.notInterestedInElm form) then
+                                if Form2023.doesNotUseElm form && not (Form2023.notInterestedInElm form) then
                                     Just (formField form)
 
                                 else
@@ -768,29 +768,36 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                 _ ->
                     ( model, Command.none )
 
-        PreviewRequest password ->
-            if password == Env.previewPassword then
-                Debug.todo ""
-                --formData (getCurrentSurvey model)
-                --    |> Tuple.mapSecond (PreviewResponse >> Effect.Lamdera.sendToFrontend clientId)
-
-            else
-                ( model, Command.none )
-
         RequestFormData2023 ->
             let
                 ( survey, surveyStatus ) =
                     loadFormData sessionId time model
             in
             ( setCurrentSurvey (\_ -> survey) model
-            , LoadForm surveyStatus |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
+            , LoadForm2023 surveyStatus |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
             )
 
         RequestFormData2022 ->
-            Debug.todo ""
+            let
+                ( survey, data ) =
+                    formData2022 model.survey2022
+            in
+            ( { model | survey2022 = survey }
+            , LoadForm2022 data |> ResponseData |> Effect.Lamdera.sendToFrontend clientId
+            )
 
         RequestAdminFormData ->
-            Debug.todo ""
+            ( model
+            , (if isAdmin sessionId model then
+                getAdminData model.survey2023 |> Just
+
+               else
+                Nothing
+              )
+                |> LoadAdmin
+                |> ResponseData
+                |> Effect.Lamdera.sendToFrontend clientId
+            )
 
         UnsubscribeRequest unsubscribeId ->
             ( { model | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails }

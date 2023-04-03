@@ -244,7 +244,14 @@ tests =
             sessionId1
             adminUrl
             windowSize
-            (\( instructions, client ) -> instructions |> shortWait)
+            (\( instructions, client ) ->
+                instructions
+                    |> shortWait
+                    |> client.inputText Frontend.passwordInputId Env.adminPassword
+                    |> shortWait
+                    |> client.clickButton Frontend.loginButtonId
+                    |> shortWait
+            )
     ]
 
 

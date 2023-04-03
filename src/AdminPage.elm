@@ -25,7 +25,7 @@ import Element.Font
 import Element.Input
 import EmailAddress exposing (EmailAddress)
 import Env
-import Form exposing (Form, FormMapping, SpecificQuestion(..))
+import Form2023 exposing (Form2023, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import NetworkModel exposing (NetworkModel)
 import Questions exposing (Question)
@@ -46,7 +46,7 @@ type Msg
 
 
 type ToBackend
-    = ReplaceFormsRequest ( List Form, FormMapping )
+    = ReplaceFormsRequest ( List Form2023, FormMapping )
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
     | SendEmailsRequest
@@ -58,7 +58,7 @@ type ToFrontend
 
 
 type alias AdminLoginData =
-    { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
+    { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : SendEmailsStatus
     }
@@ -73,7 +73,7 @@ type FormMappingEdit
 
 
 type alias Model =
-    { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
+    { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : NetworkModel FormMappingEdit FormMapping
     , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
@@ -652,7 +652,7 @@ deleteButton onPress =
 
 
 codec =
-    Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec
+    Serialize.tuple (Serialize.list Form2023.formCodec) Form2023.formMappingCodec
 
 
 adminView : Model -> Element Msg
@@ -1046,7 +1046,7 @@ questionName selectedMapping =
             "DoYouUseElmReview"
 
 
-commentEditor : SpecificQuestion -> Bool -> Question a -> (Form -> Maybe a) -> String -> Model -> Element Msg
+commentEditor : SpecificQuestion -> Bool -> Question a -> (Form2023 -> Maybe a) -> String -> Model -> Element Msg
 commentEditor specificQuestion singleLine question getAnswer comment model =
     let
         answers : List a
@@ -1076,7 +1076,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
 freeTextMappingView :
     SpecificQuestion
     -> String
-    -> (Form -> String)
+    -> (Form2023 -> String)
     -> FreeTextAnswerMap
     -> Model
     -> Element Msg
@@ -1133,7 +1133,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16 ]
-            [ List.filterMap Form.getOtherAnswer_ answers
+            [ List.filterMap Form2023.getOtherAnswer_ answers
                 |> List.sortBy (String.trim >> String.toLower)
                 |> List.map
                     (\other ->
@@ -1190,7 +1190,7 @@ answerMappingView :
     SpecificQuestion
     -> Bool
     -> Question a
-    -> (Form -> MultiChoiceWithOther a)
+    -> (Form2023 -> MultiChoiceWithOther a)
     -> AnswerMap a
     -> Model
     -> Element Msg
@@ -1247,7 +1247,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16, Element.alignTop ]
-            [ List.filterMap Form.getOtherAnswer answers
+            [ List.filterMap Form2023.getOtherAnswer answers
                 |> List.sortBy (String.trim >> String.toLower)
                 |> List.map
                     (\other ->
@@ -1300,7 +1300,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         ]
 
 
-submittedForms : List { form : Form, submitTime : Maybe Effect.Time.Posix } -> List Form
+submittedForms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix } -> List Form2023
 submittedForms forms =
     List.filterMap
         (\{ form, submitTime } ->

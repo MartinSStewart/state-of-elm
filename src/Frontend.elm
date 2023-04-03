@@ -19,7 +19,7 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Env
-import Form exposing (Form)
+import Form2023 exposing (Form2023)
 import Lamdera
 import List.Extra as List
 import Quantity
@@ -92,14 +92,16 @@ tryLoading loading =
             ( Loaded
                 { page =
                     case responseData of
-                        LoadAdmin adminData ->
-                            AdminLogin { password = "", loginFailed = False }
+                        LoadAdmin maybeAdminData ->
+                            case maybeAdminData of
+                                Just adminData ->
+                                    AdminPage.init adminData |> AdminPage
 
-                        LoadForm loadFormStatus ->
+                                Nothing ->
+                                    AdminLogin { password = "", loginFailed = False }
+
+                        LoadForm2023 loadFormStatus ->
                             loadForm loadFormStatus
-
-                        PreviewResponse data ->
-                            Debug.todo ""
 
                         UnsubscribeResponse ->
                             UnsubscribePage
@@ -238,12 +240,12 @@ updateLoaded msg model =
 
         AdminPageMsg adminMsg ->
             case model.page of
-                Admin admin ->
+                AdminPage admin ->
                     let
                         ( newAdmin, cmd ) =
                             AdminPage.update adminMsg admin
                     in
-                    ( { model | page = Admin newAdmin }, Command.map AdminToBackend AdminPageMsg cmd )
+                    ( { model | page = AdminPage newAdmin }, Command.map AdminToBackend AdminPageMsg cmd )
 
                 _ ->
                     ( model, Command.none )
@@ -280,49 +282,10 @@ updateFromBackend msg model =
 updateFromBackendLoaded : ToFrontend -> LoadedData -> ( LoadedData, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackendLoaded msg model =
     ( case msg of
-        ResponseData responseData ->
-            case responseData of
-                LoadForm loadFormStatus ->
-                    --case model.page of
-                    --    Loading loadingData ->
-                    --        loadForm False formStatus loadingData
-                    --
-                    --    _ ->
-                    --        model
-                    Debug.todo ""
-
-                LoadAdmin adminLoginData ->
-                    --{ model | page = AdminPage.init adminData |> Admin }
-                    Debug.todo ""
-
-                PreviewResponse data ->
-                    --case model.page of
-                    --    FormLoaded formLoaded ->
-                    --        loadForm
-                    --            True
-                    --            (SurveyResults data)
-                    --            { windowSize = Just formLoaded.windowSize
-                    --            , time = Just formLoaded.time
-                    --            , surveyYear = Route.currentSurvey
-                    --            }
-                    --
-                    --    Loading loadingData ->
-                    --        loadForm True (SurveyResults data) loadingData
-                    --
-                    --    _ ->
-                    --        model
-                    Debug.todo ""
-
-                UnsubscribeResponse ->
-                    model
+        ResponseData _ ->
+            model
 
         SubmitConfirmed ->
-            --case model.page of
-            --    FormLoaded formLoaded ->
-            --        FormCompleted formLoaded.time
-            --
-            --    _ ->
-            --        model
             case model.page of
                 FormLoaded _ ->
                     { model | page = FormCompleted }
@@ -331,35 +294,33 @@ updateFromBackendLoaded msg model =
                     model
 
         AdminLoginResponse result ->
-            --case model.page of
-            --    AdminLogin adminLogin ->
-            --        case result of
-            --            Ok adminLoginData ->
-            --                AdminPage.init adminLoginData |> Admin
-            --
-            --            Err () ->
-            --                AdminLogin { adminLogin | loginFailed = True }
-            --
-            --    _ ->
-            --        model
-            Debug.todo ""
+            case model.page of
+                AdminLogin adminLogin ->
+                    { model
+                        | page =
+                            case result of
+                                Ok adminLoginData ->
+                                    AdminPage.init adminLoginData |> AdminPage
+
+                                Err () ->
+                                    AdminLogin { adminLogin | loginFailed = True }
+                    }
+
+                _ ->
+                    model
 
         LogOutResponse formStatus ->
-            --case model.page of
-            --    Admin _ ->
-            --        loadForm
-            --            False
-            --            formStatus
-            --            { windowSize = Nothing, time = Nothing, surveyYear = Route.currentSurvey }
-            --
-            --    _ ->
-            --        model
-            Debug.todo ""
+            case model.page of
+                AdminPage _ ->
+                    { model | page = loadForm formStatus }
+
+                _ ->
+                    model
 
         AdminToFrontend toFrontend ->
             case model.page of
-                Admin adminModel ->
-                    { model | page = AdminPage.updateFromBackend toFrontend adminModel |> Admin }
+                AdminPage adminModel ->
+                    { model | page = AdminPage.updateFromBackend toFrontend adminModel |> AdminPage }
 
                 _ ->
                     model
@@ -367,12 +328,12 @@ updateFromBackendLoaded msg model =
     )
 
 
-loadForm : LoadFormStatus -> Page
+loadForm : LoadFormStatus2023 -> Page
 loadForm formStatus =
     case formStatus of
         NoFormFound ->
             FormLoaded
-                { form = Form.emptyForm
+                { form = Form2023.emptyForm
                 , acceptedTos = False
                 , submitting = False
                 , pressedSubmitCount = 0
@@ -396,7 +357,7 @@ loadForm formStatus =
                 { data = data, mode = Percentage, segment = AllUsers }
 
         AwaitingResultsData ->
-            Debug.todo ""
+            FormCompleted
 
 
 view : FrontendModel -> Browser.Document FrontendMsg
@@ -447,7 +408,7 @@ loadedView model =
             Element.column
                 [ Element.centerX, Element.centerY, Element.spacing 16 ]
                 [ Element.Input.currentPassword
-                    []
+                    [ Element.htmlAttribute (Dom.idToAttribute passwordInputId) ]
                     { onChange = TypedPassword
                     , text = password
                     , placeholder = Nothing
@@ -466,7 +427,7 @@ loadedView model =
                 , Ui.button loginButtonId PressedLogin "Login"
                 ]
 
-        Admin admin ->
+        AdminPage admin ->
             AdminPage.adminView admin |> Element.map AdminPageMsg
 
         SurveyResultsLoaded surveyResultsLoaded ->
@@ -489,6 +450,12 @@ loadedView model =
                 )
 
 
+passwordInputId : Dom.HtmlId
+passwordInputId =
+    Dom.id "passwordInput"
+
+
+loginButtonId : Dom.HtmlId
 loginButtonId =
     Dom.id "loginButtonId"
 
@@ -671,7 +638,7 @@ awaitingResultsView =
         )
 
 
-formView : Size -> Form -> Element FrontendMsg
+formView : Size -> Form2023 -> Element FrontendMsg
 formView windowSize form =
     Element.column
         [ Element.spacing 64
@@ -753,7 +720,7 @@ formView windowSize form =
                 Nothing
                 form.newsAndDiscussions
                 (\a -> FormChanged { form | newsAndDiscussions = a })
-            , if Form.doesNotUseElm form then
+            , if Form2023.doesNotUseElm form then
                 Element.none
 
               else
@@ -783,7 +750,7 @@ formView windowSize form =
                 form.emailAddress
                 (\a -> FormChanged { form | emailAddress = a })
             ]
-        , if Form.doesNotUseElm form then
+        , if Form2023.doesNotUseElm form then
             Element.none
 
           else
@@ -834,7 +801,7 @@ formView windowSize form =
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
                 ]
-        , if Form.doesNotUseElm form then
+        , if Form2023.doesNotUseElm form then
             Element.none
 
           else
