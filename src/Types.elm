@@ -4,6 +4,7 @@ import AdminPage exposing (AdminLoginData)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser
+import Duration
 import Effect.Browser.Navigation
 import Effect.Http as Http
 import Effect.Lamdera exposing (ClientId, SessionId)
@@ -14,6 +15,7 @@ import Form2022 exposing (Form2022)
 import Form2023 exposing (Form2023, FormMapping)
 import Id exposing (Id)
 import Postmark exposing (PostmarkSendResponse)
+import Quantity
 import Route exposing (Route, SurveyYear, UnsubscribeId)
 import SendGrid
 import SurveyResults2022
@@ -68,13 +70,13 @@ type SurveyStatus
     | SurveyFinished
 
 
-surveyStatus : SurveyStatus
-surveyStatus =
-    if Env.presentSurveyResults then
-        SurveyFinished
+surveyStatus : Effect.Time.Posix -> SurveyStatus
+surveyStatus currentTime =
+    if Duration.from Env.presentResultsTime currentTime |> Quantity.lessThanZero then
+        SurveyOpen
 
     else
-        SurveyOpen
+        SurveyFinished
 
 
 type alias Form2023Loaded_ =

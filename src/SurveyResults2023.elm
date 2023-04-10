@@ -17,6 +17,7 @@ import AssocList as Dict
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
+import Effect.Browser.Dom as Dom
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -453,7 +454,8 @@ type Side
 filterButton : Bool -> Side -> msg -> String -> Element msg
 filterButton isSelected side onPress label =
     Element.Input.button
-        [ (case side of
+        [ Element.htmlAttribute (Dom.idToAttribute (Dom.id label))
+        , (case side of
             Left ->
                 { topLeft = 4, bottomLeft = 4, topRight = 0, bottomRight = 0 }
 

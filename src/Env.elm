@@ -17,16 +17,6 @@ adminPasswordHash =
     Sha256.sha256 adminPassword
 
 
-presentSurveyResults_ : String
-presentSurveyResults_ =
-    "false"
-
-
-presentSurveyResults : Bool
-presentSurveyResults =
-    String.toLower presentSurveyResults_ == "true"
-
-
 isProduction_ : String
 isProduction_ =
     "false"
@@ -40,6 +30,11 @@ isProduction =
 surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
     Effect.Time.millisToPosix 1680504853000
+
+
+presentResultsTime : Effect.Time.Posix
+presentResultsTime =
+    Duration.addTo surveyCloseTime (Duration.days 30)
 
 
 surveyIsOpen : Effect.Time.Posix -> Bool

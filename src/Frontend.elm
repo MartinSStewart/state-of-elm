@@ -408,7 +408,7 @@ loadedView : LoadedData -> Element FrontendMsg
 loadedView model =
     case model.page of
         FormLoaded formLoaded ->
-            case Types.surveyStatus of
+            case Types.surveyStatus model.time of
                 SurveyOpen ->
                     if Env.surveyIsOpen model.time then
                         answerSurveyView model formLoaded
@@ -420,7 +420,7 @@ loadedView model =
                     Element.none
 
         FormCompleted ->
-            case Types.surveyStatus of
+            case Types.surveyStatus model.time of
                 SurveyOpen ->
                     if Env.surveyIsOpen model.time then
                         formCompletedView

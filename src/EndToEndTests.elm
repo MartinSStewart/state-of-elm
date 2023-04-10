@@ -225,6 +225,15 @@ tests =
                     |> clickRadio client Questions.experienceLevel
                     |> client.inputText Ui.emailAddressInputId (EmailAddress.toString userEmailAddress)
                     |> shortWait
+            )
+        -- Client refreshes page
+        |> TF.connectFrontend
+            sessionId0
+            url
+            windowSize
+            (\( instructions, client ) ->
+                instructions
+                    |> shortWait
                     |> client.clickButton (checkboxId "I accept" |> Dom.id)
                     |> shortWait
                     |> client.clickButton Ui.submitSurveyButtonId
@@ -255,6 +264,14 @@ tests =
                     |> shortWait
                     |> client.clickButton Frontend.loginButtonId
                     |> shortWait
+            )
+        |> TF.fastForward (Duration.days 30)
+        |> TF.connectFrontend
+            sessionId0
+            url
+            windowSize
+            (\( instructions, client ) ->
+                instructions |> shortWait |> client.clickButton (Dom.id "Per capita") |> shortWait
             )
     , TF.start config "View 2022 results"
         |> TF.connectFrontend

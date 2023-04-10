@@ -180,7 +180,7 @@ update msg model =
 
 loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2023, LoadFormStatus2023 )
 loadFormData sessionId time model =
-    case Types.surveyStatus of
+    case Types.surveyStatus time of
         SurveyOpen ->
             ( getCurrentSurvey model
             , if Env.surveyIsOpen time then
@@ -562,7 +562,7 @@ updateFromFrontendWithTime : Effect.Time.Posix -> SessionId -> ClientId -> ToBac
 updateFromFrontendWithTime time sessionId clientId msg model =
     case msg of
         AutoSaveForm form ->
-            case Types.surveyStatus of
+            case Types.surveyStatus time of
                 SurveyOpen ->
                     ( if Env.surveyIsOpen time then
                         setCurrentSurvey
@@ -598,7 +598,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                     ( model, Command.none )
 
         SubmitForm form ->
-            case Types.surveyStatus of
+            case Types.surveyStatus time of
                 SurveyOpen ->
                     if Env.surveyIsOpen time then
                         ( setCurrentSurvey
