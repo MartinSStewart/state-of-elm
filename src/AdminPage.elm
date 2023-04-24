@@ -101,6 +101,7 @@ questionsWithOther : List SpecificQuestion
 questionsWithOther =
     [ DoYouUseElmQuestion
     , AgeQuestion
+    , PleaseSelectYourGenderQuestion
     , FunctionalProgrammingExperienceQuestion
     , OtherLanguagesQuestion
     , NewsAndDiscussionsQuestion
@@ -216,6 +217,9 @@ networkUpdate edit answerMap =
                 DoYouUseElmReviewQuestion ->
                     answerMap
 
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
         TypedGroupName question hotkey groupName ->
             let
                 renameGroup : AnswerMap a -> AnswerMap a
@@ -302,6 +306,9 @@ networkUpdate edit answerMap =
                 DoYouUseElmReviewQuestion ->
                     answerMap
 
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
         TypedNewGroupName question groupName ->
             let
                 addGroup : AnswerMap a -> AnswerMap a
@@ -386,6 +393,9 @@ networkUpdate edit answerMap =
                     answerMap
 
                 DoYouUseElmReviewQuestion ->
+                    answerMap
+
+                PleaseSelectYourGenderQuestion ->
                     answerMap
 
         TypedOtherAnswerGroups question otherAnswer text ->
@@ -478,6 +488,9 @@ networkUpdate edit answerMap =
                 DoYouUseElmReviewQuestion ->
                     answerMap
 
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
         TypedComment question text ->
             let
                 withComment : AnswerMap a -> AnswerMap a
@@ -563,6 +576,9 @@ networkUpdate edit answerMap =
 
                 DoYouUseElmReviewQuestion ->
                     { answerMap | doYouUseElmReview = text }
+
+                PleaseSelectYourGenderQuestion ->
+                    { answerMap | pleaseSelectYourGender = text }
 
 
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -966,6 +982,15 @@ answerMapView model =
                 formMapping.doYouUseElmReview
                 model
 
+        PleaseSelectYourGenderQuestion ->
+            commentEditor
+                model.selectedMapping
+                False
+                Questions.pleaseSelectYourGender
+                .pleaseSelectYourGender
+                formMapping.pleaseSelectYourGender
+                model
+
 
 questionName : SpecificQuestion -> String
 questionName selectedMapping =
@@ -1044,6 +1069,9 @@ questionName selectedMapping =
 
         DoYouUseElmReviewQuestion ->
             "DoYouUseElmReview"
+
+        PleaseSelectYourGenderQuestion ->
+            "PleaseSelectYourGenderQuestion"
 
 
 commentEditor : SpecificQuestion -> Bool -> Question a -> (Form2023 -> Maybe a) -> String -> Model -> Element Msg

@@ -83,7 +83,7 @@ getOtherAnswer_ text =
 type alias FormMapping =
     { doYouUseElm : String
     , age : String
-    , pleaseSelectYourGender : AnswerMap PleaseSelectYourGender
+    , pleaseSelectYourGender : String
     , functionalProgrammingExperience : String
     , otherLanguages : AnswerMap OtherLanguages
     , newsAndDiscussions : AnswerMap NewsAndDiscussions
@@ -145,6 +145,7 @@ emptyForm =
 type SpecificQuestion
     = DoYouUseElmQuestion
     | AgeQuestion
+    | PleaseSelectYourGenderQuestion
     | FunctionalProgrammingExperienceQuestion
     | OtherLanguagesQuestion
     | NewsAndDiscussionsQuestion
@@ -175,7 +176,7 @@ formMappingCodec =
     Serialize.record FormMapping
         |> Serialize.field .doYouUseElm Serialize.string
         |> Serialize.field .age Serialize.string
-        |> Serialize.field .pleaseSelectYourGender AnswerMap.codec
+        |> Serialize.field .pleaseSelectYourGender Serialize.string
         |> Serialize.field .functionalProgrammingExperience Serialize.string
         |> Serialize.field .otherLanguages AnswerMap.codec
         |> Serialize.field .newsAndDiscussions AnswerMap.codec
@@ -1058,7 +1059,38 @@ ageCodec =
 
 pleaseSelectYourGender : Codec e PleaseSelectYourGender
 pleaseSelectYourGender =
-    Debug.todo ""
+    Serialize.customType
+        (\manEncoder womanEncoder transManEncoder transWomanEncoder nonBinaryEncoder preferNotToAnswerEncoder otherGenderEncoder value ->
+            case value of
+                Questions2023.Man ->
+                    manEncoder
+
+                Questions2023.Woman ->
+                    womanEncoder
+
+                Questions2023.TransMan ->
+                    transManEncoder
+
+                Questions2023.TransWoman ->
+                    transWomanEncoder
+
+                Questions2023.NonBinary ->
+                    nonBinaryEncoder
+
+                Questions2023.PreferNotToAnswer ->
+                    preferNotToAnswerEncoder
+
+                Questions2023.OtherGender ->
+                    otherGenderEncoder
+        )
+        |> Serialize.variant0 Questions2023.Man
+        |> Serialize.variant0 Questions2023.Woman
+        |> Serialize.variant0 Questions2023.TransMan
+        |> Serialize.variant0 Questions2023.TransWoman
+        |> Serialize.variant0 Questions2023.NonBinary
+        |> Serialize.variant0 Questions2023.PreferNotToAnswer
+        |> Serialize.variant0 Questions2023.OtherGender
+        |> Serialize.finishCustomType
 
 
 doYouUseElmCodec : Codec e DoYouUseElm
