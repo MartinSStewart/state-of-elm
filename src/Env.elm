@@ -27,6 +27,14 @@ isProduction =
     String.toLower isProduction_ == "true"
 
 
+canShowLatestResults_ =
+    "true"
+
+
+canShowLatestResults =
+    String.toLower canShowLatestResults_ == "true"
+
+
 surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
     Effect.Time.millisToPosix 1680504853000

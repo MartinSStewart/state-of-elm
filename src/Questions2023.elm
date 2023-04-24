@@ -15,6 +15,7 @@ module Questions2023 exposing
     , HowLong(..)
     , NewsAndDiscussions(..)
     , OtherLanguages(..)
+    , PleaseSelectYourGender(..)
     , Question
     , StylingTools(..)
     , TestTools(..)
@@ -40,6 +41,7 @@ module Questions2023 exposing
     , initialInterestTitle
     , newsAndDiscussions
     , otherLanguages
+    , pleaseSelectYourGender
     , stylingTools
     , testTools
     , testsWrittenFor
@@ -60,6 +62,16 @@ type Age
     | Age40To49
     | Age50To59
     | Over60
+
+
+type PleaseSelectYourGender
+    = Man
+    | Woman
+    | TransMan
+    | TransWoman
+    | NonBinary
+    | PreferNotToAnswer
+    | OtherGender
 
 
 type ExperienceLevel
@@ -357,6 +369,44 @@ age =
 
                 Over60 ->
                     "60 years or older"
+    }
+
+
+pleaseSelectYourGender : Question PleaseSelectYourGender
+pleaseSelectYourGender =
+    { title = "Please select the gender you most closely identify with"
+    , choices =
+        Nonempty Woman
+            [ Man
+            , TransWoman
+            , TransMan
+            , NonBinary
+            , PreferNotToAnswer
+            , OtherGender
+            ]
+    , choiceToString =
+        \a ->
+            case a of
+                Man ->
+                    "Man"
+
+                Woman ->
+                    "Woman"
+
+                TransMan ->
+                    "Trans man"
+
+                TransWoman ->
+                    "Trans woman"
+
+                NonBinary ->
+                    "Non-binary"
+
+                PreferNotToAnswer ->
+                    "Prefer not to answer"
+
+                OtherGender ->
+                    "Other"
     }
 
 

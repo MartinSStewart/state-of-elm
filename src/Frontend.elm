@@ -478,7 +478,8 @@ loadedView model =
                 )
 
         SurveyResults2023Page surveyResultsLoaded ->
-            SurveyResults2023.view model surveyResultsLoaded |> Element.map SurveyResults2023Msg
+            SurveyResults2023.view model model.surveyResults2022 surveyResultsLoaded
+                |> Element.map SurveyResults2023Msg
 
         ErrorPage ->
             Element.paragraph [] [ Element.text "Something went wrong. Try reloading the page I guess?" ]
@@ -736,6 +737,12 @@ formView windowSize form =
                 Nothing
                 form.age
                 (\a -> FormChanged { form | age = a })
+            , Ui.singleChoiceQuestion
+                windowSize
+                Questions2023.pleaseSelectYourGender
+                Nothing
+                form.pleaseSelectYourGender
+                (\a -> FormChanged { form | pleaseSelectYourGender = a })
             , Ui.singleChoiceQuestion
                 windowSize
                 Questions2023.experienceLevel

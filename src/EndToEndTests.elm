@@ -276,7 +276,7 @@ tests =
     , TF.start config "View 2022 results"
         |> TF.connectFrontend
             sessionId0
-            url2022
+            url
             windowSize
             (\( instructions, client ) ->
                 instructions

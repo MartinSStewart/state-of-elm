@@ -31,6 +31,7 @@ import Question exposing (Question)
 import Questions2023
 import Route exposing (SurveyYear(..))
 import StringExtra
+import SurveyResults2022
 import Ui exposing (Size)
 
 
@@ -154,8 +155,8 @@ update msg model =
             { model | segment = segment }
 
 
-view : { a | windowSize : Size } -> Model -> Element Msg
-view config model =
+view : { a | windowSize : Size } -> SurveyResults2022.Data -> Model -> Element Msg
+view config previousYear model =
     let
         windowSize =
             config.windowSize
@@ -178,32 +179,18 @@ view config model =
         [ Element.width Element.fill, Element.behindContent (Element.html css) ]
         [ Ui.headerContainer
             windowSize
-            Year2022
+            Year2023
             [ Element.paragraph
                 [ Element.Font.bold ]
                 [ Element.text "The survey results are in!" ]
             , Element.paragraph
                 []
                 [ Element.text "Thank you to everyone who participated!"
-                ]
-            , Element.paragraph
-                []
-                [ Element.text "There was a 4 year hiatus for the State of Elm survey. Previously "
-                , Element.newTabLink linkAttributes
-                    { url = "https://www.brianthicks.com/post/2018/12/26/state-of-elm-2018-results/"
-                    , label = Element.text "Brian Hicks"
+                , Element.link
+                    [ Element.Font.underline ]
+                    { url = Route.encode (Route.SurveyRoute Year2022)
+                    , label = Element.text "Previous year's results."
                     }
-                , Element.text " ran this survey but going forward "
-                , Element.newTabLink linkAttributes
-                    { url = "https://github.com/MartinSStewart/state-of-elm"
-                    , label = Element.text "I'll be managing it"
-                    }
-                , Element.text ". Special thanks to "
-                , Element.newTabLink linkAttributes
-                    { url = "https://github.com/wolfadex"
-                    , label = Element.text "Wolfadex"
-                    }
-                , Element.text " for helping categorize all the free text answers."
                 ]
             ]
         , Element.column
@@ -220,13 +207,10 @@ view config model =
                 , mode = Total
                 , title = "Number of participants"
                 , filterUi = Element.none
-                , comment = """Fewer people participated in the survey this year compared to 2018 and 2017. I spoke with Brian Hicks about this and it's likely because:
-* This survey was only open for 20 days in contrast to the 2018 survey which was open for 60 days (though it's worth noting that by the 20 day mark, there weren't many new participants)
-* Brian promoted the survey via additional channels such as mailing lists and external communities (I only linked this years survey on Elm Slack, Incremental Elm, and Elm Discourse)
-* People likely formed a habit of filling out the surveys when they were occurring annually.
-"""
+                , comment = ""
                 , data =
-                    [ { choice = "2022", value = toFloat data.totalParticipants }
+                    [ { choice = "2023", value = toFloat data.totalParticipants }
+                    , { choice = "2022", value = toFloat previousYear.totalParticipants }
                     , { choice = "2018", value = 1176 }
                     , { choice = "2017", value = 1170 }
                     , { choice = "2016", value = 644 }

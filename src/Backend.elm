@@ -109,6 +109,7 @@ initSurvey2023 =
         answerMap =
             { doYouUseElm = ""
             , age = ""
+            , pleaseSelectYourGender = AnswerMap.init Questions2023.pleaseSelectYourGender
             , functionalProgrammingExperience = ""
             , otherLanguages = AnswerMap.init Questions2023.otherLanguages
             , newsAndDiscussions = AnswerMap.init Questions2023.newsAndDiscussions

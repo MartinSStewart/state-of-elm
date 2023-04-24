@@ -15,30 +15,7 @@ import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import Questions2023
-    exposing
-        ( Age(..)
-        , ApplicationDomains(..)
-        , BuildTools(..)
-        , DoYouUseElm(..)
-        , DoYouUseElmAtWork(..)
-        , DoYouUseElmFormat(..)
-        , DoYouUseElmReview(..)
-        , Editors(..)
-        , ElmResources(..)
-        , ElmVersion(..)
-        , ExperienceLevel(..)
-        , Frameworks(..)
-        , HowLargeIsTheCompany(..)
-        , HowLong(..)
-        , NewsAndDiscussions(..)
-        , OtherLanguages(..)
-        , StylingTools(..)
-        , TestTools(..)
-        , TestsWrittenFor(..)
-        , WhatLanguageDoYouUseForBackend(..)
-        , WhichElmReviewRulesDoYouUse(..)
-        )
+import Questions2023 exposing (Age(..), ApplicationDomains(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editors(..), ElmResources(..), ElmVersion(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), PleaseSelectYourGender, StylingTools(..), TestTools(..), TestsWrittenFor(..), WhatLanguageDoYouUseForBackend(..), WhichElmReviewRulesDoYouUse(..))
 import Serialize exposing (Codec)
 import Ui exposing (MultiChoiceWithOther)
 
@@ -46,6 +23,7 @@ import Ui exposing (MultiChoiceWithOther)
 type alias Form2023 =
     { doYouUseElm : Set DoYouUseElm
     , age : Maybe Age
+    , pleaseSelectYourGender : Maybe PleaseSelectYourGender
     , functionalProgrammingExperience : Maybe ExperienceLevel
     , otherLanguages : MultiChoiceWithOther OtherLanguages
     , newsAndDiscussions : MultiChoiceWithOther NewsAndDiscussions
@@ -105,6 +83,7 @@ getOtherAnswer_ text =
 type alias FormMapping =
     { doYouUseElm : String
     , age : String
+    , pleaseSelectYourGender : AnswerMap PleaseSelectYourGender
     , functionalProgrammingExperience : String
     , otherLanguages : AnswerMap OtherLanguages
     , newsAndDiscussions : AnswerMap NewsAndDiscussions
@@ -135,6 +114,7 @@ emptyForm : Form2023
 emptyForm =
     { doYouUseElm = Set.empty
     , age = Nothing
+    , pleaseSelectYourGender = Nothing
     , functionalProgrammingExperience = Nothing
     , otherLanguages = Ui.multiChoiceWithOtherInit
     , newsAndDiscussions = Ui.multiChoiceWithOtherInit
@@ -195,6 +175,7 @@ formMappingCodec =
     Serialize.record FormMapping
         |> Serialize.field .doYouUseElm Serialize.string
         |> Serialize.field .age Serialize.string
+        |> Serialize.field .pleaseSelectYourGender AnswerMap.codec
         |> Serialize.field .functionalProgrammingExperience Serialize.string
         |> Serialize.field .otherLanguages AnswerMap.codec
         |> Serialize.field .newsAndDiscussions AnswerMap.codec
@@ -226,6 +207,7 @@ formCodec =
     Serialize.record Form2023
         |> Serialize.field .doYouUseElm (assocSetCodec doYouUseElmCodec)
         |> Serialize.field .age (Serialize.maybe ageCodec)
+        |> Serialize.field .pleaseSelectYourGender (Serialize.maybe pleaseSelectYourGender)
         |> Serialize.field .functionalProgrammingExperience (Serialize.maybe experienceLevelCodec)
         |> Serialize.field .otherLanguages (multiChoiceWithOtherCodec otherLanguagesCodec)
         |> Serialize.field .newsAndDiscussions (multiChoiceWithOtherCodec newsAndDiscussionsCodec)
@@ -1072,6 +1054,11 @@ ageCodec =
         |> Serialize.variant0 Age50To59
         |> Serialize.variant0 Over60
         |> Serialize.finishCustomType
+
+
+pleaseSelectYourGender : Codec e PleaseSelectYourGender
+pleaseSelectYourGender =
+    Debug.todo ""
 
 
 doYouUseElmCodec : Codec e DoYouUseElm

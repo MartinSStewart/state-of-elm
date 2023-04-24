@@ -75,8 +75,11 @@ surveyStatus currentTime =
     if Duration.from Env.presentResultsTime currentTime |> Quantity.lessThanZero then
         SurveyOpen
 
-    else
+    else if Env.canShowLatestResults then
         SurveyFinished
+
+    else
+        SurveyOpen
 
 
 type alias Form2023Loaded_ =
