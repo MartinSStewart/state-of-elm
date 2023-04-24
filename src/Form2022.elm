@@ -15,7 +15,7 @@ import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import Questions
+import Questions2022
     exposing
         ( Age(..)
         , ApplicationDomains(..)
@@ -415,7 +415,7 @@ editorCodec =
 frameworksCodec : Codec e Frameworks
 frameworksCodec =
     Serialize.customType
-        (\a b c d e f value ->
+        (\a b c d value ->
             case value of
                 Lamdera_ ->
                     a
@@ -428,19 +428,11 @@ frameworksCodec =
 
                 ElmPlayground ->
                     d
-
-                NoFramework ->
-                    e
-
-                ElmLand ->
-                    f
         )
         |> Serialize.variant0 Lamdera_
         |> Serialize.variant0 ElmSpa
         |> Serialize.variant0 ElmPages
         |> Serialize.variant0 ElmPlayground
-        |> Serialize.variant0 NoFramework
-        |> Serialize.variant0 ElmLand
         |> Serialize.finishCustomType
 
 

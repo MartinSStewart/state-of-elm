@@ -22,8 +22,8 @@ module AnswerMap exposing
 
 import AssocSet as Set exposing (Set)
 import List.Extra as List
-import List.Nonempty
-import Questions exposing (Question)
+import List.Nonempty exposing (Nonempty)
+import Question exposing (Question)
 import Serialize exposing (Codec)
 
 

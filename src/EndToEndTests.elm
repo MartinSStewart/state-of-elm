@@ -17,14 +17,14 @@ import Html.Parser
 import Json.Decode
 import List.Nonempty
 import Quantity
-import Questions exposing (Question)
+import Question exposing (Question)
+import Questions2023
 import Route exposing (Route(..), SurveyYear(..))
 import Time exposing (Month(..))
 import Types exposing (BackendModel, BackendMsg, FrontendModel(..), FrontendMsg(..), ToBackend(..), ToFrontend)
 import Ui
 import Unsafe
 import Url
-import Url.Builder
 
 
 main : Program () (TF.Model FrontendModel) TF.Msg
@@ -218,11 +218,11 @@ tests =
             (\( instructions, client ) ->
                 instructions
                     |> shortWait
-                    |> clickCheckbox client Questions.doYouUseElm
+                    |> clickCheckbox client Questions2023.doYouUseElm
                     |> shortWait
-                    |> clickRadio client Questions.age
+                    |> clickRadio client Questions2023.age
                     |> shortWait
-                    |> clickRadio client Questions.experienceLevel
+                    |> clickRadio client Questions2023.experienceLevel
                     |> client.inputText Ui.emailAddressInputId (EmailAddress.toString userEmailAddress)
                     |> shortWait
             )

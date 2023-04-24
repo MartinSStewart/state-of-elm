@@ -28,7 +28,7 @@ import Env
 import Form2023 exposing (Form2023, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import NetworkModel exposing (NetworkModel)
-import Questions exposing (Question)
+import Questions2023 as Questions exposing (Question)
 import SendGrid
 import Serialize
 import SurveyResults2022 exposing (Mode(..))
@@ -820,7 +820,7 @@ answerMapView model =
             answerMappingView
                 model.selectedMapping
                 False
-                Questions.frameworks2023
+                Questions.frameworks
                 .frameworks
                 formMapping.frameworks
                 model

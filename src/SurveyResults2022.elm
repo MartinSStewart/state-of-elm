@@ -27,7 +27,8 @@ import Html exposing (Html)
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
-import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
+import Question exposing (Question)
+import Questions2022
 import Route exposing (SurveyYear(..))
 import StringExtra
 import Ui exposing (Size)
@@ -62,29 +63,29 @@ type alias DataEntryWithOtherSegments a =
 
 type alias Data =
     { totalParticipants : Int
-    , doYouUseElm : DataEntry DoYouUseElm
-    , age : DataEntrySegments Age
-    , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
-    , otherLanguages : DataEntryWithOtherSegments OtherLanguages
-    , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
+    , doYouUseElm : DataEntry Questions2022.DoYouUseElm
+    , age : DataEntrySegments Questions2022.Age
+    , functionalProgrammingExperience : DataEntrySegments Questions2022.ExperienceLevel
+    , otherLanguages : DataEntryWithOtherSegments Questions2022.OtherLanguages
+    , newsAndDiscussions : DataEntryWithOtherSegments Questions2022.NewsAndDiscussions
     , elmInitialInterest : DataEntryWithOtherSegments ()
     , countryLivingIn : DataEntrySegments Country
-    , elmResources : DataEntryWithOther ElmResources
-    , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
-    , applicationDomains : DataEntryWithOther ApplicationDomains
-    , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : DataEntryWithOther WhatLanguageDoYouUseForBackend
-    , howLong : DataEntry HowLong
-    , elmVersion : DataEntryWithOther ElmVersion
-    , doYouUseElmFormat : DataEntry DoYouUseElmFormat
-    , stylingTools : DataEntryWithOther StylingTools
-    , buildTools : DataEntryWithOther BuildTools
-    , frameworks : DataEntryWithOther Frameworks
-    , editors : DataEntryWithOther Editors
-    , doYouUseElmReview : DataEntry DoYouUseElmReview
-    , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
-    , testTools : DataEntryWithOther TestTools
-    , testsWrittenFor : DataEntryWithOther TestsWrittenFor
+    , elmResources : DataEntryWithOther Questions2022.ElmResources
+    , doYouUseElmAtWork : DataEntry Questions2022.DoYouUseElmAtWork
+    , applicationDomains : DataEntryWithOther Questions2022.ApplicationDomains
+    , howLargeIsTheCompany : DataEntry Questions2022.HowLargeIsTheCompany
+    , whatLanguageDoYouUseForBackend : DataEntryWithOther Questions2022.WhatLanguageDoYouUseForBackend
+    , howLong : DataEntry Questions2022.HowLong
+    , elmVersion : DataEntryWithOther Questions2022.ElmVersion
+    , doYouUseElmFormat : DataEntry Questions2022.DoYouUseElmFormat
+    , stylingTools : DataEntryWithOther Questions2022.StylingTools
+    , buildTools : DataEntryWithOther Questions2022.BuildTools
+    , frameworks : DataEntryWithOther Questions2022.Frameworks
+    , editors : DataEntryWithOther Questions2022.Editors
+    , doYouUseElmReview : DataEntry Questions2022.DoYouUseElmReview
+    , whichElmReviewRulesDoYouUse : DataEntryWithOther Questions2022.WhichElmReviewRulesDoYouUse
+    , testTools : DataEntryWithOther Questions2022.TestTools
+    , testsWrittenFor : DataEntryWithOther Questions2022.TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     }
@@ -226,35 +227,35 @@ view config data model =
             , Ui.section
                 config.windowSize
                 "About you"
-                [ multiChoiceGraph config.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
-                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
-                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
-                , multiChoiceWithOtherSegment config.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
-                , multiChoiceWithOtherSegment config.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-                , freeTextSegment modeWithoutPerCapita model.segment config.windowSize data.elmInitialInterest Questions.initialInterestTitle
-                , singleChoiceSegmentGraph config.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+                [ multiChoiceGraph config.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions2022.doYouUseElm
+                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions2022.age
+                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions2022.experienceLevel
+                , multiChoiceWithOtherSegment config.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions2022.otherLanguages
+                , multiChoiceWithOtherSegment config.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions2022.newsAndDiscussions
+                , freeTextSegment modeWithoutPerCapita model.segment config.windowSize data.elmInitialInterest Questions2022.initialInterestTitle
+                , singleChoiceSegmentGraph config.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions2022.countryLivingIn
                 ]
             , Ui.section
                 config.windowSize
                 "Questions for people who use(d) Elm"
-                [ multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
-                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
-                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-                , multiChoiceWithOther config.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
-                , multiChoiceWithOther config.windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
-                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks2022
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.editors Questions.editors
-                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions.whichElmReviewRulesDoYouUse
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
-                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
-                , freeText modeWithoutPerCapita config.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-                , freeText modeWithoutPerCapita config.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                [ multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.elmResources Questions2022.elmResources
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions2022.doYouUseElmAtWork
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.applicationDomains Questions2022.applicationDomains
+                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions2022.howLargeIsTheCompany
+                , multiChoiceWithOther config.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions2022.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLong Questions2022.howLong
+                , multiChoiceWithOther config.windowSize False False modeWithoutPerCapita data.elmVersion Questions2022.elmVersion
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions2022.doYouUseElmFormat
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.stylingTools Questions2022.stylingTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.buildTools Questions2022.buildTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.frameworks Questions2022.frameworks
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.editors Questions2022.editors
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2022.doYouUseElmReview
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions2022.whichElmReviewRulesDoYouUse
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testTools Questions2022.testTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions2022.testsWrittenFor
+                , freeText modeWithoutPerCapita config.windowSize data.biggestPainPoint Questions2022.biggestPainPointTitle
+                , freeText modeWithoutPerCapita config.windowSize data.whatDoYouLikeMost Questions2022.whatDoYouLikeMostTitle
                 ]
             ]
         , Element.el

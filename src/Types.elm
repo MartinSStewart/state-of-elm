@@ -103,8 +103,8 @@ type alias BackendModel =
 
 
 type alias BackendSurvey2022 =
-    { forms : Dict SessionId { form : Form2023, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormMapping
+    { forms : Dict SessionId { form : Form2022, submitTime : Maybe Effect.Time.Posix }
+    , formMapping : Form2022.FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
     , cachedSurveyResults : Maybe SurveyResults2022.Data
     }

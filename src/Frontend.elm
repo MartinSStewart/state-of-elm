@@ -23,7 +23,7 @@ import Form2023 exposing (Form2023)
 import Lamdera
 import List.Extra as List
 import Quantity
-import Questions exposing (DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmReview(..))
+import Questions2023
 import Route exposing (Route(..), SurveyYear(..))
 import SurveyResults2022 exposing (Mode(..), Segment(..))
 import SurveyResults2023
@@ -684,7 +684,7 @@ formView windowSize form =
             "About you"
             [ Ui.multiChoiceQuestion
                 windowSize
-                Questions.doYouUseElm
+                Questions2023.doYouUseElm
                 Nothing
                 form.doYouUseElm
                 (\a ->
@@ -694,22 +694,22 @@ formView windowSize form =
                                 let
                                     isYes =
                                         case Set.diff a form.doYouUseElm |> Set.toList |> List.head of
-                                            Just YesAtWork ->
+                                            Just Questions2023.YesAtWork ->
                                                 Just True
 
-                                            Just YesInSideProjects ->
+                                            Just Questions2023.YesInSideProjects ->
                                                 Just True
 
-                                            Just YesAsAStudent ->
+                                            Just Questions2023.YesAsAStudent ->
                                                 Just True
 
-                                            Just IUsedToButIDontAnymore ->
+                                            Just Questions2023.IUsedToButIDontAnymore ->
                                                 Just True
 
-                                            Just NoButImCuriousAboutIt ->
+                                            Just Questions2023.NoButImCuriousAboutIt ->
                                                 Just False
 
-                                            Just NoAndIDontPlanTo ->
+                                            Just Questions2023.NoAndIDontPlanTo ->
                                                 Just False
 
                                             Nothing ->
@@ -717,14 +717,14 @@ formView windowSize form =
                                 in
                                 case isYes of
                                     Just True ->
-                                        Set.remove NoButImCuriousAboutIt a
-                                            |> Set.remove NoAndIDontPlanTo
+                                        Set.remove Questions2023.NoButImCuriousAboutIt a
+                                            |> Set.remove Questions2023.NoAndIDontPlanTo
 
                                     Just False ->
-                                        Set.remove YesAtWork a
-                                            |> Set.remove YesInSideProjects
-                                            |> Set.remove YesAsAStudent
-                                            |> Set.remove IUsedToButIDontAnymore
+                                        Set.remove Questions2023.YesAtWork a
+                                            |> Set.remove Questions2023.YesInSideProjects
+                                            |> Set.remove Questions2023.YesAsAStudent
+                                            |> Set.remove Questions2023.IUsedToButIDontAnymore
 
                                     Nothing ->
                                         a
@@ -732,25 +732,25 @@ formView windowSize form =
                 )
             , Ui.singleChoiceQuestion
                 windowSize
-                Questions.age
+                Questions2023.age
                 Nothing
                 form.age
                 (\a -> FormChanged { form | age = a })
             , Ui.singleChoiceQuestion
                 windowSize
-                Questions.experienceLevel
+                Questions2023.experienceLevel
                 Nothing
                 form.functionalProgrammingExperience
                 (\a -> FormChanged { form | functionalProgrammingExperience = a })
             , Ui.multiChoiceQuestionWithOther
                 windowSize
-                Questions.otherLanguages
+                Questions2023.otherLanguages
                 Nothing
                 form.otherLanguages
                 (\a -> FormChanged { form | otherLanguages = a })
             , Ui.multiChoiceQuestionWithOther
                 windowSize
-                Questions.newsAndDiscussions
+                Questions2023.newsAndDiscussions
                 Nothing
                 form.newsAndDiscussions
                 (\a -> FormChanged { form | newsAndDiscussions = a })
@@ -760,13 +760,13 @@ formView windowSize form =
               else
                 Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.elmResources
+                    Questions2023.elmResources
                     Nothing
                     form.elmResources
                     (\a -> FormChanged { form | elmResources = a })
             , Ui.textInput
                 windowSize
-                Questions.initialInterestTitle
+                Questions2023.initialInterestTitle
                 Nothing
                 form.elmInitialInterest
                 (\a -> FormChanged { form | elmInitialInterest = a })
@@ -792,45 +792,45 @@ formView windowSize form =
                 "Where do you use Elm?"
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.applicationDomains
+                    Questions2023.applicationDomains
                     (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    Questions.doYouUseElmAtWork
+                    Questions2023.doYouUseElmAtWork
                     (Just "Either for a consumer product or an internal tool")
                     form.doYouUseElmAtWork
                     (\a -> FormChanged { form | doYouUseElmAtWork = a })
-                , if form.doYouUseElmAtWork == Just NotEmployed then
+                , if form.doYouUseElmAtWork == Just Questions2023.NotEmployed then
                     Element.none
 
                   else
                     Ui.singleChoiceQuestion
                         windowSize
-                        Questions.howLargeIsTheCompany
+                        Questions2023.howLargeIsTheCompany
                         Nothing
                         form.howLargeIsTheCompany
                         (\a -> FormChanged { form | howLargeIsTheCompany = a })
-                , if form.doYouUseElmAtWork == Just NotEmployed then
+                , if form.doYouUseElmAtWork == Just Questions2023.NotEmployed then
                     Element.none
 
                   else
                     Ui.multiChoiceQuestionWithOther
                         windowSize
-                        Questions.whatLanguageDoYouUseForBackend
+                        Questions2023.whatLanguageDoYouUseForBackend
                         Nothing
                         form.whatLanguageDoYouUseForBackend
                         (\a -> FormChanged { form | whatLanguageDoYouUseForBackend = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    Questions.howLong
+                    Questions2023.howLong
                     Nothing
                     form.howLong
                     (\a -> FormChanged { form | howLong = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.elmVersion
+                    Questions2023.elmVersion
                     Nothing
                     form.elmVersion
                     (\a -> FormChanged { form | elmVersion = a })
@@ -843,55 +843,55 @@ formView windowSize form =
                 "How do you use Elm?"
                 [ Ui.singleChoiceQuestion
                     windowSize
-                    Questions.doYouUseElmFormat
+                    Questions2023.doYouUseElmFormat
                     Nothing
                     form.doYouUseElmFormat
                     (\a -> FormChanged { form | doYouUseElmFormat = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.stylingTools
+                    Questions2023.stylingTools
                     Nothing
                     form.stylingTools
                     (\a -> FormChanged { form | stylingTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.buildTools
+                    Questions2023.buildTools
                     Nothing
                     form.buildTools
                     (\a -> FormChanged { form | buildTools = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.frameworks2023
+                    Questions2023.frameworks
                     Nothing
                     form.frameworks
                     (\a -> FormChanged { form | frameworks = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.editors
+                    Questions2023.editors
                     Nothing
                     form.editors
                     (\a -> FormChanged { form | editors = a })
                 , Ui.singleChoiceQuestion
                     windowSize
-                    Questions.doYouUseElmReview
+                    Questions2023.doYouUseElmReview
                     Nothing
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
-                    Questions.testTools
+                    Questions2023.testTools
                     Nothing
                     form.testTools
                     (\a -> FormChanged { form | testTools = a })
                 , Ui.textInput
                     windowSize
-                    Questions.biggestPainPointTitle
+                    Questions2023.biggestPainPointTitle
                     Nothing
                     form.biggestPainPoint
                     (\a -> FormChanged { form | biggestPainPoint = a })
                 , Ui.textInput
                     windowSize
-                    Questions.whatDoYouLikeMostTitle
+                    Questions2023.whatDoYouLikeMostTitle
                     Nothing
                     form.whatDoYouLikeMost
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })

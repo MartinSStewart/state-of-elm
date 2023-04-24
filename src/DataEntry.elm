@@ -18,7 +18,7 @@ import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import List.Extra as List
 import List.Nonempty as Nonempty exposing (Nonempty)
 import List.Nonempty.Ancillary as Nonempty
-import Questions exposing (Question)
+import Question exposing (Question)
 import Ui exposing (MultiChoiceWithOther)
 
 

@@ -39,7 +39,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import List.Nonempty
-import Questions exposing (Question)
+import Question exposing (Question)
 import Route exposing (SurveyYear)
 import Simple.Animation
 import Simple.Animation.Animated

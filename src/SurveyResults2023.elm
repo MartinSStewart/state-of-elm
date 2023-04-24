@@ -27,7 +27,8 @@ import Html exposing (Html)
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
-import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
+import Question exposing (Question)
+import Questions2023
 import Route exposing (SurveyYear(..))
 import StringExtra
 import Ui exposing (Size)
@@ -65,28 +66,28 @@ type alias DataEntryWithOtherSegments a =
 
 type alias Data =
     { totalParticipants : Int
-    , doYouUseElm : DataEntry DoYouUseElm
-    , age : DataEntrySegments Age
-    , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
-    , otherLanguages : DataEntryWithOtherSegments OtherLanguages
-    , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
+    , doYouUseElm : DataEntry Questions2023.DoYouUseElm
+    , age : DataEntrySegments Questions2023.Age
+    , functionalProgrammingExperience : DataEntrySegments Questions2023.ExperienceLevel
+    , otherLanguages : DataEntryWithOtherSegments Questions2023.OtherLanguages
+    , newsAndDiscussions : DataEntryWithOtherSegments Questions2023.NewsAndDiscussions
     , elmInitialInterest : DataEntryWithOtherSegments ()
     , countryLivingIn : DataEntrySegments Country
-    , elmResources : DataEntryWithOther ElmResources
-    , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
-    , applicationDomains : DataEntryWithOther ApplicationDomains
-    , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : DataEntryWithOther WhatLanguageDoYouUseForBackend
-    , howLong : DataEntry HowLong
-    , elmVersion : DataEntryWithOther ElmVersion
-    , doYouUseElmFormat : DataEntry DoYouUseElmFormat
-    , stylingTools : DataEntryWithOther StylingTools
-    , buildTools : DataEntryWithOther BuildTools
-    , frameworks : DataEntryWithOther Frameworks
-    , editors : DataEntryWithOther Editors
-    , doYouUseElmReview : DataEntry DoYouUseElmReview
-    , testTools : DataEntryWithOther TestTools
-    , testsWrittenFor : DataEntryWithOther TestsWrittenFor
+    , elmResources : DataEntryWithOther Questions2023.ElmResources
+    , doYouUseElmAtWork : DataEntry Questions2023.DoYouUseElmAtWork
+    , applicationDomains : DataEntryWithOther Questions2023.ApplicationDomains
+    , howLargeIsTheCompany : DataEntry Questions2023.HowLargeIsTheCompany
+    , whatLanguageDoYouUseForBackend : DataEntryWithOther Questions2023.WhatLanguageDoYouUseForBackend
+    , howLong : DataEntry Questions2023.HowLong
+    , elmVersion : DataEntryWithOther Questions2023.ElmVersion
+    , doYouUseElmFormat : DataEntry Questions2023.DoYouUseElmFormat
+    , stylingTools : DataEntryWithOther Questions2023.StylingTools
+    , buildTools : DataEntryWithOther Questions2023.BuildTools
+    , frameworks : DataEntryWithOther Questions2023.Frameworks
+    , editors : DataEntryWithOther Questions2023.Editors
+    , doYouUseElmReview : DataEntry Questions2023.DoYouUseElmReview
+    , testTools : DataEntryWithOther Questions2023.TestTools
+    , testsWrittenFor : DataEntryWithOther Questions2023.TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     }
@@ -234,34 +235,34 @@ view config model =
             , Ui.section
                 windowSize
                 "About you"
-                [ multiChoiceGraph windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
-                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
-                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
-                , multiChoiceWithOtherSegment windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
-                , multiChoiceWithOtherSegment windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-                , freeTextSegment modeWithoutPerCapita model.segment windowSize data.elmInitialInterest Questions.initialInterestTitle
-                , singleChoiceSegmentGraph windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+                [ multiChoiceGraph windowSize False False modeWithoutPerCapita data.doYouUseElm Questions2023.doYouUseElm
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions2023.age
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions2023.experienceLevel
+                , multiChoiceWithOtherSegment windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions2023.otherLanguages
+                , multiChoiceWithOtherSegment windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions2023.newsAndDiscussions
+                , freeTextSegment modeWithoutPerCapita model.segment windowSize data.elmInitialInterest Questions2023.initialInterestTitle
+                , singleChoiceSegmentGraph windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions2023.countryLivingIn
                 ]
             , Ui.section
                 windowSize
                 "Questions for people who use(d) Elm"
-                [ multiChoiceWithOther windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
-                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
-                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-                , multiChoiceWithOther windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
-                , multiChoiceWithOther windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
-                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks2022
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions.editors
-                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
-                , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-                , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                [ multiChoiceWithOther windowSize False True modeWithoutPerCapita data.elmResources Questions2023.elmResources
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions2023.doYouUseElmAtWork
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.applicationDomains Questions2023.applicationDomains
+                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions2023.howLargeIsTheCompany
+                , multiChoiceWithOther windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions2023.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph windowSize False False modeWithoutPerCapita data.howLong Questions2023.howLong
+                , multiChoiceWithOther windowSize False False modeWithoutPerCapita data.elmVersion Questions2023.elmVersion
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions2023.doYouUseElmFormat
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.stylingTools Questions2023.stylingTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.buildTools Questions2023.buildTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.frameworks Questions2023.frameworks
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions2023.editors
+                , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2023.doYouUseElmReview
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions2023.testTools
+                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions2023.testsWrittenFor
+                , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions2023.biggestPainPointTitle
+                , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions2023.whatDoYouLikeMostTitle
                 ]
             ]
         , Element.el

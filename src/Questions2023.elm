@@ -1,4 +1,4 @@
-module Questions exposing
+module Questions2023 exposing
     ( Age(..)
     , ApplicationDomains(..)
     , BuildTools(..)
@@ -34,8 +34,7 @@ module Questions exposing
     , elmResources
     , elmVersion
     , experienceLevel
-    , frameworks2022
-    , frameworks2023
+    , frameworks
     , howLargeIsTheCompany
     , howLong
     , initialInterestTitle
@@ -1016,35 +1015,8 @@ buildTools =
     }
 
 
-frameworks2022 : Question Frameworks
-frameworks2022 =
-    { title = "What frameworks do you use?"
-    , choices = Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa ]
-    , choiceToString =
-        \a ->
-            case a of
-                Lamdera_ ->
-                    "Lamdera"
-
-                ElmSpa ->
-                    "elm-spa"
-
-                ElmPages ->
-                    "elm-pages"
-
-                ElmPlayground ->
-                    "elm-playground"
-
-                NoFramework ->
-                    "None"
-
-                ElmLand ->
-                    "elm-land"
-    }
-
-
-frameworks2023 : Question Frameworks
-frameworks2023 =
+frameworks : Question Frameworks
+frameworks =
     { title = "What frameworks do you use?"
     , choices = Nonempty NoFramework [ Lamdera_, ElmPages, ElmPlayground, ElmSpa, ElmLand ]
     , choiceToString =
