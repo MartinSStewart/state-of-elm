@@ -185,7 +185,7 @@ view config previousYear model =
                 [ Element.text "The survey results are in!" ]
             , Element.paragraph
                 []
-                [ Element.text "Thank you to everyone who participated!"
+                [ Element.text "Thank you to everyone who participated! "
                 , Element.link
                     [ Element.Font.underline ]
                     { url = Route.encode (Route.SurveyRoute Year2022)
