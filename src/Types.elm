@@ -6,6 +6,7 @@ import AssocSet exposing (Set)
 import Browser
 import Duration
 import Effect.Browser.Navigation
+import Effect.File exposing (File)
 import Effect.Http as Http
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
@@ -88,6 +89,8 @@ type alias Form2023Loaded_ =
     , submitting : Bool
     , pressedSubmitCount : Int
     , debounceCounter : Int
+    , elmJsonTextInput : String
+    , elmJsonError : Maybe String
     }
 
 
@@ -135,6 +138,10 @@ type FrontendMsg
     | AdminPageMsg AdminPage.Msg
     | SurveyResults2022Msg SurveyResults2022.Msg
     | SurveyResults2023Msg SurveyResults2023.Msg
+    | PressedSelectElmJsonFiles
+    | SelectedElmJsonFiles File (List File)
+    | GotElmJsonFilesContent (List String)
+    | TypedElmJsonFile String
 
 
 type ToBackend

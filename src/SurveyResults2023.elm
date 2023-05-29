@@ -13,7 +13,7 @@ module SurveyResults2023 exposing
     , view
     )
 
-import AssocList as Dict
+import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
@@ -27,6 +27,7 @@ import Html exposing (Html)
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
+import PackageName exposing (PackageName)
 import Question exposing (Question)
 import Questions2023
 import Route exposing (SurveyYear(..))
@@ -91,6 +92,7 @@ type alias Data =
     , testsWrittenFor : DataEntryWithOther Questions2023.TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
+    , elmJson : Dict PackageName Int
     }
 
 

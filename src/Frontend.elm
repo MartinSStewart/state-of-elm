@@ -3,15 +3,18 @@ module Frontend exposing (..)
 import AdminPage
 import AssocSet as Set
 import Browser
+import Dict
 import Duration exposing (Duration)
 import Effect.Browser.Dom as Dom
 import Effect.Browser.Events
 import Effect.Browser.Navigation
 import Effect.Command as Command exposing (Command, FrontendOnly)
+import Effect.File
+import Effect.File.Select
 import Effect.Lamdera
 import Effect.Process
 import Effect.Subscription as Subscription
-import Effect.Task
+import Effect.Task as Task
 import Effect.Time
 import Element exposing (Element)
 import Element.Background
@@ -20,8 +23,10 @@ import Element.Input
 import Element.Region
 import Env
 import Form2023 exposing (Form2023)
+import Json.Decode
 import Lamdera
 import List.Extra as List
+import PackageName exposing (PackageName)
 import Quantity
 import Questions2023
 import Route exposing (Route(..), SurveyYear(..))
@@ -64,10 +69,10 @@ init url key =
     ( Loading { windowSize = Nothing, time = Nothing, route = route, navKey = key, responseData = Nothing }
     , Command.batch
         [ Effect.Browser.Navigation.replaceUrl key url2
-        , Effect.Task.perform
+        , Task.perform
             (\{ viewport } -> GotWindowSize { width = round viewport.width, height = round viewport.height })
             Dom.getViewport
-        , Effect.Task.perform GotTime Effect.Time.now
+        , Task.perform GotTime Effect.Time.now
         , Effect.Lamdera.sendToBackend
             (case route of
                 SurveyRoute Year2023 ->
@@ -191,7 +196,7 @@ updateLoaded msg model =
                 (\formLoaded ->
                     ( { formLoaded | form = form, debounceCounter = formLoaded.debounceCounter + 1 }
                     , Effect.Process.sleep Duration.second
-                        |> Effect.Task.perform (\() -> Debounce (formLoaded.debounceCounter + 1))
+                        |> Task.perform (\() -> Debounce (formLoaded.debounceCounter + 1))
                     )
                 )
 
@@ -278,6 +283,88 @@ updateLoaded msg model =
                 _ ->
                     ( model, Command.none )
 
+        PressedSelectElmJsonFiles ->
+            ( model, Effect.File.Select.files [ "application/json" ] SelectedElmJsonFiles )
+
+        TypedElmJsonFile elmJsonText ->
+            updateFormLoaded (addElmJson [ elmJsonText ])
+
+        SelectedElmJsonFiles file files ->
+            ( model
+            , List.map Effect.File.toString (file :: files) |> Task.sequence |> Task.perform GotElmJsonFilesContent
+            )
+
+        GotElmJsonFilesContent fileContents ->
+            updateFormLoaded (addElmJson fileContents)
+
+
+addElmJson : List String -> Form2023Loaded_ -> ( Form2023Loaded_, Command FrontendOnly ToBackend FrontendMsg )
+addElmJson elmJsons model =
+    let
+        results : List (Result Json.Decode.Error (List PackageName))
+        results =
+            List.map (Json.Decode.decodeString parseElmJson) elmJsons
+
+        oks : List (List PackageName)
+        oks =
+            List.filterMap Result.toMaybe results
+
+        errs : List String
+        errs =
+            List.filterMap
+                (\result ->
+                    case result of
+                        Ok _ ->
+                            Nothing
+
+                        Err error ->
+                            Json.Decode.errorToString error |> Just
+                )
+                results
+
+        form =
+            model.form
+    in
+    ( { model | form = { form | elmJson = form.elmJson ++ oks }, debounceCounter = model.debounceCounter + 1 }
+    , Effect.Process.sleep Duration.second
+        |> Task.perform (\() -> Debounce (model.debounceCounter + 1))
+    )
+
+
+parseElmJson : Json.Decode.Decoder (List PackageName)
+parseElmJson =
+    Json.Decode.map2
+        Tuple.pair
+        (Json.Decode.field "type" Json.Decode.string)
+        (Json.Decode.field "elm-version" Json.Decode.string)
+        |> Json.Decode.andThen
+            (\( type_, elmVersion ) ->
+                if type_ == "application" then
+                    if String.startsWith "0.19." elmVersion || elmVersion == "0.19" then
+                        Json.Decode.at [ "dependencies", "direct" ] (Json.Decode.dict Json.Decode.string)
+                            |> Json.Decode.andThen
+                                (\dict ->
+                                    let
+                                        packageNames =
+                                            Dict.toList dict |> List.map PackageName.fromTuple
+
+                                        okPackageNames =
+                                            List.filterMap identity packageNames
+                                    in
+                                    if List.length packageNames == List.length okPackageNames then
+                                        Json.Decode.succeed okPackageNames
+
+                                    else
+                                        Json.Decode.fail "Failed to parse some direct dependencies"
+                                )
+
+                    else
+                        Json.Decode.fail "Only upload elm.json files for 0.19 or 0.19.1 applications please!"
+
+                else
+                    Json.Decode.fail "Only upload elm.json files for applications please!"
+            )
+
 
 updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Command FrontendOnly ToBackend FrontendMsg )
 updateFromBackend msg model =
@@ -362,6 +449,8 @@ loadForm route formStatus =
                         , submitting = False
                         , pressedSubmitCount = 0
                         , debounceCounter = 0
+                        , elmJsonTextInput = ""
+                        , elmJsonError = Nothing
                         }
 
                 FormAutoSaved form ->
@@ -371,6 +460,8 @@ loadForm route formStatus =
                         , submitting = False
                         , pressedSubmitCount = 0
                         , debounceCounter = 0
+                        , elmJsonTextInput = ""
+                        , elmJsonError = Nothing
                         }
 
                 FormSubmitted ->
@@ -884,6 +975,19 @@ formView windowSize form =
                     Nothing
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
+                , Element.column
+                    []
+                    [ Element.text "What packages do you use in your Elm apps?"
+                    , Ui.button selectElmJsonFilesButtonId PressedSelectElmJsonFiles "Upload elm.json"
+                    , Element.Input.multiline
+                        Ui.multilineAttributes
+                        { onChange = TypedElmJsonFile
+                        , text = ""
+                        , placeholder = Nothing
+                        , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
+                        , spellcheck = False
+                        }
+                    ]
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
                     Questions2023.testTools
@@ -904,3 +1008,8 @@ formView windowSize form =
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })
                 ]
         ]
+
+
+selectElmJsonFilesButtonId : Dom.HtmlId
+selectElmJsonFilesButtonId =
+    Dom.id "selectElmJsonFilesButton"

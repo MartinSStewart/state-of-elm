@@ -439,7 +439,7 @@ formData2023 model =
                             |> DataEntry.fromMultiChoiceWithOther question (answerMapField model.formMapping)
                     }
 
-                segment : (Form2023 -> Maybe a) -> (Form2023.FormMapping -> String) -> Question a -> SurveyResults2022.DataEntrySegments a
+                segment : (Form2023 -> Maybe a) -> (Form2023.FormMapping -> String) -> Question a -> SurveyResults2023.DataEntrySegments a
                 segment formField answerMapField question =
                     { users =
                         List.filterMap
@@ -465,7 +465,7 @@ formData2023 model =
                             |> DataEntry.fromForms (answerMapField model.formMapping) question.choices
                     }
 
-                segmentFreeText : (Form2023 -> String) -> (Form2023.FormMapping -> FreeTextAnswerMap) -> SurveyResults2022.DataEntryWithOtherSegments a
+                segmentFreeText : (Form2023 -> String) -> (Form2023.FormMapping -> FreeTextAnswerMap) -> SurveyResults2023.DataEntryWithOtherSegments a
                 segmentFreeText formField answerMapField =
                     { users =
                         List.filterMap
@@ -491,6 +491,7 @@ formData2023 model =
                             |> DataEntry.fromFreeText (answerMapField model.formMapping)
                     }
 
+                formData_ : SurveyResults2023.Data
                 formData_ =
                     { totalParticipants = List.length submittedForms
                     , doYouUseElm =
@@ -552,6 +553,13 @@ formData2023 model =
                     , whatDoYouLikeMost =
                         List.map .whatDoYouLikeMost formsWithoutNoInterestedInElm
                             |> DataEntry.fromFreeText model.formMapping.whatDoYouLikeMost
+                    , elmJson =
+                        List.map .elmJson formsWithoutNoInterestedInElm
+                            |> List.concat
+                            |> List.concat
+                            |> List.gatherEquals
+                            |> List.map (\( first, rest ) -> ( first, List.length rest + 1 ))
+                            |> Dict.fromList
                     }
             in
             ( { model | cachedSurveyResults = Just formData_ }, formData_ )

@@ -15,6 +15,7 @@ import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
+import PackageName exposing (PackageName)
 import Questions2023 exposing (Age(..), ApplicationDomains(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editors(..), ElmResources(..), ElmVersion(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), PleaseSelectYourGender, StylingTools(..), TestTools(..), TestsWrittenFor(..), WhatLanguageDoYouUseForBackend(..), WhichElmReviewRulesDoYouUse(..))
 import Serialize exposing (Codec)
 import Ui exposing (MultiChoiceWithOther)
@@ -48,6 +49,7 @@ type alias Form2023 =
     , biggestPainPoint : String
     , whatDoYouLikeMost : String
     , emailAddress : String
+    , elmJson : List (List PackageName)
     }
 
 
@@ -139,6 +141,7 @@ emptyForm =
     , biggestPainPoint = ""
     , whatDoYouLikeMost = ""
     , emailAddress = ""
+    , elmJson = []
     }
 
 
@@ -235,6 +238,7 @@ formCodec =
         |> Serialize.field .biggestPainPoint Serialize.string
         |> Serialize.field .whatDoYouLikeMost Serialize.string
         |> Serialize.field .emailAddress Serialize.string
+        |> Serialize.field .elmJson (Serialize.list (Serialize.list PackageName.codec))
         |> Serialize.finishRecord
 
 

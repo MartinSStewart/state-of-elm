@@ -15,6 +15,7 @@ module Ui exposing
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
+    , multilineAttributes
     , multipleChoiceIndicator
     , section
     , singleChoiceQuestion
