@@ -167,6 +167,7 @@ type HowLong
     | SevenYears
     | EightYears
     | NineYears
+    | TenYears
 
 
 type DoYouUseElmReview
@@ -887,6 +888,7 @@ howLong =
             , SevenYears
             , EightYears
             , NineYears
+            , TenYears
             ]
     , choiceToString =
         \a ->
@@ -923,6 +925,9 @@ howLong =
 
                 NineYears ->
                     "9 years"
+
+                TenYears ->
+                    "10 years"
     }
 
 

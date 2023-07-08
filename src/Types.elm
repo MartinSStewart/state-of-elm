@@ -142,6 +142,7 @@ type FrontendMsg
     | SelectedElmJsonFiles File (List File)
     | GotElmJsonFilesContent (List String)
     | TypedElmJsonFile String
+    | PressedRemoveElmJson Int
 
 
 type ToBackend

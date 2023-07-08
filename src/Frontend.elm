@@ -18,6 +18,7 @@ import Effect.Task as Task
 import Effect.Time
 import Element exposing (Element)
 import Element.Background
+import Element.Border
 import Element.Font
 import Element.Input
 import Element.Region
@@ -296,6 +297,19 @@ updateLoaded msg model =
 
         GotElmJsonFilesContent fileContents ->
             updateFormLoaded (addElmJson fileContents)
+
+        PressedRemoveElmJson index ->
+            updateFormLoaded
+                (\formLoaded ->
+                    let
+                        form : Form2023
+                        form =
+                            formLoaded.form
+                    in
+                    ( { formLoaded | form = { form | elmJson = List.removeAt index form.elmJson } }
+                    , Command.none
+                    )
+                )
 
 
 addElmJson : List String -> Form2023Loaded_ -> ( Form2023Loaded_, Command FrontendOnly ToBackend FrontendMsg )
@@ -975,10 +989,18 @@ formView windowSize form =
                     Nothing
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
-                , Element.column
-                    []
-                    [ Element.text "What packages do you use in your Elm apps?"
-                    , Ui.button selectElmJsonFilesButtonId PressedSelectElmJsonFiles "Upload elm.json"
+                , Ui.container
+                    windowSize
+                    [ Ui.title "What packages do you use in your Elm apps?"
+                    , Ui.customButton
+                        [ Element.Background.color Ui.blue1
+                        , Element.Font.color Ui.white
+                        , Element.Font.bold
+                        , Element.padding 16
+                        ]
+                        selectElmJsonFilesButtonId
+                        PressedSelectElmJsonFiles
+                        (Element.text "Upload elm.json")
                     , Element.Input.multiline
                         Ui.multilineAttributes
                         { onChange = TypedElmJsonFile
@@ -987,6 +1009,27 @@ formView windowSize form =
                         , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
                         , spellcheck = False
                         }
+                    , Element.wrappedRow
+                        [ Element.spacing 16 ]
+                        (List.indexedMap
+                            (\index elmJson ->
+                                Element.el
+                                    [ Element.width (Element.px 200)
+                                    , Element.height (Element.px 200)
+                                    , Element.Border.color (Element.rgb 0.5 0.5 1)
+                                    , Element.Border.width 2
+                                    , Element.inFront
+                                        (Ui.customButton
+                                            [ Element.alignRight ]
+                                            (removeElmJsonButtonId index)
+                                            (PressedRemoveElmJson index)
+                                            (Element.text "X")
+                                        )
+                                    ]
+                                    Element.none
+                            )
+                            form.elmJson
+                        )
                     ]
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
@@ -1013,3 +1056,8 @@ formView windowSize form =
 selectElmJsonFilesButtonId : Dom.HtmlId
 selectElmJsonFilesButtonId =
     Dom.id "selectElmJsonFilesButton"
+
+
+removeElmJsonButtonId : Int -> Dom.HtmlId
+removeElmJsonButtonId index =
+    Dom.id ("removeElmJsonButton" ++ String.fromInt index)

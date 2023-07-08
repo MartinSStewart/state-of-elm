@@ -6,6 +6,8 @@ module Ui exposing
     , blue0
     , blue1
     , button
+    , container
+    , customButton
     , disclaimer
     , emailAddressInput
     , emailAddressInputId
@@ -266,6 +268,15 @@ button htmlId onPress text =
         ]
         { onPress = Just onPress
         , label = Element.text text
+        }
+
+
+customButton : List (Element.Attribute msg) -> HtmlId -> msg -> Element msg -> Element msg
+customButton attributes htmlId onPress label =
+    Element.Input.button
+        (Element.htmlAttribute (Dom.idToAttribute htmlId) :: attributes)
+        { onPress = Just onPress
+        , label = label
         }
 
 

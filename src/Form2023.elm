@@ -570,7 +570,7 @@ whatElmVersionCodec =
 howLongCodec : Codec e HowLong
 howLongCodec =
     Serialize.customType
-        (\a b c d e f g h i j k value ->
+        (\a b c d e f g h i j k l value ->
             case value of
                 Under3Months ->
                     a
@@ -604,6 +604,9 @@ howLongCodec =
 
                 NineYears ->
                     k
+
+                TenYears ->
+                    l
         )
         |> Serialize.variant0 Under3Months
         |> Serialize.variant0 Between3MonthsAndAYear
@@ -616,6 +619,7 @@ howLongCodec =
         |> Serialize.variant0 SevenYears
         |> Serialize.variant0 EightYears
         |> Serialize.variant0 NineYears
+        |> Serialize.variant0 TenYears
         |> Serialize.finishCustomType
 
 
