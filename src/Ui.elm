@@ -23,6 +23,7 @@ module Ui exposing
     , singleChoiceQuestion
     , sourceCodeLink
     , submitSurveyButtonId
+    , subtitle
     , textInput
     , title
     , titleFontSize
@@ -350,12 +351,17 @@ titleAndSubtitle title_ maybeSubtitle =
         [ Element.spacing 12 ]
         [ title title_
         , case maybeSubtitle of
-            Just subtitle ->
-                Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text subtitle ]
+            Just text ->
+                subtitle text
 
             Nothing ->
                 Element.none
         ]
+
+
+subtitle : String -> Element msg
+subtitle text =
+    Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text text ]
 
 
 title : String -> Element msg

@@ -288,7 +288,12 @@ updateLoaded msg model =
             ( model, Effect.File.Select.files [ "application/json" ] SelectedElmJsonFiles )
 
         TypedElmJsonFile elmJsonText ->
-            updateFormLoaded (addElmJson [ elmJsonText ])
+            if String.length elmJsonText < 4 then
+                updateFormLoaded
+                    (\form -> ( { form | elmJsonError = Just "Copy paste your whole elm.json in" }, Command.none ))
+
+            else
+                updateFormLoaded (addElmJson [ elmJsonText ])
 
         SelectedElmJsonFiles file files ->
             ( model
@@ -312,6 +317,34 @@ updateLoaded msg model =
                 )
 
 
+getJsonError : Json.Decode.Error -> String
+getJsonError error =
+    case error of
+        Json.Decode.Field string error2 ->
+            getJsonError error2
+
+        Json.Decode.Index int error2 ->
+            getJsonError error2
+
+        Json.Decode.OneOf errors ->
+            case List.head errors of
+                Just error2 ->
+                    getJsonError error2
+
+                Nothing ->
+                    "Failed to decode"
+
+        Json.Decode.Failure string value ->
+            if String.startsWith "This is not valid JSON!" string then
+                "Invalid JSON"
+
+            else if String.startsWith "Expecting" string then
+                "Not a valid elm.json file"
+
+            else
+                string
+
+
 addElmJson : List String -> Form2023Loaded_ -> ( Form2023Loaded_, Command FrontendOnly ToBackend FrontendMsg )
 addElmJson elmJsons model =
     let
@@ -332,14 +365,28 @@ addElmJson elmJsons model =
                             Nothing
 
                         Err error ->
-                            Json.Decode.errorToString error |> Just
+                            getJsonError error |> Just
                 )
                 results
 
         form =
             model.form
     in
-    ( { model | form = { form | elmJson = form.elmJson ++ oks }, debounceCounter = model.debounceCounter + 1 }
+    ( { model
+        | form =
+            { form
+                | elmJson =
+                    form.elmJson
+                        ++ (if List.isEmpty errs then
+                                oks
+
+                            else
+                                []
+                           )
+            }
+        , elmJsonError = List.head errs
+        , debounceCounter = model.debounceCounter + 1
+      }
     , Effect.Process.sleep Duration.second
         |> Task.perform (\() -> Debounce (model.debounceCounter + 1))
     )
@@ -376,7 +423,7 @@ parseElmJson =
                         Json.Decode.fail "Only upload elm.json files for 0.19 or 0.19.1 applications please!"
 
                 else
-                    Json.Decode.fail "Only upload elm.json files for applications please!"
+                    Json.Decode.fail "Only upload elm.json files for applications, not packages"
             )
 
 
@@ -658,7 +705,8 @@ answerSurveyView model formLoaded =
                 [ Ui.titleFontSize, Element.Font.bold ]
                 [ "Survey closes in " ++ timeLeft Env.surveyCloseTime model.time |> Element.text ]
             ]
-        , formView model.windowSize formLoaded.form
+        , --packagesQuestion model.windowSize formLoaded
+          formView model.windowSize formLoaded
         , Ui.acceptTosQuestion
             model.windowSize
             formLoaded.acceptedTos
@@ -778,8 +826,12 @@ awaitingResultsView =
         )
 
 
-formView : Size -> Form2023 -> Element FrontendMsg
-formView windowSize form =
+formView : Size -> Form2023Loaded_ -> Element FrontendMsg
+formView windowSize model =
+    let
+        form =
+            model.form
+    in
     Element.column
         [ Element.spacing 64
         , Element.padding 8
@@ -989,48 +1041,7 @@ formView windowSize form =
                     Nothing
                     form.doYouUseElmReview
                     (\a -> FormChanged { form | doYouUseElmReview = a })
-                , Ui.container
-                    windowSize
-                    [ Ui.title "What packages do you use in your Elm apps?"
-                    , Ui.customButton
-                        [ Element.Background.color Ui.blue1
-                        , Element.Font.color Ui.white
-                        , Element.Font.bold
-                        , Element.padding 16
-                        ]
-                        selectElmJsonFilesButtonId
-                        PressedSelectElmJsonFiles
-                        (Element.text "Upload elm.json")
-                    , Element.Input.multiline
-                        Ui.multilineAttributes
-                        { onChange = TypedElmJsonFile
-                        , text = ""
-                        , placeholder = Nothing
-                        , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
-                        , spellcheck = False
-                        }
-                    , Element.wrappedRow
-                        [ Element.spacing 16 ]
-                        (List.indexedMap
-                            (\index elmJson ->
-                                Element.el
-                                    [ Element.width (Element.px 200)
-                                    , Element.height (Element.px 200)
-                                    , Element.Border.color (Element.rgb 0.5 0.5 1)
-                                    , Element.Border.width 2
-                                    , Element.inFront
-                                        (Ui.customButton
-                                            [ Element.alignRight ]
-                                            (removeElmJsonButtonId index)
-                                            (PressedRemoveElmJson index)
-                                            (Element.text "X")
-                                        )
-                                    ]
-                                    Element.none
-                            )
-                            form.elmJson
-                        )
-                    ]
+                , packagesQuestion windowSize model
                 , Ui.multiChoiceQuestionWithOther
                     windowSize
                     Questions2023.testTools
@@ -1050,6 +1061,77 @@ formView windowSize form =
                     form.whatDoYouLikeMost
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })
                 ]
+        ]
+
+
+packagesQuestion : Size -> Form2023Loaded_ -> Element FrontendMsg
+packagesQuestion windowSize model =
+    Ui.container
+        windowSize
+        [ Ui.title "What packages do you use in your Elm apps?"
+        , Element.column
+            [ Element.spacing 8 ]
+            [ Ui.subtitle "Upload elm.json files from apps you're working on or worked on this year. You don't need to upload everything, each unique package is counted once."
+            ]
+        , Ui.customButton
+            [ Element.Background.color Ui.blue1
+            , Element.Font.color Ui.white
+            , Element.Font.bold
+            , Element.padding 16
+            ]
+            selectElmJsonFilesButtonId
+            PressedSelectElmJsonFiles
+            (Element.text "Upload elm.json")
+        , Element.Input.multiline
+            Ui.multilineAttributes
+            { onChange = TypedElmJsonFile
+            , text = ""
+            , placeholder = Nothing
+            , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
+            , spellcheck = False
+            }
+        , case model.elmJsonError of
+            Just error ->
+                Element.el [ Element.Font.size 16, Element.Font.color (Element.rgb 0.8 0.1 0.2) ] (Element.text error)
+
+            Nothing ->
+                Element.none
+        , Element.wrappedRow
+            [ Element.spacing 16 ]
+            (List.indexedMap
+                (\index elmJson ->
+                    Element.el
+                        [ Element.width (Element.px 130)
+                        , Element.height (Element.px 130)
+                        , Element.Border.color (Element.rgb 0.8 0.8 0.8)
+                        , Element.Background.color (Element.rgb 0.94 0.94 0.94)
+                        , Element.Border.rounded 4
+                        , Element.Border.width 1
+                        , Element.inFront
+                            (Ui.customButton
+                                [ Element.alignRight, Element.padding 4, Element.Font.size 20 ]
+                                (removeElmJsonButtonId index)
+                                (PressedRemoveElmJson index)
+                                (Element.text "✖")
+                            )
+                        ]
+                        (Element.column
+                            [ Element.centerX
+                            , Element.centerY
+                            , Element.spacing 12
+                            , Element.moveDown 4
+                            ]
+                            [ Element.el
+                                [ Element.Font.bold, Element.centerX ]
+                                (Element.text ("elm.json #" ++ String.fromInt index))
+                            , Element.el
+                                [ Element.Font.size 16, Element.centerX ]
+                                (Element.text (String.fromInt (List.length elmJson) ++ " packages"))
+                            ]
+                        )
+                )
+                model.form.elmJson
+            )
         ]
 
 
