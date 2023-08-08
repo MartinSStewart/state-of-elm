@@ -679,27 +679,31 @@ adminView model =
         , Element.row [ Element.spacing 16 ]
             [ button False PressedLogOut "Log out"
             , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
-            , case model.sendEmailsStatus of
-                EmailsNotSent ->
-                    button False PressedSendEmails "Send emails"
+            , if Env.canShowLatestResults then
+                case model.sendEmailsStatus of
+                    EmailsNotSent ->
+                        button False PressedSendEmails "Send results emails"
 
-                Sending ->
-                    button False PressedSendEmails "Sending..."
+                    Sending ->
+                        button False PressedSendEmails "Sending..."
 
-                SendResult list ->
-                    List.filterMap
-                        (\{ emailAddress, result } ->
-                            case result of
-                                Ok _ ->
-                                    Nothing
+                    SendResult list ->
+                        List.filterMap
+                            (\{ emailAddress, result } ->
+                                case result of
+                                    Ok _ ->
+                                        Nothing
 
-                                Err _ ->
-                                    Just (EmailAddress.toString emailAddress)
-                        )
-                        list
-                        |> String.join ", "
-                        |> (++) "Failed to send to the following emails: "
-                        |> Element.text
+                                    Err _ ->
+                                        Just (EmailAddress.toString emailAddress)
+                            )
+                            list
+                            |> String.join ", "
+                            |> (++) "Failed to send to the following emails: "
+                            |> Element.text
+
+              else
+                Element.none
             ]
         , if model.showEncodedState then
             Element.Input.text

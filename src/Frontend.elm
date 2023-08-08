@@ -290,7 +290,7 @@ updateLoaded msg model =
         TypedElmJsonFile elmJsonText ->
             if String.length elmJsonText < 4 then
                 updateFormLoaded
-                    (\form -> ( { form | elmJsonError = Just "Copy paste your whole elm.json in" }, Command.none ))
+                    (\form -> ( { form | elmJsonError = Just "Copy paste your whole elm.json into the text field" }, Command.none ))
 
             else
                 updateFormLoaded (addElmJson [ elmJsonText ])
@@ -705,8 +705,7 @@ answerSurveyView model formLoaded =
                 [ Ui.titleFontSize, Element.Font.bold ]
                 [ "Survey closes in " ++ timeLeft Env.surveyCloseTime model.time |> Element.text ]
             ]
-        , --packagesQuestion model.windowSize formLoaded
-          formView model.windowSize formLoaded
+        , formView model.windowSize formLoaded
         , Ui.acceptTosQuestion
             model.windowSize
             formLoaded.acceptedTos
@@ -1066,36 +1065,41 @@ formView windowSize model =
 
 packagesQuestion : Size -> Form2023Loaded_ -> Element FrontendMsg
 packagesQuestion windowSize model =
+    let
+        uniquePackages : List PackageName
+        uniquePackages =
+            List.concat model.form.elmJson |> List.unique
+    in
     Ui.container
         windowSize
         [ Ui.title "What packages do you use in your Elm apps?"
+        , Ui.subtitle "Upload elm.json files from apps you're working on or worked on this year. You don't need to upload everything, each unique package is counted once."
         , Element.column
-            [ Element.spacing 8 ]
-            [ Ui.subtitle "Upload elm.json files from apps you're working on or worked on this year. You don't need to upload everything, each unique package is counted once."
-            ]
-        , Ui.customButton
-            [ Element.Background.color Ui.blue1
-            , Element.Font.color Ui.white
-            , Element.Font.bold
-            , Element.padding 16
-            ]
-            selectElmJsonFilesButtonId
-            PressedSelectElmJsonFiles
-            (Element.text "Upload elm.json")
-        , Element.Input.multiline
-            Ui.multilineAttributes
-            { onChange = TypedElmJsonFile
-            , text = ""
-            , placeholder = Nothing
-            , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
-            , spellcheck = False
-            }
-        , case model.elmJsonError of
-            Just error ->
-                Element.el [ Element.Font.size 16, Element.Font.color (Element.rgb 0.8 0.1 0.2) ] (Element.text error)
+            [ Element.spacing 8, Element.width Element.fill ]
+            [ Ui.customButton
+                [ Element.Background.color Ui.blue1
+                , Element.Font.color Ui.white
+                , Element.Font.bold
+                , Element.padding 16
+                ]
+                selectElmJsonFilesButtonId
+                PressedSelectElmJsonFiles
+                (Element.text "Upload elm.json")
+            , Element.Input.multiline
+                Ui.multilineAttributes
+                { onChange = TypedElmJsonFile
+                , text = ""
+                , placeholder = Nothing
+                , label = Element.Input.labelAbove [] (Element.text "Or paste the elm.json contents here")
+                , spellcheck = False
+                }
+            , case model.elmJsonError of
+                Just error ->
+                    Element.el [ Element.Font.size 16, Element.Font.color (Element.rgb 0.8 0.1 0.2) ] (Element.text error)
 
-            Nothing ->
-                Element.none
+                Nothing ->
+                    Element.none
+            ]
         , Element.wrappedRow
             [ Element.spacing 16 ]
             (List.indexedMap
@@ -1132,6 +1136,13 @@ packagesQuestion windowSize model =
                 )
                 model.form.elmJson
             )
+        , if List.isEmpty model.form.elmJson then
+            Element.none
+
+          else
+            Element.el
+                [ Element.Font.size 16 ]
+                (Element.text ("Total unique packages: " ++ String.fromInt (List.length uniquePackages)))
         ]
 
 
