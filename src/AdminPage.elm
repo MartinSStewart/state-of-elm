@@ -704,6 +704,7 @@ adminView model =
 
               else
                 Element.none
+            , Element.text (String.fromInt (List.length model.forms) ++ " submissions")
             ]
         , if model.showEncodedState then
             Element.Input.text
