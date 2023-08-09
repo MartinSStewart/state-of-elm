@@ -699,7 +699,7 @@ adminView model =
                             )
                             list
                             |> String.join ", "
-                            |> (++) "Failed to send some emails: "
+                            |> (++) "Failed to send 1 or more emails: "
                             |> Element.text
 
               else
