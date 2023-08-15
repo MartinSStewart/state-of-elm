@@ -128,9 +128,7 @@ initSurvey2023 =
             , frameworks = AnswerMap.init Questions2023.frameworks
             , editors = AnswerMap.init Questions2023.editors
             , doYouUseElmReview = ""
-            , whichElmReviewRulesDoYouUse = AnswerMap.init Questions2023.whichElmReviewRulesDoYouUse
             , testTools = AnswerMap.init Questions2023.testTools
-            , testsWrittenFor = AnswerMap.init Questions2023.testsWrittenFor
             , biggestPainPoint = FreeTextAnswerMap.init
             , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
@@ -544,9 +542,6 @@ formData2023 model =
                     , testTools =
                         List.map .testTools formsWithoutNoInterestedInElm
                             |> DataEntry.fromMultiChoiceWithOther Questions2023.testTools model.formMapping.testTools
-                    , testsWrittenFor =
-                        List.map .testsWrittenFor formsWithoutNoInterestedInElm
-                            |> DataEntry.fromMultiChoiceWithOther Questions2023.testsWrittenFor model.formMapping.testsWrittenFor
                     , biggestPainPoint =
                         List.map .biggestPainPoint formsWithoutNoInterestedInElm
                             |> DataEntry.fromFreeText model.formMapping.biggestPainPoint

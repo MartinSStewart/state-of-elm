@@ -16,7 +16,7 @@ import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import PackageName exposing (PackageName)
-import Questions2023 exposing (Age(..), ApplicationDomains(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editors(..), ElmResources(..), ElmVersion(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), PleaseSelectYourGender, StylingTools(..), TestTools(..), TestsWrittenFor(..), WhatLanguageDoYouUseForBackend(..), WhichElmReviewRulesDoYouUse(..))
+import Questions2023 exposing (Age(..), ApplicationDomains(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editors(..), ElmResources(..), ElmVersion(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), PleaseSelectYourGender, StylingTools(..), TestTools(..), WhatLanguageDoYouUseForBackend(..))
 import Serialize exposing (Codec)
 import Ui exposing (MultiChoiceWithOther)
 
@@ -42,9 +42,7 @@ type alias Form2023 =
     , frameworks : MultiChoiceWithOther Frameworks
     , editors : MultiChoiceWithOther Editors
     , doYouUseElmReview : Maybe DoYouUseElmReview
-    , whichElmReviewRulesDoYouUse : MultiChoiceWithOther WhichElmReviewRulesDoYouUse
     , testTools : MultiChoiceWithOther TestTools
-    , testsWrittenFor : MultiChoiceWithOther TestsWrittenFor
     , elmInitialInterest : String
     , biggestPainPoint : String
     , whatDoYouLikeMost : String
@@ -103,9 +101,7 @@ type alias FormMapping =
     , frameworks : AnswerMap Frameworks
     , editors : AnswerMap Editors
     , doYouUseElmReview : String
-    , whichElmReviewRulesDoYouUse : AnswerMap WhichElmReviewRulesDoYouUse
     , testTools : AnswerMap TestTools
-    , testsWrittenFor : AnswerMap TestsWrittenFor
     , elmInitialInterest : FreeTextAnswerMap
     , biggestPainPoint : FreeTextAnswerMap
     , whatDoYouLikeMost : FreeTextAnswerMap
@@ -134,9 +130,7 @@ emptyForm =
     , frameworks = Ui.multiChoiceWithOtherInit
     , editors = Ui.multiChoiceWithOtherInit
     , doYouUseElmReview = Nothing
-    , whichElmReviewRulesDoYouUse = Ui.multiChoiceWithOtherInit
     , testTools = Ui.multiChoiceWithOtherInit
-    , testsWrittenFor = Ui.multiChoiceWithOtherInit
     , elmInitialInterest = ""
     , biggestPainPoint = ""
     , whatDoYouLikeMost = ""
@@ -166,9 +160,7 @@ type SpecificQuestion
     | FrameworksQuestion
     | EditorsQuestion
     | DoYouUseElmReviewQuestion
-    | WhichElmReviewRulesDoYouUseQuestion
     | TestToolsQuestion
-    | TestsWrittenForQuestion
     | ElmInitialInterestQuestion
     | BiggestPainPointQuestion
     | WhatDoYouLikeMostQuestion
@@ -197,9 +189,7 @@ formMappingCodec =
         |> Serialize.field .frameworks AnswerMap.codec
         |> Serialize.field .editors AnswerMap.codec
         |> Serialize.field .doYouUseElmReview Serialize.string
-        |> Serialize.field .whichElmReviewRulesDoYouUse AnswerMap.codec
         |> Serialize.field .testTools AnswerMap.codec
-        |> Serialize.field .testsWrittenFor AnswerMap.codec
         |> Serialize.field .elmInitialInterest FreeTextAnswerMap.codec
         |> Serialize.field .biggestPainPoint FreeTextAnswerMap.codec
         |> Serialize.field .whatDoYouLikeMost FreeTextAnswerMap.codec
@@ -231,9 +221,7 @@ formCodec =
         |> Serialize.field .frameworks (multiChoiceWithOtherCodec frameworksCodec)
         |> Serialize.field .editors (multiChoiceWithOtherCodec editorCodec)
         |> Serialize.field .doYouUseElmReview (Serialize.maybe doYouUseElmReviewCodec)
-        |> Serialize.field .whichElmReviewRulesDoYouUse (multiChoiceWithOtherCodec whichElmReviewRulesDoYouUseCodec)
         |> Serialize.field .testTools (multiChoiceWithOtherCodec testToolsCodec)
-        |> Serialize.field .testsWrittenFor (multiChoiceWithOtherCodec testsWrittenForCodec)
         |> Serialize.field .elmInitialInterest Serialize.string
         |> Serialize.field .biggestPainPoint Serialize.string
         |> Serialize.field .whatDoYouLikeMost Serialize.string
@@ -251,42 +239,10 @@ countryCodec =
         |> Serialize.finishRecord
 
 
-testsWrittenForCodec : Codec e TestsWrittenFor
-testsWrittenForCodec =
-    Serialize.customType
-        (\a b c d e f value ->
-            case value of
-                ComplicatedFunctions ->
-                    a
-
-                FunctionsThatReturnCmds ->
-                    b
-
-                AllPublicFunctions ->
-                    c
-
-                HtmlFunctions ->
-                    d
-
-                JsonDecodersAndEncoders ->
-                    e
-
-                MostPublicFunctions ->
-                    f
-        )
-        |> Serialize.variant0 ComplicatedFunctions
-        |> Serialize.variant0 FunctionsThatReturnCmds
-        |> Serialize.variant0 AllPublicFunctions
-        |> Serialize.variant0 HtmlFunctions
-        |> Serialize.variant0 JsonDecodersAndEncoders
-        |> Serialize.variant0 MostPublicFunctions
-        |> Serialize.finishCustomType
-
-
 testToolsCodec : Codec e TestTools
 testToolsCodec =
     Serialize.customType
-        (\a b c d e value ->
+        (\a b c d e f value ->
             case value of
                 BrowserAcceptanceTests ->
                     a
@@ -302,44 +258,16 @@ testToolsCodec =
 
                 VisualRegressionTests ->
                     e
+
+                NoTestTools ->
+                    f
         )
         |> Serialize.variant0 BrowserAcceptanceTests
         |> Serialize.variant0 ElmBenchmark
         |> Serialize.variant0 ElmTest
         |> Serialize.variant0 ElmProgramTest
         |> Serialize.variant0 VisualRegressionTests
-        |> Serialize.finishCustomType
-
-
-whichElmReviewRulesDoYouUseCodec : Codec e WhichElmReviewRulesDoYouUse
-whichElmReviewRulesDoYouUseCodec =
-    Serialize.customType
-        (\a b c d e f value ->
-            case value of
-                ElmReviewUnused ->
-                    a
-
-                ElmReviewSimplify ->
-                    b
-
-                ElmReviewLicense ->
-                    c
-
-                ElmReviewDebug ->
-                    d
-
-                ElmReviewCommon ->
-                    e
-
-                ElmReviewCognitiveComplexity ->
-                    f
-        )
-        |> Serialize.variant0 ElmReviewUnused
-        |> Serialize.variant0 ElmReviewSimplify
-        |> Serialize.variant0 ElmReviewLicense
-        |> Serialize.variant0 ElmReviewDebug
-        |> Serialize.variant0 ElmReviewCommon
-        |> Serialize.variant0 ElmReviewCognitiveComplexity
+        |> Serialize.variant0 NoTestTools
         |> Serialize.finishCustomType
 
 
@@ -370,7 +298,7 @@ doYouUseElmReviewCodec =
 editorCodec : Codec e Editors
 editorCodec =
     Serialize.customType
-        (\a b c d e f value ->
+        (\a b c d e f g value ->
             case value of
                 SublimeText ->
                     a
@@ -389,6 +317,9 @@ editorCodec =
 
                 Intellij ->
                     f
+
+                NoEditor ->
+                    g
         )
         |> Serialize.variant0 SublimeText
         |> Serialize.variant0 Vim
@@ -396,6 +327,7 @@ editorCodec =
         |> Serialize.variant0 Emacs
         |> Serialize.variant0 VSCode
         |> Serialize.variant0 Intellij
+        |> Serialize.variant0 NoEditor
         |> Serialize.finishCustomType
 
 
@@ -434,7 +366,7 @@ frameworksCodec =
 buildToolsCodec : Codec e BuildTools
 buildToolsCodec =
     Serialize.customType
-        (\a b c d e f g h i j k value ->
+        (\a b c d e f g h i j k l value ->
             case value of
                 ShellScripts ->
                     a
@@ -468,6 +400,9 @@ buildToolsCodec =
 
                 Vite ->
                     k
+
+                NoBuildTools ->
+                    l
         )
         |> Serialize.variant0 ShellScripts
         |> Serialize.variant0 ElmLive
@@ -480,13 +415,14 @@ buildToolsCodec =
         |> Serialize.variant0 ElmReactor
         |> Serialize.variant0 Parcel
         |> Serialize.variant0 Vite
+        |> Serialize.variant0 NoBuildTools
         |> Serialize.finishCustomType
 
 
 stylingToolsCodec : Codec e StylingTools
 stylingToolsCodec =
     Serialize.customType
-        (\a b c d e f g value ->
+        (\a b c d e f g h value ->
             case value of
                 SassOrScss ->
                     a
@@ -508,6 +444,9 @@ stylingToolsCodec =
 
                 Bootstrap ->
                     g
+
+                NoStylingTools ->
+                    h
         )
         |> Serialize.variant0 SassOrScss
         |> Serialize.variant0 ElmCss
@@ -516,6 +455,7 @@ stylingToolsCodec =
         |> Serialize.variant0 Tailwind
         |> Serialize.variant0 ElmTailwindModules
         |> Serialize.variant0 Bootstrap
+        |> Serialize.variant0 NoStylingTools
         |> Serialize.finishCustomType
 
 
@@ -750,7 +690,7 @@ doYouUseElmAtWorkCodec =
 whereDoYouUseElmCodec : Codec e ApplicationDomains
 whereDoYouUseElmCodec =
     Serialize.customType
-        (\a b c d e f g h i j value ->
+        (\a b c d e f g h i j k value ->
             case value of
                 Education ->
                     a
@@ -781,6 +721,9 @@ whereDoYouUseElmCodec =
 
                 Transportation ->
                     j
+
+                NoApplicationDomains ->
+                    k
         )
         |> Serialize.variant0 Education
         |> Serialize.variant0 Gaming
@@ -792,13 +735,14 @@ whereDoYouUseElmCodec =
         |> Serialize.variant0 Communication
         |> Serialize.variant0 DataVisualization
         |> Serialize.variant0 Transportation
+        |> Serialize.variant0 NoApplicationDomains
         |> Serialize.finishCustomType
 
 
 elmResourcesCodec : Codec e ElmResources
 elmResourcesCodec =
     Serialize.customType
-        (\a b c d e f g h i j k l m n value ->
+        (\a b c d e f g h i j k l m n o value ->
             case value of
                 DailyDrip ->
                     a
@@ -841,6 +785,9 @@ elmResourcesCodec =
 
                 ElmOnline ->
                     n
+
+                NoElmResources ->
+                    o
         )
         |> Serialize.variant0 DailyDrip
         |> Serialize.variant0 ElmInActionBook
@@ -856,13 +803,14 @@ elmResourcesCodec =
         |> Serialize.variant0 ElmSlack_
         |> Serialize.variant0 FrontendMasters
         |> Serialize.variant0 ElmOnline
+        |> Serialize.variant0 NoElmResources
         |> Serialize.finishCustomType
 
 
 newsAndDiscussionsCodec : Codec e NewsAndDiscussions
 newsAndDiscussionsCodec =
     Serialize.customType
-        (\a b c d e f g h i j k l value ->
+        (\a b c d e f g h i j k l m value ->
             case value of
                 ElmDiscourse ->
                     a
@@ -899,6 +847,9 @@ newsAndDiscussionsCodec =
 
                 ElmCraft ->
                     l
+
+                NoNewsOrDiscussions ->
+                    m
         )
         |> Serialize.variant0 ElmDiscourse
         |> Serialize.variant0 ElmSlack
@@ -912,13 +863,14 @@ newsAndDiscussionsCodec =
         |> Serialize.variant0 ElmWeekly
         |> Serialize.variant0 ElmNews
         |> Serialize.variant0 ElmCraft
+        |> Serialize.variant0 NoNewsOrDiscussions
         |> Serialize.finishCustomType
 
 
 otherLanguagesCodec : Codec e OtherLanguages
 otherLanguagesCodec =
     Serialize.customType
-        (\a b c d e f g h i j k l m n o p q value ->
+        (\a b c d e f g h i j k l m n o p q r value ->
             case value of
                 JavaScript ->
                     a
@@ -970,6 +922,9 @@ otherLanguagesCodec =
 
                 FSharp ->
                     q
+
+                NoOtherLanguage ->
+                    r
         )
         |> Serialize.variant0 JavaScript
         |> Serialize.variant0 TypeScript
@@ -988,6 +943,7 @@ otherLanguagesCodec =
         |> Serialize.variant0 Clojure
         |> Serialize.variant0 Rust
         |> Serialize.variant0 FSharp
+        |> Serialize.variant0 NoOtherLanguage
         |> Serialize.finishCustomType
 
 
@@ -1032,7 +988,7 @@ experienceLevelCodec =
 ageCodec : Codec e Age
 ageCodec =
     Serialize.customType
-        (\a b c d e f g value ->
+        (\a b c d e f g h value ->
             case value of
                 Under10 ->
                     a
@@ -1054,6 +1010,9 @@ ageCodec =
 
                 Over60 ->
                     g
+
+                PreferNotToAnswer2 ->
+                    h
         )
         |> Serialize.variant0 Under10
         |> Serialize.variant0 Age10To19
@@ -1062,6 +1021,7 @@ ageCodec =
         |> Serialize.variant0 Age40To49
         |> Serialize.variant0 Age50To59
         |> Serialize.variant0 Over60
+        |> Serialize.variant0 PreferNotToAnswer2
         |> Serialize.finishCustomType
 
 

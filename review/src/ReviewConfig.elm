@@ -33,4 +33,4 @@ config =
     , NoUnused.Modules.rule
     , NoUnused.Parameters.rule
     ]
-        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Evergreen" ])
+        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Evergreen", "snapshot-runner", "packages" ])

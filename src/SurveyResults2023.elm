@@ -89,7 +89,6 @@ type alias Data =
     , editors : DataEntryWithOther Questions2023.Editors
     , doYouUseElmReview : DataEntry Questions2023.DoYouUseElmReview
     , testTools : DataEntryWithOther Questions2023.TestTools
-    , testsWrittenFor : DataEntryWithOther Questions2023.TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     , elmJson : Dict PackageName Int
@@ -246,7 +245,6 @@ view config previousYear model =
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions2023.editors
                 , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2023.doYouUseElmReview
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions2023.testTools
-                , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions2023.testsWrittenFor
                 , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions2023.biggestPainPointTitle
                 , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions2023.whatDoYouLikeMostTitle
                 ]

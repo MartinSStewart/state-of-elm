@@ -119,9 +119,7 @@ questionsWithOther =
     , FrameworksQuestion
     , EditorsQuestion
     , DoYouUseElmReviewQuestion
-    , WhichElmReviewRulesDoYouUseQuestion
     , TestToolsQuestion
-    , TestsWrittenForQuestion
     , ElmInitialInterestQuestion
     , BiggestPainPointQuestion
     , WhatDoYouLikeMostQuestion
@@ -172,14 +170,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = removeGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = removeGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = removeGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = removeGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = removeGroup_ answerMap.elmInitialInterest }
@@ -261,14 +253,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = renameGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = renameGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = renameGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = renameGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = renameGroup_ answerMap.elmInitialInterest }
@@ -350,14 +336,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = addGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = addGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = addGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = addGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = addGroup_ answerMap.elmInitialInterest }
@@ -443,14 +423,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = updateOtherAnswer answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = updateOtherAnswer answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = updateOtherAnswer answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = updateOtherAnswer answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = updateOtherAnswer_ answerMap.elmInitialInterest }
@@ -532,14 +506,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = withComment answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = withComment answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = withComment answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = withComment answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = withComment_ answerMap.elmInitialInterest }
@@ -855,15 +823,6 @@ answerMapView model =
                 formMapping.editors
                 model
 
-        WhichElmReviewRulesDoYouUseQuestion ->
-            answerMappingView
-                model.selectedMapping
-                False
-                Questions.whichElmReviewRulesDoYouUse
-                .whichElmReviewRulesDoYouUse
-                formMapping.whichElmReviewRulesDoYouUse
-                model
-
         TestToolsQuestion ->
             answerMappingView
                 model.selectedMapping
@@ -871,15 +830,6 @@ answerMapView model =
                 Questions.testTools
                 .testTools
                 formMapping.testTools
-                model
-
-        TestsWrittenForQuestion ->
-            answerMappingView
-                model.selectedMapping
-                False
-                Questions.testsWrittenFor
-                .testsWrittenFor
-                formMapping.testsWrittenFor
                 model
 
         ElmInitialInterestQuestion ->
@@ -1030,14 +980,8 @@ questionName selectedMapping =
         EditorsQuestion ->
             "Editors"
 
-        WhichElmReviewRulesDoYouUseQuestion ->
-            "WhichElmReviewRulesDoYouUse"
-
         TestToolsQuestion ->
             "TestTools"
-
-        TestsWrittenForQuestion ->
-            "TestsWrittenFor"
 
         ElmInitialInterestQuestion ->
             "ElmInitialInterest"

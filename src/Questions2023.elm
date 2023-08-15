@@ -19,9 +19,7 @@ module Questions2023 exposing
     , Question
     , StylingTools(..)
     , TestTools(..)
-    , TestsWrittenFor(..)
     , WhatLanguageDoYouUseForBackend(..)
-    , WhichElmReviewRulesDoYouUse(..)
     , age
     , applicationDomains
     , biggestPainPointTitle
@@ -44,10 +42,8 @@ module Questions2023 exposing
     , pleaseSelectYourGender
     , stylingTools
     , testTools
-    , testsWrittenFor
     , whatDoYouLikeMostTitle
     , whatLanguageDoYouUseForBackend
-    , whichElmReviewRulesDoYouUse
     )
 
 import Countries exposing (Country)
@@ -62,6 +58,7 @@ type Age
     | Age40To49
     | Age50To59
     | Over60
+    | PreferNotToAnswer2
 
 
 type PleaseSelectYourGender
@@ -108,6 +105,7 @@ type OtherLanguages
     | Clojure
     | Rust
     | FSharp
+    | NoOtherLanguage
 
 
 type NewsAndDiscussions
@@ -123,6 +121,7 @@ type NewsAndDiscussions
     | ElmWeekly
     | ElmNews
     | ElmCraft
+    | NoNewsOrDiscussions
 
 
 type ElmResources
@@ -140,6 +139,7 @@ type ElmResources
     | ElmSlack_
     | FrontendMasters
     | ElmOnline
+    | NoElmResources
 
 
 type ApplicationDomains
@@ -153,6 +153,7 @@ type ApplicationDomains
     | Communication
     | DataVisualization
     | Transportation
+    | NoApplicationDomains
 
 
 type HowLong
@@ -175,15 +176,6 @@ type DoYouUseElmReview
     | HeardOfItButNeverTriedElmReview
     | IveTriedElmReview
     | IUseElmReviewRegularly
-
-
-type WhichElmReviewRulesDoYouUse
-    = ElmReviewUnused
-    | ElmReviewSimplify
-    | ElmReviewLicense
-    | ElmReviewDebug
-    | ElmReviewCommon
-    | ElmReviewCognitiveComplexity
 
 
 type DoYouUseElmAtWork
@@ -242,6 +234,7 @@ type StylingTools
     | Tailwind
     | ElmTailwindModules
     | Bootstrap
+    | NoStylingTools
 
 
 type BuildTools
@@ -256,6 +249,7 @@ type BuildTools
     | ElmReactor
     | Parcel
     | Vite
+    | NoBuildTools
 
 
 type Frameworks
@@ -274,6 +268,7 @@ type Editors
     | Emacs
     | VSCode
     | Intellij
+    | NoEditor
 
 
 type TestTools
@@ -282,15 +277,7 @@ type TestTools
     | ElmTest
     | ElmProgramTest
     | VisualRegressionTests
-
-
-type TestsWrittenFor
-    = ComplicatedFunctions
-    | FunctionsThatReturnCmds
-    | AllPublicFunctions
-    | HtmlFunctions
-    | JsonDecodersAndEncoders
-    | MostPublicFunctions
+    | NoTestTools
 
 
 type alias Question a =
@@ -346,6 +333,7 @@ age =
             , Age40To49
             , Age50To59
             , Over60
+            , PreferNotToAnswer2
             ]
     , choiceToString =
         \a ->
@@ -370,6 +358,9 @@ age =
 
                 Over60 ->
                     "60 years or older"
+
+                PreferNotToAnswer2 ->
+                    "Prefer not to answer"
     }
 
 
@@ -460,6 +451,7 @@ otherLanguages =
             , Rust
             , Swift
             , TypeScript
+            , NoOtherLanguage
             ]
     , choiceToString =
         \a ->
@@ -514,6 +506,9 @@ otherLanguages =
 
                 FSharp ->
                     "F#"
+
+                NoOtherLanguage ->
+                    "None"
     }
 
 
@@ -534,6 +529,7 @@ newsAndDiscussions =
             , DevTo
             , ElmNews
             , ElmCraft
+            , NoNewsOrDiscussions
             ]
     , choiceToString =
         \a ->
@@ -573,6 +569,9 @@ newsAndDiscussions =
 
                 ElmCraft ->
                     "elmcraft.org"
+
+                NoNewsOrDiscussions ->
+                    "None"
     }
 
 
@@ -595,6 +594,7 @@ elmResources =
             , TheJsonSurvivalKit
             , WeeklyBeginnersElmSubreddit
             , GuideElmLang
+            , NoElmResources
             ]
     , choiceToString =
         \a ->
@@ -640,6 +640,9 @@ elmResources =
 
                 ElmOnline ->
                     "Elm Online"
+
+                NoElmResources ->
+                    "None"
     }
 
 
@@ -693,7 +696,7 @@ countryLivingIn =
 
 applicationDomains : Question ApplicationDomains
 applicationDomains =
-    { title = "In which application domains, if any, have you used Elm?"
+    { title = "In which application domains have you used Elm?"
     , choices =
         Nonempty
             Communication
@@ -706,6 +709,7 @@ applicationDomains =
             , Music
             , Productivity
             , Transportation
+            , NoApplicationDomains
             ]
     , choiceToString =
         \a ->
@@ -739,6 +743,9 @@ applicationDomains =
 
                 Transportation ->
                     "Transportation"
+
+                NoApplicationDomains ->
+                    "None"
     }
 
 
@@ -989,6 +996,7 @@ stylingTools =
             , ElmTailwindModules
             , ElmUi
             , PlainCss
+            , NoStylingTools
             ]
     , choiceToString =
         \a ->
@@ -1013,6 +1021,9 @@ stylingTools =
 
                 ElmTailwindModules ->
                     "elm-tailwind-modules"
+
+                NoStylingTools ->
+                    "None"
     }
 
 
@@ -1031,6 +1042,7 @@ buildTools =
             , ElmLive
             , ElmMakeStandalone
             , ElmReactor
+            , NoBuildTools
             ]
     , choiceToString =
         \a ->
@@ -1067,13 +1079,16 @@ buildTools =
 
                 Vite ->
                     "Vite"
+
+                NoBuildTools ->
+                    "None"
     }
 
 
 frameworks : Question Frameworks
 frameworks =
     { title = "What frameworks do you use?"
-    , choices = Nonempty NoFramework [ Lamdera_, ElmPages, ElmPlayground, ElmSpa, ElmLand ]
+    , choices = Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa, ElmLand, NoFramework ]
     , choiceToString =
         \a ->
             case a of
@@ -1107,6 +1122,7 @@ editors =
             , SublimeText
             , VSCode
             , Vim
+            , NoEditor
             ]
     , choiceToString =
         \a ->
@@ -1128,6 +1144,9 @@ editors =
 
                 Intellij ->
                     "Intellij"
+
+                NoEditor ->
+                    "None"
     }
 
 
@@ -1157,40 +1176,6 @@ doYouUseElmReview =
     }
 
 
-whichElmReviewRulesDoYouUse : Question WhichElmReviewRulesDoYouUse
-whichElmReviewRulesDoYouUse =
-    { title = "Which elm-review rules do you use?"
-    , choices =
-        Nonempty ElmReviewUnused
-            [ ElmReviewSimplify
-            , ElmReviewLicense
-            , ElmReviewDebug
-            , ElmReviewCommon
-            , ElmReviewCognitiveComplexity
-            ]
-    , choiceToString =
-        \a ->
-            case a of
-                ElmReviewUnused ->
-                    "elm-review-unused"
-
-                ElmReviewSimplify ->
-                    "elm-review-simplify"
-
-                ElmReviewLicense ->
-                    "elm-review-license"
-
-                ElmReviewDebug ->
-                    "elm-review-debug"
-
-                ElmReviewCommon ->
-                    "elm-review-common"
-
-                ElmReviewCognitiveComplexity ->
-                    "elm-review-cognitive-complexity"
-    }
-
-
 testTools : Question TestTools
 testTools =
     { title = "What tools do you use to test your Elm projects?"
@@ -1200,6 +1185,7 @@ testTools =
             , ElmTest
             , ElmProgramTest
             , VisualRegressionTests
+            , NoTestTools
             ]
     , choiceToString =
         \a ->
@@ -1218,40 +1204,9 @@ testTools =
 
                 VisualRegressionTests ->
                     "Visual regression testing (e.g. Percy.io)"
-    }
 
-
-testsWrittenFor : Question TestsWrittenFor
-testsWrittenFor =
-    { title = "What do you write tests for in your Elm projects?"
-    , choices =
-        Nonempty ComplicatedFunctions
-            [ FunctionsThatReturnCmds
-            , AllPublicFunctions
-            , HtmlFunctions
-            , JsonDecodersAndEncoders
-            , MostPublicFunctions
-            ]
-    , choiceToString =
-        \a ->
-            case a of
-                ComplicatedFunctions ->
-                    "Your most complicated functions"
-
-                FunctionsThatReturnCmds ->
-                    "Functions that return Cmd"
-
-                AllPublicFunctions ->
-                    "All public functions in your modules"
-
-                HtmlFunctions ->
-                    "Functions that return Html"
-
-                JsonDecodersAndEncoders ->
-                    "JSON encoders/decoders"
-
-                MostPublicFunctions ->
-                    "Most public functions in your modules"
+                NoTestTools ->
+                    "None"
     }
 
 
