@@ -678,7 +678,7 @@ adminView model =
         [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
         , Element.row [ Element.spacing 16 ]
             [ button False PressedLogOut "Log out"
-            , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
+            , button model.showEncodedState PressedToggleShowEncodedState "View encoded state"
             , if Env.canShowLatestResults then
                 case model.sendEmailsStatus of
                     EmailsNotSent ->
