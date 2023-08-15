@@ -2,7 +2,7 @@ module Tests exposing (..)
 
 import Effect.Test as TF
 import EndToEndTests
-import Test exposing (Test)
+import Test
 
 
 appTests =

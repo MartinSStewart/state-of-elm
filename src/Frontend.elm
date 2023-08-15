@@ -31,7 +31,7 @@ import PackageName exposing (PackageName)
 import Quantity
 import Questions2023
 import Route exposing (Route(..), SurveyYear(..))
-import SurveyResults2022 exposing (Mode(..), Segment(..))
+import SurveyResults2022
 import SurveyResults2023
 import Types exposing (..)
 import Ui exposing (Size)
@@ -320,10 +320,10 @@ updateLoaded msg model =
 getJsonError : Json.Decode.Error -> String
 getJsonError error =
     case error of
-        Json.Decode.Field string error2 ->
+        Json.Decode.Field _ error2 ->
             getJsonError error2
 
-        Json.Decode.Index int error2 ->
+        Json.Decode.Index _ error2 ->
             getJsonError error2
 
         Json.Decode.OneOf errors ->
@@ -334,7 +334,7 @@ getJsonError error =
                 Nothing ->
                     "Failed to decode"
 
-        Json.Decode.Failure string value ->
+        Json.Decode.Failure string _ ->
             if String.startsWith "This is not valid JSON!" string then
                 "Invalid JSON"
 
