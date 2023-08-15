@@ -682,7 +682,7 @@ adminView model =
             , if Env.canShowLatestResults then
                 case model.sendEmailsStatus of
                     EmailsNotSent ->
-                        button False PressedSendEmails "Send results emails"
+                        button False PressedSendEmails "Email survey results"
 
                     Sending ->
                         button False PressedSendEmails "Sending..."
