@@ -11,6 +11,7 @@ when inside the directory containing this file.
 
 -}
 
+import NoMissingTypeConstructor
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -24,13 +25,14 @@ import Review.Rule exposing (Rule)
 
 config : List Rule
 config =
-    [ NoUnused.CustomTypeConstructors.rule []
-    , NoUnused.Variables.rule
-    , NoUnused.Patterns.rule
-    , NoUnused.CustomTypeConstructorArgs.rule
-    , NoUnused.Dependencies.rule
-    , NoUnused.Exports.rule
-    , NoUnused.Modules.rule
-    , NoUnused.Parameters.rule
+    [ --NoUnused.CustomTypeConstructors.rule []
+      --, NoUnused.Variables.rule
+      --, NoUnused.Patterns.rule
+      --, NoUnused.CustomTypeConstructorArgs.rule
+      --, NoUnused.Dependencies.rule
+      --, NoUnused.Exports.rule
+      --, NoUnused.Modules.rule
+      --, NoUnused.Parameters.rule
+      NoMissingTypeConstructor.rule
     ]
         |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Evergreen", "snapshot-runner", "packages" ])

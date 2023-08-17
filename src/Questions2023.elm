@@ -115,12 +115,12 @@ type NewsAndDiscussions
     | Twitter
     | ElmRadio
     | BlogPosts
-    | Facebook
     | DevTo
     | Meetups
     | ElmWeekly
     | ElmNews
     | ElmCraft
+    | IncrementalElm
     | NoNewsOrDiscussions
 
 
@@ -153,6 +153,12 @@ type ApplicationDomains
     | Communication
     | DataVisualization
     | Transportation
+    | SocialMedia
+    | Engineering
+    | Sports
+    | ArtAndCulture
+    | Legal
+    | EnvironmentOrClimate
     | NoApplicationDomains
 
 
@@ -209,6 +215,9 @@ type WhatLanguageDoYouUseForBackend
     | Rust_
     | FSharp_
     | AlsoElm
+    | C_
+    | CPlusPlus_
+    | Kotlin_
     | NotApplicable
 
 
@@ -249,6 +258,11 @@ type BuildTools
     | ElmReactor
     | Parcel
     | Vite
+    | ElmWatch
+    | ElmPages_
+    | Lamdera__
+    | ElmLand_
+    | EsBuild
     | NoBuildTools
 
 
@@ -523,7 +537,6 @@ newsAndDiscussions =
             , ElmSlack
             , ElmSubreddit
             , ElmWeekly
-            , Facebook
             , Meetups
             , Twitter
             , DevTo
@@ -552,9 +565,6 @@ newsAndDiscussions =
                 BlogPosts ->
                     "Blog posts"
 
-                Facebook ->
-                    "Facebook groups"
-
                 DevTo ->
                     "dev.to"
 
@@ -569,6 +579,9 @@ newsAndDiscussions =
 
                 ElmCraft ->
                     "elmcraft.org"
+
+                IncrementalElm ->
+                    "Incremental Elm"
 
                 NoNewsOrDiscussions ->
                     "None"
@@ -744,6 +757,24 @@ applicationDomains =
                 Transportation ->
                     "Transportation"
 
+                SocialMedia ->
+                    "Social media"
+
+                Engineering ->
+                    "Engineering"
+
+                Sports ->
+                    "Sports"
+
+                ArtAndCulture ->
+                    "Art and culture"
+
+                Legal ->
+                    "Legal"
+
+                EnvironmentOrClimate ->
+                    "Environment and climate"
+
                 NoApplicationDomains ->
                     "None"
     }
@@ -809,7 +840,8 @@ whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
     , choices =
-        Nonempty JavaScript_
+        Nonempty
+            JavaScript_
             [ TypeScript_
             , Go_
             , Haskell_
@@ -824,6 +856,9 @@ whatLanguageDoYouUseForBackend =
             , Rust_
             , FSharp_
             , AlsoElm
+            , C_
+            , CPlusPlus_
+            , Kotlin_
             , NotApplicable
             ]
     , choiceToString =
@@ -876,6 +911,15 @@ whatLanguageDoYouUseForBackend =
 
                 NotApplicable ->
                     "Not applicable"
+
+                C_ ->
+                    "C"
+
+                CPlusPlus_ ->
+                    "C++"
+
+                Kotlin_ ->
+                    "Kotlin"
     }
 
 
@@ -1042,6 +1086,10 @@ buildTools =
             , ElmLive
             , ElmMakeStandalone
             , ElmReactor
+            , ElmWatch
+            , ElmPages_
+            , Lamdera__
+            , ElmLand_
             , NoBuildTools
             ]
     , choiceToString =
@@ -1082,6 +1130,21 @@ buildTools =
 
                 NoBuildTools ->
                     "None"
+
+                ElmWatch ->
+                    "elm-watch"
+
+                ElmPages_ ->
+                    "elm-pages"
+
+                Lamdera__ ->
+                    "Lamdera"
+
+                ElmLand_ ->
+                    "elm-land"
+
+                EsBuild ->
+                    "esbuild"
     }
 
 
