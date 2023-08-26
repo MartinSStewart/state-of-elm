@@ -34,6 +34,8 @@ module Questions2023 exposing
     , elmVersion
     , experienceLevel
     , frameworks
+    , howDidItGoUsingElmAtWorkTitle
+    , howIsItGoingUsingElmAtWorkTitle
     , howLargeIsTheCompany
     , howLong
     , initialInterestTitle
@@ -44,6 +46,7 @@ module Questions2023 exposing
     , testTools
     , whatDoYouLikeMostTitle
     , whatLanguageDoYouUseForBackend
+    , whatPreventsYouFromUsingElmAtWorkTitle
     )
 
 import Countries exposing (Country)
@@ -188,7 +191,7 @@ type DoYouUseElmAtWork
     = NotInterestedInElmAtWork
     | WouldLikeToUseElmAtWork
     | HaveTriedElmInAWorkProject
-    | MyTeamMostlyWritesNewCodeInElm
+    | IUseElmAtWork
     | NotEmployed
 
 
@@ -787,7 +790,7 @@ doYouUseElmAtWork =
         Nonempty NotInterestedInElmAtWork
             [ WouldLikeToUseElmAtWork
             , HaveTriedElmInAWorkProject
-            , MyTeamMostlyWritesNewCodeInElm
+            , IUseElmAtWork
             , NotEmployed
             ]
     , choiceToString =
@@ -802,12 +805,27 @@ doYouUseElmAtWork =
                 HaveTriedElmInAWorkProject ->
                     "I have tried Elm at work"
 
-                MyTeamMostlyWritesNewCodeInElm ->
-                    "My team mostly writes new code in Elm"
+                IUseElmAtWork ->
+                    "I use Elm at work"
 
                 NotEmployed ->
                     "Not employed"
     }
+
+
+whatPreventsYouFromUsingElmAtWorkTitle : String
+whatPreventsYouFromUsingElmAtWorkTitle =
+    "What prevents you from using Elm at work?"
+
+
+howDidItGoUsingElmAtWorkTitle : String
+howDidItGoUsingElmAtWorkTitle =
+    "How did it go using Elm at work?"
+
+
+howIsItGoingUsingElmAtWorkTitle : String
+howIsItGoingUsingElmAtWorkTitle =
+    "How is it going using Elm at work?"
 
 
 howLargeIsTheCompany : Question HowLargeIsTheCompany

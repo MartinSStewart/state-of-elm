@@ -15,7 +15,7 @@ import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty exposing (Nonempty(..))
 import PackageName exposing (PackageName)
 import Questions2023 exposing (Age(..), ApplicationDomains(..), BuildTools(..), DoYouUseElm(..), DoYouUseElmAtWork(..), DoYouUseElmFormat(..), DoYouUseElmReview(..), Editors(..), ElmResources(..), ElmVersion(..), ExperienceLevel(..), Frameworks(..), HowLargeIsTheCompany(..), HowLong(..), NewsAndDiscussions(..), OtherLanguages(..), PleaseSelectYourGender(..), StylingTools(..), TestTools(..), WhatLanguageDoYouUseForBackend(..))
 import Serialize exposing (Codec)
@@ -33,6 +33,8 @@ type alias Form2023 =
     , countryLivingIn : Maybe Country
     , applicationDomains : MultiChoiceWithOther ApplicationDomains
     , doYouUseElmAtWork : Maybe DoYouUseElmAtWork
+    , whatPreventsYouFromUsingElmAtWork : String
+    , howDidItGoUsingElmAtWork : String
     , howLargeIsTheCompany : Maybe HowLargeIsTheCompany
     , whatLanguageDoYouUseForBackend : MultiChoiceWithOther WhatLanguageDoYouUseForBackend
     , howLong : Maybe HowLong
@@ -92,6 +94,8 @@ type alias FormMapping =
     , countryLivingIn : String
     , applicationDomains : AnswerMap ApplicationDomains
     , doYouUseElmAtWork : String
+    , whatPreventsYouFromUsingElmAtWork : FreeTextAnswerMap
+    , howDidItGoUsingElmAtWork : FreeTextAnswerMap
     , howLargeIsTheCompany : String
     , whatLanguageDoYouUseForBackend : AnswerMap WhatLanguageDoYouUseForBackend
     , howLong : String
@@ -121,6 +125,8 @@ emptyForm =
     , countryLivingIn = Nothing
     , applicationDomains = Ui.multiChoiceWithOtherInit
     , doYouUseElmAtWork = Nothing
+    , whatPreventsYouFromUsingElmAtWork = ""
+    , howDidItGoUsingElmAtWork = ""
     , howLargeIsTheCompany = Nothing
     , whatLanguageDoYouUseForBackend = Ui.multiChoiceWithOtherInit
     , howLong = Nothing
@@ -151,6 +157,8 @@ type SpecificQuestion
     | CountryLivingInQuestion
     | ApplicationDomainsQuestion
     | DoYouUseElmAtWorkQuestion
+    | WhatPreventsYouFromUsingElmAtWork
+    | HowDidItGoUsingElmAtWork
     | HowLargeIsTheCompanyQuestion
     | WhatLanguageDoYouUseForBackendQuestion
     | HowLongQuestion
@@ -180,6 +188,8 @@ formMappingCodec =
         |> Serialize.field .countryLivingIn Serialize.string
         |> Serialize.field .applicationDomains AnswerMap.codec
         |> Serialize.field .doYouUseElmAtWork Serialize.string
+        |> Serialize.field .whatPreventsYouFromUsingElmAtWork FreeTextAnswerMap.codec
+        |> Serialize.field .howDidItGoUsingElmAtWork FreeTextAnswerMap.codec
         |> Serialize.field .howLargeIsTheCompany Serialize.string
         |> Serialize.field .whatLanguageDoYouUseForBackend AnswerMap.codec
         |> Serialize.field .howLong Serialize.string
@@ -210,6 +220,8 @@ formCodec =
         |> Serialize.field .countryLivingIn (Serialize.maybe countryCodec)
         |> Serialize.field .applicationDomains (multiChoiceWithOtherCodec (serializeNonemptyEnum allWhereDoYouUseElm))
         |> Serialize.field .doYouUseElmAtWork (Serialize.maybe (serializeNonemptyEnum allDoYouUseElmAtWork))
+        |> Serialize.field .whatPreventsYouFromUsingElmAtWork Serialize.string
+        |> Serialize.field .howDidItGoUsingElmAtWork Serialize.string
         |> Serialize.field .howLargeIsTheCompany (Serialize.maybe (serializeNonemptyEnum allHowLargeIsTheCompany))
         |> Serialize.field
             .whatLanguageDoYouUseForBackend
@@ -284,7 +296,7 @@ allDoYouUseElmAtWork : Nonempty DoYouUseElmAtWork
 allDoYouUseElmAtWork =
     Nonempty
         NotInterestedInElmAtWork
-        [ HaveTriedElmInAWorkProject, MyTeamMostlyWritesNewCodeInElm, NotEmployed, WouldLikeToUseElmAtWork ]
+        [ HaveTriedElmInAWorkProject, IUseElmAtWork, NotEmployed, WouldLikeToUseElmAtWork ]
 
 
 allHowLargeIsTheCompany : Nonempty HowLargeIsTheCompany

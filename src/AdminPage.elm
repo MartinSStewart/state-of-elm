@@ -212,6 +212,12 @@ networkUpdate edit answerMap =
                 PleaseSelectYourGenderQuestion ->
                     answerMap
 
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = removeGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = removeGroup_ answerMap.howDidItGoUsingElmAtWork }
+
         TypedGroupName question hotkey groupName ->
             let
                 renameGroup : AnswerMap a -> AnswerMap a
@@ -295,6 +301,12 @@ networkUpdate edit answerMap =
                 PleaseSelectYourGenderQuestion ->
                     answerMap
 
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = renameGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = renameGroup_ answerMap.howDidItGoUsingElmAtWork }
+
         TypedNewGroupName question groupName ->
             let
                 addGroup : AnswerMap a -> AnswerMap a
@@ -377,6 +389,12 @@ networkUpdate edit answerMap =
 
                 PleaseSelectYourGenderQuestion ->
                     answerMap
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = addGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = addGroup_ answerMap.howDidItGoUsingElmAtWork }
 
         TypedOtherAnswerGroups question otherAnswer text ->
             let
@@ -465,6 +483,12 @@ networkUpdate edit answerMap =
                 PleaseSelectYourGenderQuestion ->
                     answerMap
 
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = updateOtherAnswer_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = updateOtherAnswer_ answerMap.howDidItGoUsingElmAtWork }
+
         TypedComment question text ->
             let
                 withComment : AnswerMap a -> AnswerMap a
@@ -547,6 +571,12 @@ networkUpdate edit answerMap =
 
                 PleaseSelectYourGenderQuestion ->
                     { answerMap | pleaseSelectYourGender = text }
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = withComment_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = withComment_ answerMap.howDidItGoUsingElmAtWork }
 
 
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -946,6 +976,22 @@ answerMapView model =
                 formMapping.pleaseSelectYourGender
                 model
 
+        WhatPreventsYouFromUsingElmAtWork ->
+            freeTextMappingView
+                model.selectedMapping
+                Questions.whatPreventsYouFromUsingElmAtWorkTitle
+                .whatPreventsYouFromUsingElmAtWork
+                formMapping.whatPreventsYouFromUsingElmAtWork
+                model
+
+        HowDidItGoUsingElmAtWork ->
+            freeTextMappingView
+                model.selectedMapping
+                Questions.howDidItGoUsingElmAtWorkTitle
+                .howDidItGoUsingElmAtWork
+                formMapping.howDidItGoUsingElmAtWork
+                model
+
 
 questionName : SpecificQuestion -> String
 questionName selectedMapping =
@@ -1021,6 +1067,12 @@ questionName selectedMapping =
 
         PleaseSelectYourGenderQuestion ->
             "PleaseSelectYourGenderQuestion"
+
+        WhatPreventsYouFromUsingElmAtWork ->
+            "WhatPreventsYouFromUsingElmAtWork"
+
+        HowDidItGoUsingElmAtWork ->
+            "HowDidItGoUsingElmAtWork"
 
 
 commentEditor : SpecificQuestion -> Bool -> Question a -> (Form2023 -> Maybe a) -> String -> Model -> Element Msg

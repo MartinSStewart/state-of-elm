@@ -965,6 +965,34 @@ formView windowSize model =
                     (Just "Either for a consumer product or an internal tool")
                     form.doYouUseElmAtWork
                     (\a -> FormChanged { form | doYouUseElmAtWork = a })
+                , if form.doYouUseElmAtWork == Just Questions2023.WouldLikeToUseElmAtWork then
+                    Ui.textInput
+                        windowSize
+                        Questions2023.whatPreventsYouFromUsingElmAtWorkTitle
+                        Nothing
+                        form.whatPreventsYouFromUsingElmAtWork
+                        (\a -> FormChanged { form | whatPreventsYouFromUsingElmAtWork = a })
+
+                  else
+                    Element.none
+                , if
+                    (form.doYouUseElmAtWork == Just Questions2023.HaveTriedElmInAWorkProject)
+                        || (form.doYouUseElmAtWork == Just Questions2023.IUseElmAtWork)
+                  then
+                    Ui.textInput
+                        windowSize
+                        (if form.doYouUseElmAtWork == Just Questions2023.HaveTriedElmInAWorkProject then
+                            Questions2023.howDidItGoUsingElmAtWorkTitle
+
+                         else
+                            Questions2023.howIsItGoingUsingElmAtWorkTitle
+                        )
+                        Nothing
+                        form.howDidItGoUsingElmAtWork
+                        (\a -> FormChanged { form | howDidItGoUsingElmAtWork = a })
+
+                  else
+                    Element.none
                 , if form.doYouUseElmAtWork == Just Questions2023.NotEmployed then
                     Element.none
 
