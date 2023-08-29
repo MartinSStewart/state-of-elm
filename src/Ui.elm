@@ -484,16 +484,24 @@ select windowSize onSelect selection question =
                         |> onSelect
                 )
             ]
-            (List.indexedMap
-                (\index option ->
-                    Html.option
-                        [ Html.Attributes.value (String.fromInt index)
-                        , Html.Attributes.selected (Just option == selection)
-                        , Html.Attributes.style "font-family" "Arial"
-                        ]
-                        [ Html.text (question.choiceToString option) ]
-                )
-                (List.Nonempty.toList question.choices)
+            ([ Html.option
+                [ Html.Attributes.selected (Nothing == selection)
+                , Html.Attributes.disabled True
+                , Html.Attributes.hidden True
+                ]
+                [ Html.text "Select a country" ]
+             ]
+                ++ List.indexedMap
+                    (\index option ->
+                        Html.option
+                            [ Html.Attributes.value (String.fromInt index)
+                            , Html.Attributes.selected (Just option == selection)
+
+                            --, Html.Attributes.style "font-family" "Arial"
+                            ]
+                            [ Html.text (question.choiceToString option) ]
+                    )
+                    (List.Nonempty.toList question.choices)
             )
             |> Element.html
             |> Element.el []
