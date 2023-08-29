@@ -20,6 +20,7 @@ module Ui exposing
     , multilineAttributes
     , multipleChoiceIndicator
     , section
+    , select
     , singleChoiceQuestion
     , sourceCodeLink
     , submitSurveyButtonId
@@ -42,7 +43,8 @@ import Element.Region
 import Html
 import Html.Attributes
 import Html.Events
-import List.Nonempty
+import List.Extra as List
+import List.Nonempty exposing (Nonempty)
 import Question exposing (Question)
 import Route exposing (SurveyYear)
 import Simple.Animation
@@ -458,6 +460,44 @@ githubLogo =
         ]
         |> Element.html
         |> Element.el []
+
+
+select : Size -> (a -> msg) -> Maybe a -> Question a -> Element msg
+select windowSize onSelect selection question =
+    container
+        windowSize
+        [ titleAndSubtitle question.title Nothing
+        , Html.select
+            [ Html.Attributes.style "font-size" "16px"
+            , Html.Attributes.style "font-family" "inherit"
+            , Html.Attributes.style "font-weight" "inherit"
+            , Html.Attributes.style "color" "inherit"
+
+            --, Html.Attributes.style "-webkit-appearance" "none"
+            --, Html.Attributes.style "appearance" "none"
+            , Html.Events.onInput
+                (\text ->
+                    String.toInt text
+                        |> Maybe.withDefault 0
+                        |> (\a -> List.getAt a (List.Nonempty.toList question.choices))
+                        |> Maybe.withDefault (List.Nonempty.head question.choices)
+                        |> onSelect
+                )
+            ]
+            (List.indexedMap
+                (\index option ->
+                    Html.option
+                        [ Html.Attributes.value (String.fromInt index)
+                        , Html.Attributes.selected (Just option == selection)
+                        , Html.Attributes.style "font-family" "Arial"
+                        ]
+                        [ Html.text (question.choiceToString option) ]
+                )
+                (List.Nonempty.toList question.choices)
+            )
+            |> Element.html
+            |> Element.el []
+        ]
 
 
 ifMobile : Size -> a -> a -> a

@@ -702,6 +702,18 @@ countryLivingIn =
                 "Taiwan, Province of China" ->
                     "Taiwan"
 
+                "South Georgia and the South Sandwich Islands" ->
+                    "South Georgia"
+
+                "Saint Helena, Ascension and Tristan da Cunha" ->
+                    "Saint Helena"
+
+                "Korea (Democratic People's Republic of)" ->
+                    "North Korea"
+
+                "Korea, Republic of" ->
+                    "South Korea"
+
                 _ ->
                     name
             )

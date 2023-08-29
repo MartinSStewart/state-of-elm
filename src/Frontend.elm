@@ -933,15 +933,11 @@ formView windowSize model =
                 Nothing
                 form.elmInitialInterest
                 (\a -> FormChanged { form | elmInitialInterest = a })
-
-            -- TODO: Restore this
-            --, Ui.searchableTextInput
-            --    windowSize
-            --    Questions.countryLivingInTitle
-            --    Nothing
-            --    countries
-            --    form.countryLivingIn
-            --    (\a -> FormChanged { form | countryLivingIn = a })
+            , Ui.select
+                windowSize
+                (\a -> FormChanged { form | countryLivingIn = Just a })
+                form.countryLivingIn
+                Questions2023.countryLivingIn
             , Ui.emailAddressInput
                 windowSize
                 form.emailAddress
