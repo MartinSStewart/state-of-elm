@@ -304,6 +304,7 @@ type alias Question a =
     }
 
 
+allDoYouUseElm : Nonempty DoYouUseElm
 allDoYouUseElm =
     Nonempty
         YesAtWork
@@ -883,15 +884,19 @@ howIsItGoingUsingElmAtWorkTitle =
     "How is it going using Elm at work?"
 
 
+allHowLargeIsTheCompany : Nonempty HowLargeIsTheCompany
+allHowLargeIsTheCompany =
+    Nonempty Size1To10Employees
+        [ Size11To50Employees
+        , Size50To100Employees
+        , Size100OrMore
+        ]
+
+
 howLargeIsTheCompany : Question HowLargeIsTheCompany
 howLargeIsTheCompany =
     { title = "How large is the company you work at?"
-    , choices =
-        Nonempty Size1To10Employees
-            [ Size11To50Employees
-            , Size50To100Employees
-            , Size100OrMore
-            ]
+    , choices = allHowLargeIsTheCompany
     , choiceToString =
         \a ->
             case a of
@@ -909,31 +914,35 @@ howLargeIsTheCompany =
     }
 
 
+allBackendLanguages : Nonempty WhatLanguageDoYouUseForBackend
+allBackendLanguages =
+    Nonempty
+        C_
+        [ Clojure_
+        , CPlusPlus_
+        , CSharp_
+        , Elixir_
+        , AlsoElm
+        , FSharp_
+        , Go_
+        , Haskell_
+        , Java_
+        , JavaScript_
+        , Kotlin_
+        , OCaml_
+        , PHP_
+        , Python_
+        , Ruby_
+        , Rust_
+        , TypeScript_
+        , NotApplicable
+        ]
+
+
 whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
-    , choices =
-        Nonempty
-            JavaScript_
-            [ TypeScript_
-            , Go_
-            , Haskell_
-            , CSharp_
-            , OCaml_
-            , Python_
-            , PHP_
-            , Java_
-            , Ruby_
-            , Elixir_
-            , Clojure_
-            , Rust_
-            , FSharp_
-            , AlsoElm
-            , C_
-            , CPlusPlus_
-            , Kotlin_
-            , NotApplicable
-            ]
+    , choices = allBackendLanguages
     , choiceToString =
         \a ->
             case a of
@@ -996,24 +1005,28 @@ whatLanguageDoYouUseForBackend =
     }
 
 
+allHowLong : Nonempty HowLong
+allHowLong =
+    Nonempty
+        Under3Months
+        [ Between3MonthsAndAYear
+        , OneYear
+        , TwoYears
+        , ThreeYears
+        , FourYears
+        , FiveYears
+        , SixYears
+        , SevenYears
+        , EightYears
+        , NineYears
+        , TenYears
+        ]
+
+
 howLong : Question HowLong
 howLong =
     { title = "How long have you been using Elm?"
-    , choices =
-        Nonempty
-            Under3Months
-            [ Between3MonthsAndAYear
-            , OneYear
-            , TwoYears
-            , ThreeYears
-            , FourYears
-            , FiveYears
-            , SixYears
-            , SevenYears
-            , EightYears
-            , NineYears
-            , TenYears
-            ]
+    , choices = allHowLong
     , choiceToString =
         \a ->
             case a of
@@ -1055,10 +1068,15 @@ howLong =
     }
 
 
+allElmVersions : Nonempty ElmVersion
+allElmVersions =
+    Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
+
+
 elmVersion : Question ElmVersion
 elmVersion =
     { title = "What versions of Elm are you using?"
-    , choices = Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
+    , choices = allElmVersions
     , choiceToString =
         \a ->
             case a of
@@ -1076,15 +1094,19 @@ elmVersion =
     }
 
 
+allDoYouUseElmFormat : Nonempty DoYouUseElmFormat
+allDoYouUseElmFormat =
+    Nonempty PreferElmFormat
+        [ TriedButDontUseElmFormat
+        , HeardButDontUseElmFormat
+        , HaveNotHeardOfElmFormat
+        ]
+
+
 doYouUseElmFormat : Question DoYouUseElmFormat
 doYouUseElmFormat =
     { title = "Do you format your code with elm-format?"
-    , choices =
-        Nonempty PreferElmFormat
-            [ TriedButDontUseElmFormat
-            , HeardButDontUseElmFormat
-            , HaveNotHeardOfElmFormat
-            ]
+    , choices = allDoYouUseElmFormat
     , choiceToString =
         \a ->
             case a of
@@ -1102,19 +1124,23 @@ doYouUseElmFormat =
     }
 
 
+allStylingTools : Nonempty StylingTools
+allStylingTools =
+    Nonempty Bootstrap
+        [ SassOrScss
+        , Tailwind
+        , ElmCss
+        , ElmTailwindModules
+        , ElmUi
+        , PlainCss
+        , NoStylingTools
+        ]
+
+
 stylingTools : Question StylingTools
 stylingTools =
     { title = "What tools or libraries do you use to style your Elm applications?"
-    , choices =
-        Nonempty Bootstrap
-            [ SassOrScss
-            , Tailwind
-            , ElmCss
-            , ElmTailwindModules
-            , ElmUi
-            , PlainCss
-            , NoStylingTools
-            ]
+    , choices = allStylingTools
     , choiceToString =
         \a ->
             case a of
@@ -1144,27 +1170,32 @@ stylingTools =
     }
 
 
+allBuildTools : Nonempty BuildTools
+allBuildTools =
+    Nonempty Brunch
+        [ Gulp
+        , Make
+        , Parcel
+        , ShellScripts
+        , Vite
+        , Webpack
+        , CreateElmApp
+        , ElmLive
+        , ElmMakeStandalone
+        , ElmReactor
+        , ElmWatch
+        , ElmPages_
+        , Lamdera__
+        , ElmLand_
+        , EsBuild
+        , NoBuildTools
+        ]
+
+
 buildTools : Question BuildTools
 buildTools =
     { title = "What tools do you use to build your Elm applications?"
-    , choices =
-        Nonempty Brunch
-            [ Gulp
-            , Make
-            , Parcel
-            , ShellScripts
-            , Vite
-            , Webpack
-            , CreateElmApp
-            , ElmLive
-            , ElmMakeStandalone
-            , ElmReactor
-            , ElmWatch
-            , ElmPages_
-            , Lamdera__
-            , ElmLand_
-            , NoBuildTools
-            ]
+    , choices = allBuildTools
     , choiceToString =
         \a ->
             case a of
@@ -1295,6 +1326,7 @@ editors =
     }
 
 
+allDoYouUseElmReview : Nonempty DoYouUseElmReview
 allDoYouUseElmReview =
     Nonempty NeverHeardOfElmReview
         [ HeardOfItButNeverTriedElmReview
