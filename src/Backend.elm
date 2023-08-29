@@ -36,6 +36,12 @@ import Types exposing (..)
 import Ui exposing (MultiChoiceWithOther)
 
 
+app :
+    { init : ( BackendModel, Cmd BackendMsg )
+    , update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+    , updateFromFrontend : String -> String -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
+    , subscriptions : BackendModel -> Sub BackendMsg
+    }
 app =
     Effect.Lamdera.backend
         Lamdera.broadcast
@@ -47,6 +53,7 @@ app =
         }
 
 
+subscriptions : a -> Subscription.Subscription restriction msg
 subscriptions _ =
     Subscription.none
 

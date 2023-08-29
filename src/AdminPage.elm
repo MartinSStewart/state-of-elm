@@ -665,6 +665,7 @@ deleteButton onPress =
         }
 
 
+codec : Serialize.Codec e ( List Form2023, FormMapping )
 codec =
     Serialize.tuple (Serialize.list Form2023.formCodec) Form2023.formMappingCodec
 

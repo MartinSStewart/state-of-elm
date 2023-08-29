@@ -212,6 +212,7 @@ heading { level, rawText, children } =
         children
 
 
+rawTextToId : String -> String
 rawTextToId rawText =
     rawText
         |> String.toLower
@@ -219,10 +220,12 @@ rawTextToId rawText =
         |> String.replace "." ""
 
 
+fromHtml : Html.Html msg -> Element msg
 fromHtml =
     html
 
 
+justs : List (Maybe a) -> List a
 justs =
     List.foldl
         (\v acc ->

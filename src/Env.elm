@@ -67,9 +67,11 @@ sendGridKey =
     SendGrid.apiKey sendGridKey_
 
 
+domain : String
 domain =
     "http://localhost:8000"
 
 
+secretKey : String
 secretKey =
     ""

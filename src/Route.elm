@@ -60,18 +60,22 @@ encode route =
             Url.Builder.absolute [ pathUnsubscribe, Id.toString token ] []
 
 
+pathUnsubscribe : String
 pathUnsubscribe =
     "unsubscribe"
 
 
+path2022 : String
 path2022 =
     "2022"
 
 
+path2023 : String
 path2023 =
     "2023"
 
 
+pathAdmin : String
 pathAdmin =
     "admin"
 

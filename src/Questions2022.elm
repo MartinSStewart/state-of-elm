@@ -583,6 +583,7 @@ elmResources =
     }
 
 
+initialInterestTitle : String
 initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
@@ -1185,9 +1186,11 @@ testsWrittenFor =
     }
 
 
+biggestPainPointTitle : String
 biggestPainPointTitle =
     "What has been your biggest pain point in your use of Elm?"
 
 
+whatDoYouLikeMostTitle : String
 whatDoYouLikeMostTitle =
     "What do you like the most about your use of Elm?"

@@ -304,18 +304,21 @@ type alias Question a =
     }
 
 
+allDoYouUseElm =
+    Nonempty
+        YesAtWork
+        [ YesInSideProjects
+        , YesAsAStudent
+        , IUsedToButIDontAnymore
+        , NoButImCuriousAboutIt
+        , NoAndIDontPlanTo
+        ]
+
+
 doYouUseElm : Question DoYouUseElm
 doYouUseElm =
     { title = "Do you use Elm?"
-    , choices =
-        Nonempty
-            YesAtWork
-            [ YesInSideProjects
-            , YesAsAStudent
-            , IUsedToButIDontAnymore
-            , NoButImCuriousAboutIt
-            , NoAndIDontPlanTo
-            ]
+    , choices = allDoYouUseElm
     , choiceToString =
         \a ->
             case a of
@@ -339,19 +342,23 @@ doYouUseElm =
     }
 
 
+allAge : Nonempty Age
+allAge =
+    Nonempty Under10
+        [ Age10To19
+        , Age20To29
+        , Age30To39
+        , Age40To49
+        , Age50To59
+        , Over60
+        , PreferNotToAnswer2
+        ]
+
+
 age : Question Age
 age =
     { title = "How old are you?"
-    , choices =
-        Nonempty Under10
-            [ Age10To19
-            , Age20To29
-            , Age30To39
-            , Age40To49
-            , Age50To59
-            , Over60
-            , PreferNotToAnswer2
-            ]
+    , choices = allAge
     , choiceToString =
         \a ->
             case a of
@@ -381,18 +388,22 @@ age =
     }
 
 
+allPleaseSelectYourGender : Nonempty PleaseSelectYourGender
+allPleaseSelectYourGender =
+    Nonempty Woman
+        [ Man
+        , TransWoman
+        , TransMan
+        , NonBinary
+        , PreferNotToAnswer
+        , OtherGender
+        ]
+
+
 pleaseSelectYourGender : Question PleaseSelectYourGender
 pleaseSelectYourGender =
     { title = "Please select the gender you most closely identify with"
-    , choices =
-        Nonempty Woman
-            [ Man
-            , TransWoman
-            , TransMan
-            , NonBinary
-            , PreferNotToAnswer
-            , OtherGender
-            ]
+    , choices = allPleaseSelectYourGender
     , choiceToString =
         \a ->
             case a of
@@ -419,16 +430,20 @@ pleaseSelectYourGender =
     }
 
 
+allExperienceLevels : Nonempty ExperienceLevel
+allExperienceLevels =
+    Nonempty
+        Beginner
+        [ Intermediate
+        , Professional
+        , Expert
+        ]
+
+
 experienceLevel : Question ExperienceLevel
 experienceLevel =
     { title = "What is your level of experience with functional programming?"
-    , choices =
-        Nonempty
-            Beginner
-            [ Intermediate
-            , Professional
-            , Expert
-            ]
+    , choices = allExperienceLevels
     , choiceToString =
         \a ->
             case a of
@@ -446,30 +461,34 @@ experienceLevel =
     }
 
 
+allOtherLanguages : Nonempty OtherLanguages
+allOtherLanguages =
+    Nonempty
+        C
+        [ CSharp
+        , CPlusPlus
+        , Clojure
+        , Elixir
+        , FSharp
+        , Go
+        , Haskell
+        , Java
+        , JavaScript
+        , OCaml
+        , PHP
+        , Python
+        , Ruby
+        , Rust
+        , Swift
+        , TypeScript
+        , NoOtherLanguage
+        ]
+
+
 otherLanguages : Question OtherLanguages
 otherLanguages =
     { title = "What programming languages, other than Elm, are you most familiar with?"
-    , choices =
-        Nonempty
-            C
-            [ CSharp
-            , CPlusPlus
-            , Clojure
-            , Elixir
-            , FSharp
-            , Go
-            , Haskell
-            , Java
-            , JavaScript
-            , OCaml
-            , PHP
-            , Python
-            , Ruby
-            , Rust
-            , Swift
-            , TypeScript
-            , NoOtherLanguage
-            ]
+    , choices = allOtherLanguages
     , choiceToString =
         \a ->
             case a of
@@ -529,24 +548,29 @@ otherLanguages =
     }
 
 
+allNewsAndDiscussions : Nonempty NewsAndDiscussions
+allNewsAndDiscussions =
+    Nonempty
+        BlogPosts
+        [ ElmDiscourse
+        , ElmRadio
+        , ElmSlack
+        , ElmSubreddit
+        , ElmWeekly
+        , Meetups
+        , Twitter
+        , DevTo
+        , ElmNews
+        , ElmCraft
+        , IncrementalElm
+        , NoNewsOrDiscussions
+        ]
+
+
 newsAndDiscussions : Question NewsAndDiscussions
 newsAndDiscussions =
     { title = "Where do you go for Elm news and discussion?"
-    , choices =
-        Nonempty
-            BlogPosts
-            [ ElmDiscourse
-            , ElmRadio
-            , ElmSlack
-            , ElmSubreddit
-            , ElmWeekly
-            , Meetups
-            , Twitter
-            , DevTo
-            , ElmNews
-            , ElmCraft
-            , NoNewsOrDiscussions
-            ]
+    , choices = allNewsAndDiscussions
     , choiceToString =
         \a ->
             case a of
@@ -591,27 +615,31 @@ newsAndDiscussions =
     }
 
 
+allElmResources : Nonempty ElmResources
+allElmResources =
+    Nonempty
+        BeginningElmBook
+        [ BuildingWebAppsWithElm
+        , DailyDrip
+        , EggheadCourses
+        , ElmOnline
+        , ElmSlack_
+        , ElmForBeginners
+        , ElmInActionBook
+        , FrontendMasters
+        , ProgrammingElmBook
+        , StackOverflow
+        , TheJsonSurvivalKit
+        , WeeklyBeginnersElmSubreddit
+        , GuideElmLang
+        , NoElmResources
+        ]
+
+
 elmResources : Question ElmResources
 elmResources =
     { title = "What resources did you use to learn Elm?"
-    , choices =
-        Nonempty
-            BeginningElmBook
-            [ BuildingWebAppsWithElm
-            , DailyDrip
-            , EggheadCourses
-            , ElmOnline
-            , ElmSlack_
-            , ElmForBeginners
-            , ElmInActionBook
-            , FrontendMasters
-            , ProgrammingElmBook
-            , StackOverflow
-            , TheJsonSurvivalKit
-            , WeeklyBeginnersElmSubreddit
-            , GuideElmLang
-            , NoElmResources
-            ]
+    , choices = allElmResources
     , choiceToString =
         \a ->
             case a of
@@ -662,6 +690,7 @@ elmResources =
     }
 
 
+initialInterestTitle : String
 initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
@@ -722,23 +751,33 @@ countryLivingIn =
     }
 
 
+allApplicationDomains : Nonempty ApplicationDomains
+allApplicationDomains =
+    Nonempty
+        Education
+        [ Gaming
+        , ECommerce
+        , Music
+        , Finance
+        , Health
+        , Productivity
+        , Communication
+        , DataVisualization
+        , Transportation
+        , SocialMedia
+        , Engineering
+        , Sports
+        , ArtAndCulture
+        , Legal
+        , EnvironmentOrClimate
+        , NoApplicationDomains
+        ]
+
+
 applicationDomains : Question ApplicationDomains
 applicationDomains =
     { title = "In which application domains have you used Elm?"
-    , choices =
-        Nonempty
-            Communication
-            [ DataVisualization
-            , ECommerce
-            , Education
-            , Finance
-            , Gaming
-            , Health
-            , Music
-            , Productivity
-            , Transportation
-            , NoApplicationDomains
-            ]
+    , choices = allApplicationDomains
     , choiceToString =
         \a ->
             case a of
@@ -795,16 +834,20 @@ applicationDomains =
     }
 
 
+allDoYouUseElmAtWork : Nonempty DoYouUseElmAtWork
+allDoYouUseElmAtWork =
+    Nonempty NotInterestedInElmAtWork
+        [ WouldLikeToUseElmAtWork
+        , HaveTriedElmInAWorkProject
+        , IUseElmAtWork
+        , NotEmployed
+        ]
+
+
 doYouUseElmAtWork : Question DoYouUseElmAtWork
 doYouUseElmAtWork =
     { title = "Do you use Elm at work?"
-    , choices =
-        Nonempty NotInterestedInElmAtWork
-            [ WouldLikeToUseElmAtWork
-            , HaveTriedElmInAWorkProject
-            , IUseElmAtWork
-            , NotEmployed
-            ]
+    , choices = allDoYouUseElmAtWork
     , choiceToString =
         \a ->
             case a of
@@ -1178,10 +1221,15 @@ buildTools =
     }
 
 
+allFrameworks : Nonempty Frameworks
+allFrameworks =
+    Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa, ElmLand, NoFramework ]
+
+
 frameworks : Question Frameworks
 frameworks =
     { title = "What frameworks do you use?"
-    , choices = Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa, ElmLand, NoFramework ]
+    , choices = allFrameworks
     , choiceToString =
         \a ->
             case a of
@@ -1205,18 +1253,22 @@ frameworks =
     }
 
 
+allEditors : Nonempty Editors
+allEditors =
+    Nonempty Atom
+        [ Emacs
+        , Intellij
+        , SublimeText
+        , VSCode
+        , Vim
+        , NoEditor
+        ]
+
+
 editors : Question Editors
 editors =
     { title = "What editor(s) do you use to write your Elm applications?"
-    , choices =
-        Nonempty Atom
-            [ Emacs
-            , Intellij
-            , SublimeText
-            , VSCode
-            , Vim
-            , NoEditor
-            ]
+    , choices = allEditors
     , choiceToString =
         \a ->
             case a of
@@ -1243,15 +1295,18 @@ editors =
     }
 
 
+allDoYouUseElmReview =
+    Nonempty NeverHeardOfElmReview
+        [ HeardOfItButNeverTriedElmReview
+        , IveTriedElmReview
+        , IUseElmReviewRegularly
+        ]
+
+
 doYouUseElmReview : Question DoYouUseElmReview
 doYouUseElmReview =
     { title = "Do you use elm-review?"
-    , choices =
-        Nonempty NeverHeardOfElmReview
-            [ HeardOfItButNeverTriedElmReview
-            , IveTriedElmReview
-            , IUseElmReviewRegularly
-            ]
+    , choices = allDoYouUseElmReview
     , choiceToString =
         \a ->
             case a of
@@ -1269,17 +1324,21 @@ doYouUseElmReview =
     }
 
 
+allTestTools : Nonempty TestTools
+allTestTools =
+    Nonempty BrowserAcceptanceTests
+        [ ElmBenchmark
+        , ElmTest
+        , ElmProgramTest
+        , VisualRegressionTests
+        , NoTestTools
+        ]
+
+
 testTools : Question TestTools
 testTools =
     { title = "What tools do you use to test your Elm projects?"
-    , choices =
-        Nonempty BrowserAcceptanceTests
-            [ ElmBenchmark
-            , ElmTest
-            , ElmProgramTest
-            , VisualRegressionTests
-            , NoTestTools
-            ]
+    , choices = allTestTools
     , choiceToString =
         \a ->
             case a of
@@ -1303,9 +1362,11 @@ testTools =
     }
 
 
+biggestPainPointTitle : String
 biggestPainPointTitle =
     "What has been your biggest pain point in your use of Elm?"
 
 
+whatDoYouLikeMostTitle : String
 whatDoYouLikeMostTitle =
     "What do you like the most about your use of Elm?"

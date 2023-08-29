@@ -38,6 +38,15 @@ import Ui exposing (Size)
 import Url
 
 
+app :
+    { init : Url.Url -> Lamdera.Key -> ( FrontendModel, Cmd FrontendMsg )
+    , view : FrontendModel -> Browser.Document FrontendMsg
+    , update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+    , updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+    , subscriptions : FrontendModel -> Sub FrontendMsg
+    , onUrlRequest : Browser.UrlRequest -> FrontendMsg
+    , onUrlChange : Url.Url -> FrontendMsg
+    }
 app =
     Effect.Lamdera.frontend
         Lamdera.sendToBackend
@@ -51,6 +60,7 @@ app =
         }
 
 
+subscriptions : a -> Subscription.Subscription FrontendOnly FrontendMsg
 subscriptions _ =
     Subscription.batch
         [ Effect.Browser.Events.onResize (\w h -> GotWindowSize { width = w, height = h })

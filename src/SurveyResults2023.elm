@@ -134,6 +134,7 @@ css =
         ]
 
 
+linkAttributes : List (Element.Attribute msg)
 linkAttributes =
     [ Element.Font.underline
     , Element.mouseOver [ Element.Font.color lightBlue ]
@@ -502,17 +503,6 @@ commentView comment =
     MarkdownThemed.view comment
 
 
-
---Html.div
---    [ Html.Attributes.style "white-space" "pre-wrap"
---    , Html.Attributes.style "line-height" "22px"
---    , Html.Attributes.style "font-size" "18px"
---    ]
---    [ Html.text comment ]
---    |> Element.html
---    |> Element.el [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 } ]
-
-
 freeTextSegment : Mode -> Segment -> Size -> DataEntryWithOtherSegments () -> String -> Element Msg
 freeTextSegment mode segment windowSize segmentData title =
     multiChoiceSegmentHelper windowSize False True mode segment segmentData title
@@ -560,31 +550,6 @@ freeText mode windowSize dataEntryWithOther title =
     multiChoiceHelper windowSize False True mode dataEntryWithOther title
 
 
-
---Element.column
---    [ Element.width Element.fill ]
---    [ Element.paragraph [] [ Element.text title ]
---    , Element.table
---        [ Element.width Element.fill, Element.paddingEach { left = 0, top = 0, bottom = 0, right = 48 } ]
---        { data = data
---        , columns =
---            [ { header = Element.none
---              , width = Element.shrink
---              , view =
---                    \{ choice } ->
---                        Element.paragraph
---                            [ Element.Font.alignRight, Element.Font.size 16, Element.padding 4 ]
---                            [ choice |> ellipsis ]
---              }
---            , { header = Element.none
---              , width = Element.fill
---              , view = \{ count } -> bar count total
---              }
---            ]
---        }
---    ]
-
-
 getValue : Mode -> Int -> Int -> Bool -> Float
 getValue mode count total includePerCapita =
     case mode of
@@ -611,6 +576,7 @@ barAndName mode name value maxCount =
         ]
 
 
+barRightPadding : number
 barRightPadding =
     40
 
@@ -1136,6 +1102,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
         }
 
 
+nonemptySortBy : (a -> comparable) -> Nonempty a -> Nonempty a
 nonemptySortBy sortFunc nonempty =
     Nonempty.toList nonempty
         |> List.sortBy sortFunc

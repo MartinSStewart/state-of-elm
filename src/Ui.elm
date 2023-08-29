@@ -290,6 +290,12 @@ disclaimer =
         [ Element.text "This is a community run survey not affiliated with Evan Czaplicki or Elm" ]
 
 
+animatedUi :
+    (List (Element.Attribute msg) -> children -> Element msg)
+    -> Simple.Animation.Animation
+    -> List (Element.Attribute msg)
+    -> children
+    -> Element msg
 animatedUi =
     Simple.Animation.Animated.ui
         { behindContent = Element.behindContent
@@ -303,6 +309,7 @@ titleFontSize =
     Element.Font.size 22
 
 
+subtitleFontSize : Element.Attr decorative msg
 subtitleFontSize =
     Element.Font.size 18
 

@@ -378,6 +378,7 @@ countryCodec =
         |> Serialize.finishRecord
 
 
+serializeNonemptyEnum : Nonempty a -> Codec e a
 serializeNonemptyEnum nonempty =
     Serialize.enum (List.Nonempty.head nonempty) (List.Nonempty.tail nonempty)
 

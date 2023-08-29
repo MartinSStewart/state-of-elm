@@ -32,6 +32,7 @@ main =
     TF.viewer tests
 
 
+config : TF.Config ToBackend FrontendMsg FrontendModel ToFrontend BackendMsg BackendModel
 config =
     TF.Config
         { init = Frontend.init
@@ -83,6 +84,7 @@ handleFileRequest _ =
         |> Just
 
 
+windowSize : { width : number, height : number }
 windowSize =
     { width = 900, height = 800 }
 
@@ -157,22 +159,27 @@ findNodesByTag tagName nodes =
         nodes
 
 
+sessionId0 : Effect.Lamdera.SessionId
 sessionId0 =
     Effect.Lamdera.sessionIdFromString "sessionId0"
 
 
+sessionId1 : Effect.Lamdera.SessionId
 sessionId1 =
     Effect.Lamdera.sessionIdFromString "sessionId1"
 
 
+url : Url.Url
 url =
     Unsafe.url Env.domain
 
 
+adminUrl : Url.Url
 adminUrl =
     Env.domain ++ Route.encode AdminRoute |> Unsafe.url
 
 
+url2022 : Url.Url
 url2022 =
     Env.domain ++ Route.encode (SurveyRoute Year2022) |> Unsafe.url
 
@@ -188,6 +195,7 @@ clickCheckbox clientActions question instructions =
         instructions
 
 
+checkboxId : String -> String
 checkboxId text =
     "checkbox_" ++ text
 
@@ -203,6 +211,7 @@ clickRadio clientActions question instructions =
         instructions
 
 
+userEmailAddress : EmailAddress
 userEmailAddress =
     Unsafe.emailAddress "a@a.se"
 
@@ -287,5 +296,8 @@ tests =
     ]
 
 
+shortWait :
+    TF.Instructions toBackend frontendMsg frontendModel toFrontend backendMsg backendModel
+    -> TF.Instructions toBackend frontendMsg frontendModel toFrontend backendMsg backendModel
 shortWait =
     TF.simulateTime (Duration.milliseconds 100)
