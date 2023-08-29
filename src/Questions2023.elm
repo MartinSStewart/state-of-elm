@@ -1020,7 +1020,7 @@ elmVersion =
         \a ->
             case a of
                 Version0_19 ->
-                    "0.19 or 0.19.1"
+                    "0.19"
 
                 Version0_18 ->
                     "0.18"
