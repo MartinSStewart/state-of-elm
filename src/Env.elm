@@ -39,7 +39,7 @@ canShowLatestResults =
 
 surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
-    Effect.Time.millisToPosix 1693334751000
+    Effect.Time.millisToPosix 1793334751000
 
 
 presentResultsTime : Effect.Time.Posix
