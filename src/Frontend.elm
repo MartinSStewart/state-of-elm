@@ -1093,6 +1093,12 @@ formView windowSize model =
                     Nothing
                     form.whatDoYouLikeMost
                     (\a -> FormChanged { form | whatDoYouLikeMost = a })
+                , Ui.textInput
+                    windowSize
+                    Questions2023.surveyImprovementsTitle
+                    (Just "New questions you want to see, a question you think could have been worded better, UX improvements, etc.")
+                    form.surveyImprovements
+                    (\a -> FormChanged { form | surveyImprovements = a })
                 ]
         ]
 
@@ -1106,7 +1112,7 @@ packagesQuestion windowSize model =
     in
     Ui.container
         windowSize
-        [ Ui.title "What packages do you use in your Elm apps?"
+        [ Ui.title Questions2023.whatPackagesDoYouUseTitle
         , Ui.subtitle "Upload elm.json files from apps you're working on or worked on this year. You don't need to upload everything, each unique package is counted once."
         , Element.column
             [ Element.spacing 8, Element.width Element.fill ]

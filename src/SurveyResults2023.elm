@@ -8,6 +8,7 @@ module SurveyResults2023 exposing
     , Segment(..)
     , freeText
     , multiChoiceWithOther
+    , simpleGraph
     , singleChoiceGraph
     , update
     , view

@@ -27,11 +27,13 @@ import EmailAddress exposing (EmailAddress)
 import Env
 import Form2023 exposing (Form2023, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
+import List.Extra as List
 import NetworkModel exposing (NetworkModel)
+import PackageName exposing (PackageName)
 import Questions2023 as Questions exposing (Question)
 import SendGrid
 import Serialize
-import SurveyResults2022 exposing (Mode(..))
+import SurveyResults2023 exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -97,8 +99,8 @@ init loginData =
     }
 
 
-questionsWithOther : List SpecificQuestion
-questionsWithOther =
+allQuestions : List SpecificQuestion
+allQuestions =
     [ DoYouUseElmQuestion
     , AgeQuestion
     , PleaseSelectYourGenderQuestion
@@ -123,6 +125,10 @@ questionsWithOther =
     , ElmInitialInterestQuestion
     , BiggestPainPointQuestion
     , WhatDoYouLikeMostQuestion
+    , HowDidItGoUsingElmAtWork
+    , WhatPreventsYouFromUsingElmAtWork
+    , SurveyImprovementsQuestion
+    , WhatPackagesDoYouUseQuestion
     ]
 
 
@@ -218,6 +224,12 @@ networkUpdate edit answerMap =
                 HowDidItGoUsingElmAtWork ->
                     { answerMap | howDidItGoUsingElmAtWork = removeGroup_ answerMap.howDidItGoUsingElmAtWork }
 
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    answerMap
+
         TypedGroupName question hotkey groupName ->
             let
                 renameGroup : AnswerMap a -> AnswerMap a
@@ -307,6 +319,12 @@ networkUpdate edit answerMap =
                 HowDidItGoUsingElmAtWork ->
                     { answerMap | howDidItGoUsingElmAtWork = renameGroup_ answerMap.howDidItGoUsingElmAtWork }
 
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    answerMap
+
         TypedNewGroupName question groupName ->
             let
                 addGroup : AnswerMap a -> AnswerMap a
@@ -395,6 +413,12 @@ networkUpdate edit answerMap =
 
                 HowDidItGoUsingElmAtWork ->
                     { answerMap | howDidItGoUsingElmAtWork = addGroup_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    answerMap
 
         TypedOtherAnswerGroups question otherAnswer text ->
             let
@@ -489,6 +513,12 @@ networkUpdate edit answerMap =
                 HowDidItGoUsingElmAtWork ->
                     { answerMap | howDidItGoUsingElmAtWork = updateOtherAnswer_ answerMap.howDidItGoUsingElmAtWork }
 
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    answerMap
+
         TypedComment question text ->
             let
                 withComment : AnswerMap a -> AnswerMap a
@@ -577,6 +607,12 @@ networkUpdate edit answerMap =
 
                 HowDidItGoUsingElmAtWork ->
                     { answerMap | howDidItGoUsingElmAtWork = withComment_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    { answerMap | whatPackagesDoYouUse = text }
 
 
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -736,7 +772,7 @@ adminView model =
                     (PressedQuestionWithOther question)
                     (questionName question)
             )
-            questionsWithOther
+            allQuestions
             |> Element.wrappedRow []
         , answerMapView model
 
@@ -993,6 +1029,52 @@ answerMapView model =
                 formMapping.howDidItGoUsingElmAtWork
                 model
 
+        SurveyImprovementsQuestion ->
+            submittedForms model.forms
+                |> List.map (\form -> Element.paragraph [] [ Element.text form.surveyImprovements ])
+                |> Element.column [ Element.width Element.fill, Element.spacing 16 ]
+
+        WhatPackagesDoYouUseQuestion ->
+            let
+                equalBy : PackageName -> ( String, String )
+                equalBy package =
+                    ( package.author, package.name )
+
+                answers : List { choice : String, value : Float }
+                answers =
+                    submittedForms model.forms
+                        |> List.concatMap (\form -> List.concat form.elmJson |> List.uniqueBy equalBy)
+                        |> List.gatherEqualsBy equalBy
+                        |> List.map
+                            (\( first, rest ) ->
+                                { choice = first.author ++ "/" ++ first.name
+                                , value = List.length rest + 1 |> toFloat
+                                }
+                            )
+            in
+            Element.row
+                [ Element.spacing 8, Element.width Element.fill ]
+                [ Element.Input.multiline
+                    [ Element.width Element.fill, Element.alignTop ]
+                    { onChange = TypedComment WhatPackagesDoYouUseQuestion >> FormMappingEditMsg
+                    , text = formMapping.whatPackagesDoYouUse
+                    , placeholder = Nothing
+                    , label = Element.Input.labelAbove [] (Element.text "Comment")
+                    , spellcheck = True
+                    }
+                , SurveyResults2023.simpleGraph
+                    { windowSize = { width = 1920, height = 1080 }
+                    , singleLine = False
+                    , isMultiChoice = False
+                    , customMaxCount = Nothing
+                    , mode = Total
+                    , title = "Number of people using a package for at least one of their apps"
+                    , filterUi = Element.none
+                    , comment = ""
+                    , data = answers
+                    }
+                ]
+
 
 questionName : SpecificQuestion -> String
 questionName selectedMapping =
@@ -1067,13 +1149,19 @@ questionName selectedMapping =
             "DoYouUseElmReview"
 
         PleaseSelectYourGenderQuestion ->
-            "PleaseSelectYourGenderQuestion"
+            "PleaseSelectYourGender"
 
         WhatPreventsYouFromUsingElmAtWork ->
             "WhatPreventsYouFromUsingElmAtWork"
 
         HowDidItGoUsingElmAtWork ->
             "HowDidItGoUsingElmAtWork"
+
+        SurveyImprovementsQuestion ->
+            "SurveyImprovements"
+
+        WhatPackagesDoYouUseQuestion ->
+            "WhatPackagesDoYouUse"
 
 
 commentEditor : SpecificQuestion -> Bool -> Question a -> (Form2023 -> Maybe a) -> String -> Model -> Element Msg
@@ -1092,7 +1180,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             , label = Element.Input.labelAbove [] (Element.text "Comment")
             , spellcheck = True
             }
-        , SurveyResults2022.singleChoiceGraph
+        , SurveyResults2023.singleChoiceGraph
             { width = 1920, height = 1080 }
             singleLine
             True
@@ -1207,7 +1295,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults2022.freeText
+        , SurveyResults2023.freeText
             Percentage
             { width = 1920, height = 1080 }
             (DataEntry.fromFreeText answerMap answers)
@@ -1319,7 +1407,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
                 , spellcheck = True
                 }
             ]
-        , SurveyResults2022.multiChoiceWithOther
+        , SurveyResults2023.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
             True

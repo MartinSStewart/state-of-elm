@@ -51,6 +51,7 @@ type alias Form2023 =
     , whatDoYouLikeMost : String
     , emailAddress : String
     , elmJson : List (List PackageName)
+    , surveyImprovements : String
     }
 
 
@@ -110,6 +111,7 @@ type alias FormMapping =
     , elmInitialInterest : FreeTextAnswerMap
     , biggestPainPoint : FreeTextAnswerMap
     , whatDoYouLikeMost : FreeTextAnswerMap
+    , whatPackagesDoYouUse : String
     }
 
 
@@ -143,6 +145,7 @@ emptyForm =
     , whatDoYouLikeMost = ""
     , emailAddress = ""
     , elmJson = []
+    , surveyImprovements = ""
     }
 
 
@@ -173,6 +176,8 @@ type SpecificQuestion
     | ElmInitialInterestQuestion
     | BiggestPainPointQuestion
     | WhatDoYouLikeMostQuestion
+    | SurveyImprovementsQuestion
+    | WhatPackagesDoYouUseQuestion
 
 
 formMappingCodec : Codec e FormMapping
@@ -204,6 +209,7 @@ formMappingCodec =
         |> Serialize.field .elmInitialInterest FreeTextAnswerMap.codec
         |> Serialize.field .biggestPainPoint FreeTextAnswerMap.codec
         |> Serialize.field .whatDoYouLikeMost FreeTextAnswerMap.codec
+        |> Serialize.field .whatPackagesDoYouUse Serialize.string
         |> Serialize.finishRecord
 
 
@@ -240,6 +246,7 @@ formCodec =
         |> Serialize.field .whatDoYouLikeMost Serialize.string
         |> Serialize.field .emailAddress Serialize.string
         |> Serialize.field .elmJson (Serialize.list (Serialize.list PackageName.codec))
+        |> Serialize.field .surveyImprovements Serialize.string
         |> Serialize.finishRecord
 
 

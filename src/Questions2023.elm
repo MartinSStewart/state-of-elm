@@ -43,9 +43,11 @@ module Questions2023 exposing
     , otherLanguages
     , pleaseSelectYourGender
     , stylingTools
+    , surveyImprovementsTitle
     , testTools
     , whatDoYouLikeMostTitle
     , whatLanguageDoYouUseForBackend
+    , whatPackagesDoYouUseTitle
     , whatPreventsYouFromUsingElmAtWorkTitle
     )
 
@@ -1402,3 +1404,13 @@ biggestPainPointTitle =
 whatDoYouLikeMostTitle : String
 whatDoYouLikeMostTitle =
     "What do you like the most about your use of Elm?"
+
+
+surveyImprovementsTitle : String
+surveyImprovementsTitle =
+    "Do you have any comments or suggestions?"
+
+
+whatPackagesDoYouUseTitle : String
+whatPackagesDoYouUseTitle =
+    "What packages do you use in your Elm apps?"

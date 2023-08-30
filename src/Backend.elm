@@ -140,6 +140,7 @@ initSurvey2023 =
             , testTools = AnswerMap.init Questions2023.testTools
             , biggestPainPoint = FreeTextAnswerMap.init
             , whatDoYouLikeMost = FreeTextAnswerMap.init
+            , whatPackagesDoYouUse = ""
             }
     in
     { forms = Dict.empty
