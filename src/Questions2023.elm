@@ -625,16 +625,16 @@ allElmResources =
         [ BuildingWebAppsWithElm
         , DailyDrip
         , EggheadCourses
-        , ElmOnline
-        , ElmSlack_
         , ElmForBeginners
         , ElmInActionBook
+        , ElmOnline
+        , ElmSlack_
         , FrontendMasters
+        , GuideElmLang
         , ProgrammingElmBook
         , StackOverflow
         , TheJsonSurvivalKit
         , WeeklyBeginnersElmSubreddit
-        , GuideElmLang
         , NoElmResources
         ]
 
@@ -698,59 +698,64 @@ initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
 
+countryChoiceToString : { a | name : b, flag : String } -> String
+countryChoiceToString { name, flag } =
+    (case name of
+        "United Kingdom of Great Britain and Northern Ireland" ->
+            "United Kingdom"
+
+        "United States of America" ->
+            "United States"
+
+        "Russian Federation" ->
+            "Russia"
+
+        "Bosnia and Herzegovina" ->
+            "Bosnia"
+
+        "Iran (Islamic Republic of)" ->
+            "Iran"
+
+        "Venezuela (Bolivarian Republic of)" ->
+            "Venezuela"
+
+        "Trinidad and Tobago" ->
+            "Trinidad"
+
+        "Viet Nam" ->
+            "Vietnam"
+
+        "Taiwan, Province of China" ->
+            "Taiwan"
+
+        "South Georgia and the South Sandwich Islands" ->
+            "South Georgia"
+
+        "Saint Helena, Ascension and Tristan da Cunha" ->
+            "Saint Helena"
+
+        "Korea (Democratic People's Republic of)" ->
+            "North Korea"
+
+        "Korea, Republic of" ->
+            "South Korea"
+
+        _ ->
+            name
+    )
+        ++ " "
+        ++ flag
+
+
 countryLivingIn : Question Country
 countryLivingIn =
     { title = "Which country do you live in?"
     , choices =
         List.Nonempty.fromList Countries.all
             |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
-    , choiceToString =
-        \{ name, flag } ->
-            (case name of
-                "United Kingdom of Great Britain and Northern Ireland" ->
-                    "United Kingdom"
-
-                "United States of America" ->
-                    "United States"
-
-                "Russian Federation" ->
-                    "Russia"
-
-                "Bosnia and Herzegovina" ->
-                    "Bosnia"
-
-                "Iran (Islamic Republic of)" ->
-                    "Iran"
-
-                "Venezuela (Bolivarian Republic of)" ->
-                    "Venezuela"
-
-                "Trinidad and Tobago" ->
-                    "Trinidad"
-
-                "Viet Nam" ->
-                    "Vietnam"
-
-                "Taiwan, Province of China" ->
-                    "Taiwan"
-
-                "South Georgia and the South Sandwich Islands" ->
-                    "South Georgia"
-
-                "Saint Helena, Ascension and Tristan da Cunha" ->
-                    "Saint Helena"
-
-                "Korea (Democratic People's Republic of)" ->
-                    "North Korea"
-
-                "Korea, Republic of" ->
-                    "South Korea"
-
-                _ ->
-                    name
-            )
-                ++ " "
-                ++ flag
+            |> List.Nonempty.cons { name = "Kosovo", code = "XK", flag = "🇽🇰" }
+            |> List.Nonempty.sortBy countryChoiceToString
+    , choiceToString = countryChoiceToString
     }
 
 
@@ -1175,21 +1180,21 @@ stylingTools =
 allBuildTools : Nonempty BuildTools
 allBuildTools =
     Nonempty Brunch
-        [ Gulp
+        [ CreateElmApp
+        , ElmLand_
+        , ElmLive
+        , ElmMakeStandalone
+        , ElmPages_
+        , ElmReactor
+        , ElmWatch
+        , EsBuild
+        , Gulp
+        , Lamdera__
         , Make
         , Parcel
         , ShellScripts
         , Vite
         , Webpack
-        , CreateElmApp
-        , ElmLive
-        , ElmMakeStandalone
-        , ElmReactor
-        , ElmWatch
-        , ElmPages_
-        , Lamdera__
-        , ElmLand_
-        , EsBuild
         , NoBuildTools
         ]
 
