@@ -703,7 +703,7 @@ initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
 
 
-countryChoiceToString : { a | name : b, flag : String } -> String
+countryChoiceToString : { a | name : String, flag : String } -> String
 countryChoiceToString { name, flag } =
     (case name of
         "United Kingdom of Great Britain and Northern Ireland" ->
