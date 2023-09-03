@@ -144,6 +144,7 @@ type ElmResources
     | ElmSlack_
     | FrontendMasters
     | ElmOnline
+    | ElmTown
     | NoElmResources
 
 
@@ -629,6 +630,7 @@ allElmResources =
         , ElmInActionBook
         , ElmOnline
         , ElmSlack_
+        , ElmTown
         , FrontendMasters
         , GuideElmLang
         , ProgrammingElmBook
@@ -690,6 +692,9 @@ elmResources =
 
                 NoElmResources ->
                     "None"
+
+                ElmTown ->
+                    "Elm Town"
     }
 
 
@@ -762,22 +767,22 @@ countryLivingIn =
 allApplicationDomains : Nonempty ApplicationDomains
 allApplicationDomains =
     Nonempty
-        Education
-        [ Gaming
-        , ECommerce
-        , Music
-        , Finance
-        , Health
-        , Productivity
-        , Communication
+        ArtAndCulture
+        [ Communication
         , DataVisualization
-        , Transportation
-        , SocialMedia
+        , ECommerce
+        , Education
         , Engineering
-        , Sports
-        , ArtAndCulture
-        , Legal
         , EnvironmentOrClimate
+        , Finance
+        , Gaming
+        , Health
+        , Legal
+        , Music
+        , Productivity
+        , SocialMedia
+        , Sports
+        , Transportation
         , NoApplicationDomains
         ]
 
