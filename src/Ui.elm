@@ -44,7 +44,7 @@ import Html
 import Html.Attributes
 import Html.Events
 import List.Extra as List
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty
 import Question exposing (Question)
 import Route exposing (SurveyYear)
 import Simple.Animation

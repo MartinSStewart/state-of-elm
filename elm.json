@@ -24,9 +24,7 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.5.2",
-            "elm-explorations/test": "2.0.0",
             "erlandsona/assoc-set": "1.1.0",
-            "hecrj/html-parser": "2.4.0",
             "ianmackenzie/elm-units": "2.9.0",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
@@ -47,15 +45,16 @@
             "elm/virtual-dom": "1.0.2",
             "elm-community/basics-extra": "4.1.0",
             "elm-community/random-extra": "3.2.0",
+            "elm-explorations/test": "2.0.0",
             "elm-explorations/webgl": "1.1.3",
             "folkertdev/elm-sha2": "1.0.0",
             "rtfeldman/elm-hex": "1.0.0"
         }
     },
     "test-dependencies": {
-        "direct": {},
-        "indirect": {
-            "justinmimbs/date": "3.2.1"
-        }
+        "direct": {
+            "elm-explorations/test": "2.0.0"
+        },
+        "indirect": {}
     }
 }
