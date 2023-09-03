@@ -44,7 +44,7 @@ surveyCloseTime =
 
 presentResultsTime : Effect.Time.Posix
 presentResultsTime =
-    Duration.addTo surveyCloseTime (Duration.days 30)
+    Duration.addTo surveyCloseTime (Duration.days 14)
 
 
 surveyIsOpen : Effect.Time.Posix -> Bool
