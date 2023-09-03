@@ -396,8 +396,6 @@ allPleaseSelectYourGender : Nonempty PleaseSelectYourGender
 allPleaseSelectYourGender =
     Nonempty Woman
         [ Man
-        , TransWoman
-        , TransMan
         , NonBinary
         , PreferNotToAnswer
         , OtherGender
