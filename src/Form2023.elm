@@ -289,7 +289,7 @@ allElmResources : Nonempty ElmResources
 allElmResources =
     Nonempty
         DailyDrip
-        [ BeginningElmBook, BuildingWebAppsWithElm, EggheadCourses, ElmForBeginners, ElmInActionBook, ElmOnline, ElmSlack_, FrontendMasters, GuideElmLang, NoElmResources, ProgrammingElmBook, StackOverflow, TheJsonSurvivalKit, WeeklyBeginnersElmSubreddit ]
+        [ BeginningElmBook, BuildingWebAppsWithElm, EggheadCourses, ElmForBeginners, ElmInActionBook, ElmOnline, ElmSlack_, FrontendMasters, GuideElmLang, NoElmResources, ProgrammingElmBook, StackOverflow, TheJsonSurvivalKit, WeeklyBeginnersElmSubreddit, ElmTown ]
 
 
 allWhereDoYouUseElm : Nonempty ApplicationDomains
