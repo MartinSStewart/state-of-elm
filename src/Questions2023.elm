@@ -1,4 +1,4 @@
-module Questions exposing
+module Questions2023 exposing
     ( Age(..)
     , ApplicationDomains(..)
     , BuildTools(..)
@@ -15,12 +15,11 @@ module Questions exposing
     , HowLong(..)
     , NewsAndDiscussions(..)
     , OtherLanguages(..)
+    , PleaseSelectYourGender(..)
     , Question
     , StylingTools(..)
     , TestTools(..)
-    , TestsWrittenFor(..)
     , WhatLanguageDoYouUseForBackend(..)
-    , WhichElmReviewRulesDoYouUse(..)
     , age
     , applicationDomains
     , biggestPainPointTitle
@@ -35,17 +34,21 @@ module Questions exposing
     , elmVersion
     , experienceLevel
     , frameworks
+    , howDidItGoUsingElmAtWorkTitle
+    , howIsItGoingUsingElmAtWorkTitle
     , howLargeIsTheCompany
     , howLong
     , initialInterestTitle
     , newsAndDiscussions
     , otherLanguages
+    , pleaseSelectYourGender
     , stylingTools
+    , surveyImprovementsTitle
     , testTools
-    , testsWrittenFor
     , whatDoYouLikeMostTitle
     , whatLanguageDoYouUseForBackend
-    , whichElmReviewRulesDoYouUse
+    , whatPackagesDoYouUseTitle
+    , whatPreventsYouFromUsingElmAtWorkTitle
     )
 
 import Countries exposing (Country)
@@ -60,6 +63,17 @@ type Age
     | Age40To49
     | Age50To59
     | Over60
+    | PreferNotToAnswer2
+
+
+type PleaseSelectYourGender
+    = Man
+    | Woman
+    | TransMan
+    | TransWoman
+    | NonBinary
+    | PreferNotToAnswer
+    | OtherGender
 
 
 type ExperienceLevel
@@ -96,6 +110,7 @@ type OtherLanguages
     | Clojure
     | Rust
     | FSharp
+    | NoOtherLanguage
 
 
 type NewsAndDiscussions
@@ -105,12 +120,13 @@ type NewsAndDiscussions
     | Twitter
     | ElmRadio
     | BlogPosts
-    | Facebook
     | DevTo
     | Meetups
     | ElmWeekly
     | ElmNews
     | ElmCraft
+    | IncrementalElm
+    | NoNewsOrDiscussions
 
 
 type ElmResources
@@ -128,6 +144,8 @@ type ElmResources
     | ElmSlack_
     | FrontendMasters
     | ElmOnline
+    | ElmTown
+    | NoElmResources
 
 
 type ApplicationDomains
@@ -141,6 +159,13 @@ type ApplicationDomains
     | Communication
     | DataVisualization
     | Transportation
+    | SocialMedia
+    | Engineering
+    | Sports
+    | ArtAndCulture
+    | Legal
+    | EnvironmentOrClimate
+    | NoApplicationDomains
 
 
 type HowLong
@@ -155,6 +180,7 @@ type HowLong
     | SevenYears
     | EightYears
     | NineYears
+    | TenYears
 
 
 type DoYouUseElmReview
@@ -164,20 +190,11 @@ type DoYouUseElmReview
     | IUseElmReviewRegularly
 
 
-type WhichElmReviewRulesDoYouUse
-    = ElmReviewUnused
-    | ElmReviewSimplify
-    | ElmReviewLicense
-    | ElmReviewDebug
-    | ElmReviewCommon
-    | ElmReviewCognitiveComplexity
-
-
 type DoYouUseElmAtWork
     = NotInterestedInElmAtWork
     | WouldLikeToUseElmAtWork
     | HaveTriedElmInAWorkProject
-    | MyTeamMostlyWritesNewCodeInElm
+    | IUseElmAtWork
     | NotEmployed
 
 
@@ -204,6 +221,9 @@ type WhatLanguageDoYouUseForBackend
     | Rust_
     | FSharp_
     | AlsoElm
+    | C_
+    | CPlusPlus_
+    | Kotlin_
     | NotApplicable
 
 
@@ -229,6 +249,7 @@ type StylingTools
     | Tailwind
     | ElmTailwindModules
     | Bootstrap
+    | NoStylingTools
 
 
 type BuildTools
@@ -243,6 +264,12 @@ type BuildTools
     | ElmReactor
     | Parcel
     | Vite
+    | ElmWatch
+    | ElmPages_
+    | Lamdera__
+    | ElmLand_
+    | EsBuild
+    | NoBuildTools
 
 
 type Frameworks
@@ -250,6 +277,8 @@ type Frameworks
     | ElmSpa
     | ElmPages
     | ElmPlayground
+    | NoFramework
+    | ElmLand
 
 
 type Editors
@@ -259,6 +288,7 @@ type Editors
     | Emacs
     | VSCode
     | Intellij
+    | NoEditor
 
 
 type TestTools
@@ -267,15 +297,7 @@ type TestTools
     | ElmTest
     | ElmProgramTest
     | VisualRegressionTests
-
-
-type TestsWrittenFor
-    = ComplicatedFunctions
-    | FunctionsThatReturnCmds
-    | AllPublicFunctions
-    | HtmlFunctions
-    | JsonDecodersAndEncoders
-    | MostPublicFunctions
+    | NoTestTools
 
 
 type alias Question a =
@@ -285,18 +307,22 @@ type alias Question a =
     }
 
 
+allDoYouUseElm : Nonempty DoYouUseElm
+allDoYouUseElm =
+    Nonempty
+        YesAtWork
+        [ YesInSideProjects
+        , YesAsAStudent
+        , IUsedToButIDontAnymore
+        , NoButImCuriousAboutIt
+        , NoAndIDontPlanTo
+        ]
+
+
 doYouUseElm : Question DoYouUseElm
 doYouUseElm =
     { title = "Do you use Elm?"
-    , choices =
-        Nonempty
-            YesAtWork
-            [ YesInSideProjects
-            , YesAsAStudent
-            , IUsedToButIDontAnymore
-            , NoButImCuriousAboutIt
-            , NoAndIDontPlanTo
-            ]
+    , choices = allDoYouUseElm
     , choiceToString =
         \a ->
             case a of
@@ -320,18 +346,23 @@ doYouUseElm =
     }
 
 
+allAge : Nonempty Age
+allAge =
+    Nonempty Under10
+        [ Age10To19
+        , Age20To29
+        , Age30To39
+        , Age40To49
+        , Age50To59
+        , Over60
+        , PreferNotToAnswer2
+        ]
+
+
 age : Question Age
 age =
     { title = "How old are you?"
-    , choices =
-        Nonempty Under10
-            [ Age10To19
-            , Age20To29
-            , Age30To39
-            , Age40To49
-            , Age50To59
-            , Over60
-            ]
+    , choices = allAge
     , choiceToString =
         \a ->
             case a of
@@ -355,19 +386,68 @@ age =
 
                 Over60 ->
                     "60 years or older"
+
+                PreferNotToAnswer2 ->
+                    "Prefer not to answer"
     }
+
+
+allPleaseSelectYourGender : Nonempty PleaseSelectYourGender
+allPleaseSelectYourGender =
+    Nonempty Woman
+        [ Man
+        , TransWoman
+        , TransMan
+        , NonBinary
+        , PreferNotToAnswer
+        , OtherGender
+        ]
+
+
+pleaseSelectYourGender : Question PleaseSelectYourGender
+pleaseSelectYourGender =
+    { title = "Please select the gender you most closely identify with"
+    , choices = allPleaseSelectYourGender
+    , choiceToString =
+        \a ->
+            case a of
+                Man ->
+                    "Man"
+
+                Woman ->
+                    "Woman"
+
+                TransMan ->
+                    "Trans man"
+
+                TransWoman ->
+                    "Trans woman"
+
+                NonBinary ->
+                    "Non-binary"
+
+                PreferNotToAnswer ->
+                    "Prefer not to answer"
+
+                OtherGender ->
+                    "Other"
+    }
+
+
+allExperienceLevels : Nonempty ExperienceLevel
+allExperienceLevels =
+    Nonempty
+        Beginner
+        [ Intermediate
+        , Professional
+        , Expert
+        ]
 
 
 experienceLevel : Question ExperienceLevel
 experienceLevel =
     { title = "What is your level of experience with functional programming?"
-    , choices =
-        Nonempty
-            Beginner
-            [ Intermediate
-            , Professional
-            , Expert
-            ]
+    , choices = allExperienceLevels
     , choiceToString =
         \a ->
             case a of
@@ -385,29 +465,34 @@ experienceLevel =
     }
 
 
+allOtherLanguages : Nonempty OtherLanguages
+allOtherLanguages =
+    Nonempty
+        C
+        [ CSharp
+        , CPlusPlus
+        , Clojure
+        , Elixir
+        , FSharp
+        , Go
+        , Haskell
+        , Java
+        , JavaScript
+        , OCaml
+        , PHP
+        , Python
+        , Ruby
+        , Rust
+        , Swift
+        , TypeScript
+        , NoOtherLanguage
+        ]
+
+
 otherLanguages : Question OtherLanguages
 otherLanguages =
     { title = "What programming languages, other than Elm, are you most familiar with?"
-    , choices =
-        Nonempty
-            C
-            [ CSharp
-            , CPlusPlus
-            , Clojure
-            , Elixir
-            , FSharp
-            , Go
-            , Haskell
-            , Java
-            , JavaScript
-            , OCaml
-            , PHP
-            , Python
-            , Ruby
-            , Rust
-            , Swift
-            , TypeScript
-            ]
+    , choices = allOtherLanguages
     , choiceToString =
         \a ->
             case a of
@@ -461,27 +546,35 @@ otherLanguages =
 
                 FSharp ->
                     "F#"
+
+                NoOtherLanguage ->
+                    "None"
     }
+
+
+allNewsAndDiscussions : Nonempty NewsAndDiscussions
+allNewsAndDiscussions =
+    Nonempty
+        BlogPosts
+        [ ElmDiscourse
+        , ElmRadio
+        , ElmSlack
+        , ElmSubreddit
+        , ElmWeekly
+        , Meetups
+        , Twitter
+        , DevTo
+        , ElmNews
+        , ElmCraft
+        , IncrementalElm
+        , NoNewsOrDiscussions
+        ]
 
 
 newsAndDiscussions : Question NewsAndDiscussions
 newsAndDiscussions =
     { title = "Where do you go for Elm news and discussion?"
-    , choices =
-        Nonempty
-            BlogPosts
-            [ ElmDiscourse
-            , ElmRadio
-            , ElmSlack
-            , ElmSubreddit
-            , ElmWeekly
-            , Facebook
-            , Meetups
-            , Twitter
-            , DevTo
-            , ElmNews
-            , ElmCraft
-            ]
+    , choices = allNewsAndDiscussions
     , choiceToString =
         \a ->
             case a of
@@ -503,9 +596,6 @@ newsAndDiscussions =
                 BlogPosts ->
                     "Blog posts"
 
-                Facebook ->
-                    "Facebook groups"
-
                 DevTo ->
                     "dev.to"
 
@@ -520,29 +610,41 @@ newsAndDiscussions =
 
                 ElmCraft ->
                     "elmcraft.org"
+
+                IncrementalElm ->
+                    "Incremental Elm"
+
+                NoNewsOrDiscussions ->
+                    "None"
     }
+
+
+allElmResources : Nonempty ElmResources
+allElmResources =
+    Nonempty
+        BeginningElmBook
+        [ BuildingWebAppsWithElm
+        , DailyDrip
+        , EggheadCourses
+        , ElmForBeginners
+        , ElmInActionBook
+        , ElmOnline
+        , ElmSlack_
+        , ElmTown
+        , FrontendMasters
+        , GuideElmLang
+        , ProgrammingElmBook
+        , StackOverflow
+        , TheJsonSurvivalKit
+        , WeeklyBeginnersElmSubreddit
+        , NoElmResources
+        ]
 
 
 elmResources : Question ElmResources
 elmResources =
     { title = "What resources did you use to learn Elm?"
-    , choices =
-        Nonempty
-            BeginningElmBook
-            [ BuildingWebAppsWithElm
-            , DailyDrip
-            , EggheadCourses
-            , ElmOnline
-            , ElmSlack_
-            , ElmForBeginners
-            , ElmInActionBook
-            , FrontendMasters
-            , ProgrammingElmBook
-            , StackOverflow
-            , TheJsonSurvivalKit
-            , WeeklyBeginnersElmSubreddit
-            , GuideElmLang
-            ]
+    , choices = allElmResources
     , choiceToString =
         \a ->
             case a of
@@ -587,11 +689,67 @@ elmResources =
 
                 ElmOnline ->
                     "Elm Online"
+
+                NoElmResources ->
+                    "None"
+
+                ElmTown ->
+                    "Elm Town"
     }
 
 
+initialInterestTitle : String
 initialInterestTitle =
     "What initially attracted you to Elm, or motivated you to try it?"
+
+
+countryChoiceToString : { a | name : b, flag : String } -> String
+countryChoiceToString { name, flag } =
+    (case name of
+        "United Kingdom of Great Britain and Northern Ireland" ->
+            "United Kingdom"
+
+        "United States of America" ->
+            "United States"
+
+        "Russian Federation" ->
+            "Russia"
+
+        "Bosnia and Herzegovina" ->
+            "Bosnia"
+
+        "Iran (Islamic Republic of)" ->
+            "Iran"
+
+        "Venezuela (Bolivarian Republic of)" ->
+            "Venezuela"
+
+        "Trinidad and Tobago" ->
+            "Trinidad"
+
+        "Viet Nam" ->
+            "Vietnam"
+
+        "Taiwan, Province of China" ->
+            "Taiwan"
+
+        "South Georgia and the South Sandwich Islands" ->
+            "South Georgia"
+
+        "Saint Helena, Ascension and Tristan da Cunha" ->
+            "Saint Helena"
+
+        "Korea (Democratic People's Republic of)" ->
+            "North Korea"
+
+        "Korea, Republic of" ->
+            "South Korea"
+
+        _ ->
+            name
+    )
+        ++ " "
+        ++ flag
 
 
 countryLivingIn : Question Country
@@ -600,60 +758,39 @@ countryLivingIn =
     , choices =
         List.Nonempty.fromList Countries.all
             |> Maybe.withDefault (Nonempty { name = "", code = "", flag = "" } [])
-    , choiceToString =
-        \{ name, flag } ->
-            (case name of
-                "United Kingdom of Great Britain and Northern Ireland" ->
-                    "United Kingdom"
-
-                "United States of America" ->
-                    "United States"
-
-                "Russian Federation" ->
-                    "Russia"
-
-                "Bosnia and Herzegovina" ->
-                    "Bosnia"
-
-                "Iran (Islamic Republic of)" ->
-                    "Iran"
-
-                "Venezuela (Bolivarian Republic of)" ->
-                    "Venezuela"
-
-                "Trinidad and Tobago" ->
-                    "Trinidad"
-
-                "Viet Nam" ->
-                    "Vietnam"
-
-                "Taiwan, Province of China" ->
-                    "Taiwan"
-
-                _ ->
-                    name
-            )
-                ++ " "
-                ++ flag
+            |> List.Nonempty.cons { name = "Kosovo", code = "XK", flag = "🇽🇰" }
+            |> List.Nonempty.sortBy countryChoiceToString
+    , choiceToString = countryChoiceToString
     }
+
+
+allApplicationDomains : Nonempty ApplicationDomains
+allApplicationDomains =
+    Nonempty
+        ArtAndCulture
+        [ Communication
+        , DataVisualization
+        , ECommerce
+        , Education
+        , Engineering
+        , EnvironmentOrClimate
+        , Finance
+        , Gaming
+        , Health
+        , Legal
+        , Music
+        , Productivity
+        , SocialMedia
+        , Sports
+        , Transportation
+        , NoApplicationDomains
+        ]
 
 
 applicationDomains : Question ApplicationDomains
 applicationDomains =
-    { title = "In which application domains, if any, have you used Elm?"
-    , choices =
-        Nonempty
-            Communication
-            [ DataVisualization
-            , ECommerce
-            , Education
-            , Finance
-            , Gaming
-            , Health
-            , Music
-            , Productivity
-            , Transportation
-            ]
+    { title = "In which application domains have you used Elm?"
+    , choices = allApplicationDomains
     , choiceToString =
         \a ->
             case a of
@@ -686,19 +823,44 @@ applicationDomains =
 
                 Transportation ->
                     "Transportation"
+
+                SocialMedia ->
+                    "Social media"
+
+                Engineering ->
+                    "Engineering"
+
+                Sports ->
+                    "Sports"
+
+                ArtAndCulture ->
+                    "Art and culture"
+
+                Legal ->
+                    "Legal"
+
+                EnvironmentOrClimate ->
+                    "Environment and climate"
+
+                NoApplicationDomains ->
+                    "None"
     }
+
+
+allDoYouUseElmAtWork : Nonempty DoYouUseElmAtWork
+allDoYouUseElmAtWork =
+    Nonempty NotInterestedInElmAtWork
+        [ WouldLikeToUseElmAtWork
+        , HaveTriedElmInAWorkProject
+        , IUseElmAtWork
+        , NotEmployed
+        ]
 
 
 doYouUseElmAtWork : Question DoYouUseElmAtWork
 doYouUseElmAtWork =
     { title = "Do you use Elm at work?"
-    , choices =
-        Nonempty NotInterestedInElmAtWork
-            [ WouldLikeToUseElmAtWork
-            , HaveTriedElmInAWorkProject
-            , MyTeamMostlyWritesNewCodeInElm
-            , NotEmployed
-            ]
+    , choices = allDoYouUseElmAtWork
     , choiceToString =
         \a ->
             case a of
@@ -711,23 +873,42 @@ doYouUseElmAtWork =
                 HaveTriedElmInAWorkProject ->
                     "I have tried Elm at work"
 
-                MyTeamMostlyWritesNewCodeInElm ->
-                    "My team mostly writes new code in Elm"
+                IUseElmAtWork ->
+                    "I use Elm at work"
 
                 NotEmployed ->
                     "Not employed"
     }
 
 
+whatPreventsYouFromUsingElmAtWorkTitle : String
+whatPreventsYouFromUsingElmAtWorkTitle =
+    "What prevents you from using Elm at work?"
+
+
+howDidItGoUsingElmAtWorkTitle : String
+howDidItGoUsingElmAtWorkTitle =
+    "How did it go using Elm at work?"
+
+
+howIsItGoingUsingElmAtWorkTitle : String
+howIsItGoingUsingElmAtWorkTitle =
+    "How is it going using Elm at work?"
+
+
+allHowLargeIsTheCompany : Nonempty HowLargeIsTheCompany
+allHowLargeIsTheCompany =
+    Nonempty Size1To10Employees
+        [ Size11To50Employees
+        , Size50To100Employees
+        , Size100OrMore
+        ]
+
+
 howLargeIsTheCompany : Question HowLargeIsTheCompany
 howLargeIsTheCompany =
     { title = "How large is the company you work at?"
-    , choices =
-        Nonempty Size1To10Employees
-            [ Size11To50Employees
-            , Size50To100Employees
-            , Size100OrMore
-            ]
+    , choices = allHowLargeIsTheCompany
     , choiceToString =
         \a ->
             case a of
@@ -745,27 +926,35 @@ howLargeIsTheCompany =
     }
 
 
+allBackendLanguages : Nonempty WhatLanguageDoYouUseForBackend
+allBackendLanguages =
+    Nonempty
+        C_
+        [ Clojure_
+        , CPlusPlus_
+        , CSharp_
+        , Elixir_
+        , AlsoElm
+        , FSharp_
+        , Go_
+        , Haskell_
+        , Java_
+        , JavaScript_
+        , Kotlin_
+        , OCaml_
+        , PHP_
+        , Python_
+        , Ruby_
+        , Rust_
+        , TypeScript_
+        , NotApplicable
+        ]
+
+
 whatLanguageDoYouUseForBackend : Question WhatLanguageDoYouUseForBackend
 whatLanguageDoYouUseForBackend =
     { title = "What languages does your company use on the backend?"
-    , choices =
-        Nonempty JavaScript_
-            [ TypeScript_
-            , Go_
-            , Haskell_
-            , CSharp_
-            , OCaml_
-            , Python_
-            , PHP_
-            , Java_
-            , Ruby_
-            , Elixir_
-            , Clojure_
-            , Rust_
-            , FSharp_
-            , AlsoElm
-            , NotApplicable
-            ]
+    , choices = allBackendLanguages
     , choiceToString =
         \a ->
             case a of
@@ -816,26 +1005,40 @@ whatLanguageDoYouUseForBackend =
 
                 NotApplicable ->
                     "Not applicable"
+
+                C_ ->
+                    "C"
+
+                CPlusPlus_ ->
+                    "C++"
+
+                Kotlin_ ->
+                    "Kotlin"
     }
+
+
+allHowLong : Nonempty HowLong
+allHowLong =
+    Nonempty
+        Under3Months
+        [ Between3MonthsAndAYear
+        , OneYear
+        , TwoYears
+        , ThreeYears
+        , FourYears
+        , FiveYears
+        , SixYears
+        , SevenYears
+        , EightYears
+        , NineYears
+        , TenYears
+        ]
 
 
 howLong : Question HowLong
 howLong =
     { title = "How long have you been using Elm?"
-    , choices =
-        Nonempty
-            Under3Months
-            [ Between3MonthsAndAYear
-            , OneYear
-            , TwoYears
-            , ThreeYears
-            , FourYears
-            , FiveYears
-            , SixYears
-            , SevenYears
-            , EightYears
-            , NineYears
-            ]
+    , choices = allHowLong
     , choiceToString =
         \a ->
             case a of
@@ -871,18 +1074,26 @@ howLong =
 
                 NineYears ->
                     "9 years"
+
+                TenYears ->
+                    "10 years"
     }
+
+
+allElmVersions : Nonempty ElmVersion
+allElmVersions =
+    Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
 
 
 elmVersion : Question ElmVersion
 elmVersion =
     { title = "What versions of Elm are you using?"
-    , choices = Nonempty Version0_19 [ Version0_18, Version0_17, Version0_16 ]
+    , choices = allElmVersions
     , choiceToString =
         \a ->
             case a of
                 Version0_19 ->
-                    "0.19 or 0.19.1"
+                    "0.19"
 
                 Version0_18 ->
                     "0.18"
@@ -895,15 +1106,19 @@ elmVersion =
     }
 
 
+allDoYouUseElmFormat : Nonempty DoYouUseElmFormat
+allDoYouUseElmFormat =
+    Nonempty PreferElmFormat
+        [ TriedButDontUseElmFormat
+        , HeardButDontUseElmFormat
+        , HaveNotHeardOfElmFormat
+        ]
+
+
 doYouUseElmFormat : Question DoYouUseElmFormat
 doYouUseElmFormat =
     { title = "Do you format your code with elm-format?"
-    , choices =
-        Nonempty PreferElmFormat
-            [ TriedButDontUseElmFormat
-            , HeardButDontUseElmFormat
-            , HaveNotHeardOfElmFormat
-            ]
+    , choices = allDoYouUseElmFormat
     , choiceToString =
         \a ->
             case a of
@@ -921,18 +1136,23 @@ doYouUseElmFormat =
     }
 
 
+allStylingTools : Nonempty StylingTools
+allStylingTools =
+    Nonempty Bootstrap
+        [ SassOrScss
+        , Tailwind
+        , ElmCss
+        , ElmTailwindModules
+        , ElmUi
+        , PlainCss
+        , NoStylingTools
+        ]
+
+
 stylingTools : Question StylingTools
 stylingTools =
     { title = "What tools or libraries do you use to style your Elm applications?"
-    , choices =
-        Nonempty Bootstrap
-            [ SassOrScss
-            , Tailwind
-            , ElmCss
-            , ElmTailwindModules
-            , ElmUi
-            , PlainCss
-            ]
+    , choices = allStylingTools
     , choiceToString =
         \a ->
             case a of
@@ -956,25 +1176,38 @@ stylingTools =
 
                 ElmTailwindModules ->
                     "elm-tailwind-modules"
+
+                NoStylingTools ->
+                    "None"
     }
+
+
+allBuildTools : Nonempty BuildTools
+allBuildTools =
+    Nonempty Brunch
+        [ CreateElmApp
+        , ElmLand_
+        , ElmLive
+        , ElmMakeStandalone
+        , ElmPages_
+        , ElmReactor
+        , ElmWatch
+        , EsBuild
+        , Gulp
+        , Lamdera__
+        , Make
+        , Parcel
+        , ShellScripts
+        , Vite
+        , Webpack
+        , NoBuildTools
+        ]
 
 
 buildTools : Question BuildTools
 buildTools =
     { title = "What tools do you use to build your Elm applications?"
-    , choices =
-        Nonempty Brunch
-            [ Gulp
-            , Make
-            , Parcel
-            , ShellScripts
-            , Vite
-            , Webpack
-            , CreateElmApp
-            , ElmLive
-            , ElmMakeStandalone
-            , ElmReactor
-            ]
+    , choices = allBuildTools
     , choiceToString =
         \a ->
             case a of
@@ -1010,13 +1243,36 @@ buildTools =
 
                 Vite ->
                     "Vite"
+
+                NoBuildTools ->
+                    "None"
+
+                ElmWatch ->
+                    "elm-watch"
+
+                ElmPages_ ->
+                    "elm-pages"
+
+                Lamdera__ ->
+                    "Lamdera"
+
+                ElmLand_ ->
+                    "elm-land"
+
+                EsBuild ->
+                    "esbuild"
     }
+
+
+allFrameworks : Nonempty Frameworks
+allFrameworks =
+    Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa, ElmLand, NoFramework ]
 
 
 frameworks : Question Frameworks
 frameworks =
     { title = "What frameworks do you use?"
-    , choices = Nonempty Lamdera_ [ ElmPages, ElmPlayground, ElmSpa ]
+    , choices = allFrameworks
     , choiceToString =
         \a ->
             case a of
@@ -1031,20 +1287,31 @@ frameworks =
 
                 ElmPlayground ->
                     "elm-playground"
+
+                NoFramework ->
+                    "None"
+
+                ElmLand ->
+                    "elm-land"
     }
+
+
+allEditors : Nonempty Editors
+allEditors =
+    Nonempty Atom
+        [ Emacs
+        , Intellij
+        , SublimeText
+        , VSCode
+        , Vim
+        , NoEditor
+        ]
 
 
 editors : Question Editors
 editors =
     { title = "What editor(s) do you use to write your Elm applications?"
-    , choices =
-        Nonempty Atom
-            [ Emacs
-            , Intellij
-            , SublimeText
-            , VSCode
-            , Vim
-            ]
+    , choices = allEditors
     , choiceToString =
         \a ->
             case a of
@@ -1065,18 +1332,25 @@ editors =
 
                 Intellij ->
                     "Intellij"
+
+                NoEditor ->
+                    "None"
     }
+
+
+allDoYouUseElmReview : Nonempty DoYouUseElmReview
+allDoYouUseElmReview =
+    Nonempty NeverHeardOfElmReview
+        [ HeardOfItButNeverTriedElmReview
+        , IveTriedElmReview
+        , IUseElmReviewRegularly
+        ]
 
 
 doYouUseElmReview : Question DoYouUseElmReview
 doYouUseElmReview =
     { title = "Do you use elm-review?"
-    , choices =
-        Nonempty NeverHeardOfElmReview
-            [ HeardOfItButNeverTriedElmReview
-            , IveTriedElmReview
-            , IUseElmReviewRegularly
-            ]
+    , choices = allDoYouUseElmReview
     , choiceToString =
         \a ->
             case a of
@@ -1094,54 +1368,21 @@ doYouUseElmReview =
     }
 
 
-whichElmReviewRulesDoYouUse : Question WhichElmReviewRulesDoYouUse
-whichElmReviewRulesDoYouUse =
-    { title = "Which elm-review rules do you use?"
-    , choices =
-        Nonempty ElmReviewUnused
-            [ ElmReviewSimplify
-            , ElmReviewLicense
-            , ElmReviewDebug
-            , ElmReviewCommon
-            , ElmReviewCognitiveComplexity
-            ]
-    , choiceToString =
-        \a ->
-            case a of
-                ElmReviewUnused ->
-                    "elm-review-unused"
-
-                ElmReviewSimplify ->
-                    "elm-review-simplify"
-
-                ElmReviewLicense ->
-                    "elm-review-license"
-
-                ElmReviewDebug ->
-                    "elm-review-debug"
-
-                ElmReviewCommon ->
-                    "elm-review-common"
-
-                ElmReviewCognitiveComplexity ->
-                    "elm-review-cognitive-complexity"
-    }
-
-
-dummyChange =
-    0
+allTestTools : Nonempty TestTools
+allTestTools =
+    Nonempty BrowserAcceptanceTests
+        [ ElmBenchmark
+        , ElmTest
+        , ElmProgramTest
+        , VisualRegressionTests
+        , NoTestTools
+        ]
 
 
 testTools : Question TestTools
 testTools =
     { title = "What tools do you use to test your Elm projects?"
-    , choices =
-        Nonempty BrowserAcceptanceTests
-            [ ElmBenchmark
-            , ElmTest
-            , ElmProgramTest
-            , VisualRegressionTests
-            ]
+    , choices = allTestTools
     , choiceToString =
         \a ->
             case a of
@@ -1159,46 +1400,27 @@ testTools =
 
                 VisualRegressionTests ->
                     "Visual regression testing (e.g. Percy.io)"
+
+                NoTestTools ->
+                    "None"
     }
 
 
-testsWrittenFor : Question TestsWrittenFor
-testsWrittenFor =
-    { title = "What do you write tests for in your Elm projects?"
-    , choices =
-        Nonempty ComplicatedFunctions
-            [ FunctionsThatReturnCmds
-            , AllPublicFunctions
-            , HtmlFunctions
-            , JsonDecodersAndEncoders
-            , MostPublicFunctions
-            ]
-    , choiceToString =
-        \a ->
-            case a of
-                ComplicatedFunctions ->
-                    "Your most complicated functions"
-
-                FunctionsThatReturnCmds ->
-                    "Functions that return Cmd"
-
-                AllPublicFunctions ->
-                    "All public functions in your modules"
-
-                HtmlFunctions ->
-                    "Functions that return Html"
-
-                JsonDecodersAndEncoders ->
-                    "JSON encoders/decoders"
-
-                MostPublicFunctions ->
-                    "Most public functions in your modules"
-    }
-
-
+biggestPainPointTitle : String
 biggestPainPointTitle =
     "What has been your biggest pain point in your use of Elm?"
 
 
+whatDoYouLikeMostTitle : String
 whatDoYouLikeMostTitle =
     "What do you like the most about your use of Elm?"
+
+
+surveyImprovementsTitle : String
+surveyImprovementsTitle =
+    "Do you have any comments or suggestions?"
+
+
+whatPackagesDoYouUseTitle : String
+whatPackagesDoYouUseTitle =
+    "What packages do you use in your Elm apps?"

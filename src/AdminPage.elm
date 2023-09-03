@@ -25,13 +25,15 @@ import Element.Font
 import Element.Input
 import EmailAddress exposing (EmailAddress)
 import Env
-import Form exposing (Form, FormMapping, SpecificQuestion(..))
+import Form2023 exposing (Form2023, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
+import List.Extra as List
 import NetworkModel exposing (NetworkModel)
-import Questions exposing (Question)
+import PackageName exposing (PackageName)
+import Questions2023 as Questions exposing (Question)
 import SendGrid
 import Serialize
-import SurveyResults exposing (Mode(..))
+import SurveyResults2023 exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -46,7 +48,7 @@ type Msg
 
 
 type ToBackend
-    = ReplaceFormsRequest ( List Form, FormMapping )
+    = ReplaceFormsRequest ( List Form2023, FormMapping )
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
     | SendEmailsRequest
@@ -58,7 +60,7 @@ type ToFrontend
 
 
 type alias AdminLoginData =
-    { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
+    { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : SendEmailsStatus
     }
@@ -73,7 +75,7 @@ type FormMappingEdit
 
 
 type alias Model =
-    { forms : List { form : Form, submitTime : Maybe Effect.Time.Posix }
+    { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : NetworkModel FormMappingEdit FormMapping
     , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
@@ -97,10 +99,11 @@ init loginData =
     }
 
 
-questionsWithOther : List SpecificQuestion
-questionsWithOther =
+allQuestions : List SpecificQuestion
+allQuestions =
     [ DoYouUseElmQuestion
     , AgeQuestion
+    , PleaseSelectYourGenderQuestion
     , FunctionalProgrammingExperienceQuestion
     , OtherLanguagesQuestion
     , NewsAndDiscussionsQuestion
@@ -118,12 +121,14 @@ questionsWithOther =
     , FrameworksQuestion
     , EditorsQuestion
     , DoYouUseElmReviewQuestion
-    , WhichElmReviewRulesDoYouUseQuestion
     , TestToolsQuestion
-    , TestsWrittenForQuestion
     , ElmInitialInterestQuestion
     , BiggestPainPointQuestion
     , WhatDoYouLikeMostQuestion
+    , HowDidItGoUsingElmAtWork
+    , WhatPreventsYouFromUsingElmAtWork
+    , SurveyImprovementsQuestion
+    , WhatPackagesDoYouUseQuestion
     ]
 
 
@@ -171,14 +176,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = removeGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = removeGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = removeGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = removeGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = removeGroup_ answerMap.elmInitialInterest }
@@ -214,6 +213,21 @@ networkUpdate edit answerMap =
                     answerMap
 
                 DoYouUseElmReviewQuestion ->
+                    answerMap
+
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = removeGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = removeGroup_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
                     answerMap
 
         TypedGroupName question hotkey groupName ->
@@ -257,14 +271,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = renameGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = renameGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = renameGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = renameGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = renameGroup_ answerMap.elmInitialInterest }
@@ -300,6 +308,21 @@ networkUpdate edit answerMap =
                     answerMap
 
                 DoYouUseElmReviewQuestion ->
+                    answerMap
+
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = renameGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = renameGroup_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
                     answerMap
 
         TypedNewGroupName question groupName ->
@@ -343,14 +366,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = addGroup answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = addGroup answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = addGroup answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = addGroup answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = addGroup_ answerMap.elmInitialInterest }
@@ -386,6 +403,21 @@ networkUpdate edit answerMap =
                     answerMap
 
                 DoYouUseElmReviewQuestion ->
+                    answerMap
+
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = addGroup_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = addGroup_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
                     answerMap
 
         TypedOtherAnswerGroups question otherAnswer text ->
@@ -433,14 +465,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = updateOtherAnswer answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = updateOtherAnswer answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = updateOtherAnswer answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = updateOtherAnswer answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = updateOtherAnswer_ answerMap.elmInitialInterest }
@@ -476,6 +502,21 @@ networkUpdate edit answerMap =
                     answerMap
 
                 DoYouUseElmReviewQuestion ->
+                    answerMap
+
+                PleaseSelectYourGenderQuestion ->
+                    answerMap
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = updateOtherAnswer_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = updateOtherAnswer_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
                     answerMap
 
         TypedComment question text ->
@@ -519,14 +560,8 @@ networkUpdate edit answerMap =
                 EditorsQuestion ->
                     { answerMap | editors = withComment answerMap.editors }
 
-                WhichElmReviewRulesDoYouUseQuestion ->
-                    { answerMap | whichElmReviewRulesDoYouUse = withComment answerMap.whichElmReviewRulesDoYouUse }
-
                 TestToolsQuestion ->
                     { answerMap | testTools = withComment answerMap.testTools }
-
-                TestsWrittenForQuestion ->
-                    { answerMap | testsWrittenFor = withComment answerMap.testsWrittenFor }
 
                 ElmInitialInterestQuestion ->
                     { answerMap | elmInitialInterest = withComment_ answerMap.elmInitialInterest }
@@ -563,6 +598,21 @@ networkUpdate edit answerMap =
 
                 DoYouUseElmReviewQuestion ->
                     { answerMap | doYouUseElmReview = text }
+
+                PleaseSelectYourGenderQuestion ->
+                    { answerMap | pleaseSelectYourGender = text }
+
+                WhatPreventsYouFromUsingElmAtWork ->
+                    { answerMap | whatPreventsYouFromUsingElmAtWork = withComment_ answerMap.whatPreventsYouFromUsingElmAtWork }
+
+                HowDidItGoUsingElmAtWork ->
+                    { answerMap | howDidItGoUsingElmAtWork = withComment_ answerMap.howDidItGoUsingElmAtWork }
+
+                SurveyImprovementsQuestion ->
+                    answerMap
+
+                WhatPackagesDoYouUseQuestion ->
+                    { answerMap | whatPackagesDoYouUse = text }
 
 
 update : Msg -> Model -> ( Model, Command FrontendOnly ToBackend Msg )
@@ -651,8 +701,9 @@ deleteButton onPress =
         }
 
 
+codec : Serialize.Codec e ( List Form2023, FormMapping )
 codec =
-    Serialize.tuple (Serialize.list Form.formCodec) Form.formMappingCodec
+    Serialize.tuple (Serialize.list Form2023.formCodec) Form2023.formMappingCodec
 
 
 adminView : Model -> Element Msg
@@ -663,27 +714,34 @@ adminView model =
         , Element.row [ Element.spacing 16 ]
             [ button False PressedLogOut "Log out"
             , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"
-            , case model.sendEmailsStatus of
-                EmailsNotSent ->
-                    button False PressedSendEmails "Send emails"
+            , if Env.canShowLatestResults then
+                case model.sendEmailsStatus of
+                    EmailsNotSent ->
+                        button False PressedSendEmails "Email survey results"
 
-                Sending ->
-                    button False PressedSendEmails "Sending..."
+                    Sending ->
+                        button False PressedSendEmails "Sending..."
 
-                SendResult list ->
-                    List.filterMap
-                        (\{ emailAddress, result } ->
-                            case result of
-                                Ok _ ->
-                                    Nothing
+                    SendResult list ->
+                        List.filterMap
+                            (\{ emailAddress, result } ->
+                                case result of
+                                    Ok _ ->
+                                        Nothing
 
-                                Err _ ->
-                                    Just (EmailAddress.toString emailAddress)
-                        )
-                        list
-                        |> String.join ", "
-                        |> (++) "Failed to send to the following emails: "
-                        |> Element.text
+                                    Err _ ->
+                                        Just (EmailAddress.toString emailAddress)
+                            )
+                            list
+                            |> String.join ", "
+                            |> (++) "Failed to send 1 or more emails: "
+                            |> Element.text
+                            |> List.singleton
+                            |> Element.paragraph []
+
+              else
+                Element.none
+            , Element.text (String.fromInt (List.length model.forms) ++ " submissions")
             ]
         , if model.showEncodedState then
             Element.Input.text
@@ -716,7 +774,7 @@ adminView model =
                     (PressedQuestionWithOther question)
                     (questionName question)
             )
-            questionsWithOther
+            allQuestions
             |> Element.wrappedRow []
         , answerMapView model
 
@@ -834,15 +892,6 @@ answerMapView model =
                 formMapping.editors
                 model
 
-        WhichElmReviewRulesDoYouUseQuestion ->
-            answerMappingView
-                model.selectedMapping
-                False
-                Questions.whichElmReviewRulesDoYouUse
-                .whichElmReviewRulesDoYouUse
-                formMapping.whichElmReviewRulesDoYouUse
-                model
-
         TestToolsQuestion ->
             answerMappingView
                 model.selectedMapping
@@ -850,15 +899,6 @@ answerMapView model =
                 Questions.testTools
                 .testTools
                 formMapping.testTools
-                model
-
-        TestsWrittenForQuestion ->
-            answerMappingView
-                model.selectedMapping
-                False
-                Questions.testsWrittenFor
-                .testsWrittenFor
-                formMapping.testsWrittenFor
                 model
 
         ElmInitialInterestQuestion ->
@@ -966,6 +1006,77 @@ answerMapView model =
                 formMapping.doYouUseElmReview
                 model
 
+        PleaseSelectYourGenderQuestion ->
+            commentEditor
+                model.selectedMapping
+                False
+                Questions.pleaseSelectYourGender
+                .pleaseSelectYourGender
+                formMapping.pleaseSelectYourGender
+                model
+
+        WhatPreventsYouFromUsingElmAtWork ->
+            freeTextMappingView
+                model.selectedMapping
+                Questions.whatPreventsYouFromUsingElmAtWorkTitle
+                .whatPreventsYouFromUsingElmAtWork
+                formMapping.whatPreventsYouFromUsingElmAtWork
+                model
+
+        HowDidItGoUsingElmAtWork ->
+            freeTextMappingView
+                model.selectedMapping
+                Questions.howDidItGoUsingElmAtWorkTitle
+                .howDidItGoUsingElmAtWork
+                formMapping.howDidItGoUsingElmAtWork
+                model
+
+        SurveyImprovementsQuestion ->
+            submittedForms model.forms
+                |> List.map (\form -> Element.paragraph [] [ Element.text form.surveyImprovements ])
+                |> Element.column [ Element.width Element.fill, Element.spacing 16 ]
+
+        WhatPackagesDoYouUseQuestion ->
+            let
+                equalBy : PackageName -> ( String, String )
+                equalBy package =
+                    ( package.author, package.name )
+
+                answers : List { choice : String, value : Float }
+                answers =
+                    submittedForms model.forms
+                        |> List.concatMap (\form -> List.concat form.elmJson |> List.uniqueBy equalBy)
+                        |> List.gatherEqualsBy equalBy
+                        |> List.map
+                            (\( first, rest ) ->
+                                { choice = first.author ++ "/" ++ first.name
+                                , value = List.length rest + 1 |> toFloat
+                                }
+                            )
+            in
+            Element.row
+                [ Element.spacing 8, Element.width Element.fill ]
+                [ Element.Input.multiline
+                    [ Element.width Element.fill, Element.alignTop ]
+                    { onChange = TypedComment WhatPackagesDoYouUseQuestion >> FormMappingEditMsg
+                    , text = formMapping.whatPackagesDoYouUse
+                    , placeholder = Nothing
+                    , label = Element.Input.labelAbove [] (Element.text "Comment")
+                    , spellcheck = True
+                    }
+                , SurveyResults2023.simpleGraph
+                    { windowSize = { width = 1920, height = 1080 }
+                    , singleLine = False
+                    , isMultiChoice = False
+                    , customMaxCount = Nothing
+                    , mode = Total
+                    , title = "Number of people using a package for at least one of their apps"
+                    , filterUi = Element.none
+                    , comment = ""
+                    , data = answers
+                    }
+                ]
+
 
 questionName : SpecificQuestion -> String
 questionName selectedMapping =
@@ -1000,14 +1111,8 @@ questionName selectedMapping =
         EditorsQuestion ->
             "Editors"
 
-        WhichElmReviewRulesDoYouUseQuestion ->
-            "WhichElmReviewRulesDoYouUse"
-
         TestToolsQuestion ->
             "TestTools"
-
-        TestsWrittenForQuestion ->
-            "TestsWrittenFor"
 
         ElmInitialInterestQuestion ->
             "ElmInitialInterest"
@@ -1045,8 +1150,23 @@ questionName selectedMapping =
         DoYouUseElmReviewQuestion ->
             "DoYouUseElmReview"
 
+        PleaseSelectYourGenderQuestion ->
+            "PleaseSelectYourGender"
 
-commentEditor : SpecificQuestion -> Bool -> Question a -> (Form -> Maybe a) -> String -> Model -> Element Msg
+        WhatPreventsYouFromUsingElmAtWork ->
+            "WhatPreventsYouFromUsingElmAtWork"
+
+        HowDidItGoUsingElmAtWork ->
+            "HowDidItGoUsingElmAtWork"
+
+        SurveyImprovementsQuestion ->
+            "SurveyImprovements"
+
+        WhatPackagesDoYouUseQuestion ->
+            "WhatPackagesDoYouUse"
+
+
+commentEditor : SpecificQuestion -> Bool -> Question a -> (Form2023 -> Maybe a) -> String -> Model -> Element Msg
 commentEditor specificQuestion singleLine question getAnswer comment model =
     let
         answers : List a
@@ -1062,7 +1182,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             , label = Element.Input.labelAbove [] (Element.text "Comment")
             , spellcheck = True
             }
-        , SurveyResults.singleChoiceGraph
+        , SurveyResults2023.singleChoiceGraph
             { width = 1920, height = 1080 }
             singleLine
             True
@@ -1076,7 +1196,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
 freeTextMappingView :
     SpecificQuestion
     -> String
-    -> (Form -> String)
+    -> (Form2023 -> String)
     -> FreeTextAnswerMap
     -> Model
     -> Element Msg
@@ -1133,7 +1253,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16 ]
-            [ List.filterMap Form.getOtherAnswer_ answers
+            [ List.filterMap Form2023.getOtherAnswer_ answers
                 |> List.sortBy (String.trim >> String.toLower)
                 |> List.map
                     (\other ->
@@ -1177,7 +1297,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.freeText
+        , SurveyResults2023.freeText
             Percentage
             { width = 1920, height = 1080 }
             (DataEntry.fromFreeText answerMap answers)
@@ -1190,7 +1310,7 @@ answerMappingView :
     SpecificQuestion
     -> Bool
     -> Question a
-    -> (Form -> MultiChoiceWithOther a)
+    -> (Form2023 -> MultiChoiceWithOther a)
     -> AnswerMap a
     -> Model
     -> Element Msg
@@ -1247,7 +1367,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16, Element.alignTop ]
-            [ List.filterMap Form.getOtherAnswer answers
+            [ List.filterMap Form2023.getOtherAnswer answers
                 |> List.sortBy (String.trim >> String.toLower)
                 |> List.map
                     (\other ->
@@ -1289,7 +1409,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
                 , spellcheck = True
                 }
             ]
-        , SurveyResults.multiChoiceWithOther
+        , SurveyResults2023.multiChoiceWithOther
             { width = 1920, height = 1080 }
             singleLine
             True
@@ -1300,7 +1420,7 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
         ]
 
 
-submittedForms : List { form : Form, submitTime : Maybe Effect.Time.Posix } -> List Form
+submittedForms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix } -> List Form2023
 submittedForms forms =
     List.filterMap
         (\{ form, submitTime } ->

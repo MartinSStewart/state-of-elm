@@ -2,7 +2,8 @@
     "type": "application",
     "source-directories": [
         "src",
-        "packages/martinsstewart/4.1.1/src"
+        "packages/martinsstewart/4.1.1/src",
+        "snapshot-runner"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
@@ -27,7 +28,7 @@
             "ianmackenzie/elm-units": "2.9.0",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
-            "lamdera/program-test": "1.0.0",
+            "lamdera/program-test": "2.0.0",
             "langyu-app/elm-ancillary-nonempty-list": "1.1.0",
             "mdgriffith/elm-ui": "1.1.8",
             "mgold/elm-nonempty-list": "4.2.0",
@@ -44,15 +45,16 @@
             "elm/virtual-dom": "1.0.2",
             "elm-community/basics-extra": "4.1.0",
             "elm-community/random-extra": "3.2.0",
-            "elm-explorations/test": "1.2.2",
+            "elm-explorations/test": "2.0.0",
             "elm-explorations/webgl": "1.1.3",
             "folkertdev/elm-sha2": "1.0.0",
-            "justinmimbs/date": "3.2.1",
             "rtfeldman/elm-hex": "1.0.0"
         }
     },
     "test-dependencies": {
-        "direct": {},
+        "direct": {
+            "elm-explorations/test": "2.0.0"
+        },
         "indirect": {}
     }
 }

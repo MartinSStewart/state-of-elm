@@ -1,4 +1,4 @@
-module SurveyResults exposing
+module SurveyResults2022 exposing
     ( Data
     , DataEntrySegments
     , DataEntryWithOtherSegments
@@ -17,6 +17,7 @@ import AssocList as Dict
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
+import Effect.Browser.Dom as Dom
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -26,18 +27,15 @@ import Html exposing (Html)
 import Html.Attributes
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
-import Questions exposing (Age, ApplicationDomains, BuildTools, DoYouUseElm, DoYouUseElmAtWork, DoYouUseElmFormat, DoYouUseElmReview, Editors, ElmResources, ElmVersion, ExperienceLevel, Frameworks, HowLargeIsTheCompany, HowLong, NewsAndDiscussions, OtherLanguages, Question, StylingTools, TestTools, TestsWrittenFor, WhatLanguageDoYouUseForBackend, WhichElmReviewRulesDoYouUse)
+import Question exposing (Question)
+import Questions2022
+import Route exposing (SurveyYear(..))
 import StringExtra
 import Ui exposing (Size)
 
 
 type alias Model =
-    { windowSize : Size
-    , data : Data
-    , mode : Mode
-    , segment : Segment
-    , isPreview : Bool
-    }
+    { mode : Mode, segment : Segment }
 
 
 type Msg
@@ -65,29 +63,29 @@ type alias DataEntryWithOtherSegments a =
 
 type alias Data =
     { totalParticipants : Int
-    , doYouUseElm : DataEntry DoYouUseElm
-    , age : DataEntrySegments Age
-    , functionalProgrammingExperience : DataEntrySegments ExperienceLevel
-    , otherLanguages : DataEntryWithOtherSegments OtherLanguages
-    , newsAndDiscussions : DataEntryWithOtherSegments NewsAndDiscussions
+    , doYouUseElm : DataEntry Questions2022.DoYouUseElm
+    , age : DataEntrySegments Questions2022.Age
+    , functionalProgrammingExperience : DataEntrySegments Questions2022.ExperienceLevel
+    , otherLanguages : DataEntryWithOtherSegments Questions2022.OtherLanguages
+    , newsAndDiscussions : DataEntryWithOtherSegments Questions2022.NewsAndDiscussions
     , elmInitialInterest : DataEntryWithOtherSegments ()
     , countryLivingIn : DataEntrySegments Country
-    , elmResources : DataEntryWithOther ElmResources
-    , doYouUseElmAtWork : DataEntry DoYouUseElmAtWork
-    , applicationDomains : DataEntryWithOther ApplicationDomains
-    , howLargeIsTheCompany : DataEntry HowLargeIsTheCompany
-    , whatLanguageDoYouUseForBackend : DataEntryWithOther WhatLanguageDoYouUseForBackend
-    , howLong : DataEntry HowLong
-    , elmVersion : DataEntryWithOther ElmVersion
-    , doYouUseElmFormat : DataEntry DoYouUseElmFormat
-    , stylingTools : DataEntryWithOther StylingTools
-    , buildTools : DataEntryWithOther BuildTools
-    , frameworks : DataEntryWithOther Frameworks
-    , editors : DataEntryWithOther Editors
-    , doYouUseElmReview : DataEntry DoYouUseElmReview
-    , whichElmReviewRulesDoYouUse : DataEntryWithOther WhichElmReviewRulesDoYouUse
-    , testTools : DataEntryWithOther TestTools
-    , testsWrittenFor : DataEntryWithOther TestsWrittenFor
+    , elmResources : DataEntryWithOther Questions2022.ElmResources
+    , doYouUseElmAtWork : DataEntry Questions2022.DoYouUseElmAtWork
+    , applicationDomains : DataEntryWithOther Questions2022.ApplicationDomains
+    , howLargeIsTheCompany : DataEntry Questions2022.HowLargeIsTheCompany
+    , whatLanguageDoYouUseForBackend : DataEntryWithOther Questions2022.WhatLanguageDoYouUseForBackend
+    , howLong : DataEntry Questions2022.HowLong
+    , elmVersion : DataEntryWithOther Questions2022.ElmVersion
+    , doYouUseElmFormat : DataEntry Questions2022.DoYouUseElmFormat
+    , stylingTools : DataEntryWithOther Questions2022.StylingTools
+    , buildTools : DataEntryWithOther Questions2022.BuildTools
+    , frameworks : DataEntryWithOther Questions2022.Frameworks
+    , editors : DataEntryWithOther Questions2022.Editors
+    , doYouUseElmReview : DataEntry Questions2022.DoYouUseElmReview
+    , whichElmReviewRulesDoYouUse : DataEntryWithOther Questions2022.WhichElmReviewRulesDoYouUse
+    , testTools : DataEntryWithOther Questions2022.TestTools
+    , testsWrittenFor : DataEntryWithOther Questions2022.TestsWrittenFor
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
     }
@@ -132,6 +130,7 @@ css =
         ]
 
 
+linkAttributes : List (Element.Attribute msg)
 linkAttributes =
     [ Element.Font.underline
     , Element.mouseOver [ Element.Font.color lightBlue ]
@@ -154,12 +153,9 @@ update msg model =
             { model | segment = segment }
 
 
-view : Model -> Element Msg
-view model =
+view : { a | windowSize : Size } -> Data -> Model -> Element Msg
+view config data model =
     let
-        data =
-            model.data
-
         modeWithoutPerCapita =
             case model.mode of
                 Percentage ->
@@ -173,19 +169,9 @@ view model =
     in
     Element.column
         [ Element.width Element.fill, Element.behindContent (Element.html css) ]
-        [ if model.isPreview then
-            Element.paragraph
-                [ Element.Background.color (Element.rgb 1 1 0)
-                , Element.padding 4
-                , Element.width Element.fill
-                , Element.Font.center
-                ]
-                [ Element.text "Preview mode! Don't share this link. Some data might not be accurate." ]
-
-          else
-            Element.none
-        , Ui.headerContainer
-            model.windowSize
+        [ Ui.headerContainer
+            config.windowSize
+            Year2022
             [ Element.paragraph
                 [ Element.Font.bold ]
                 [ Element.text "The survey results are in!" ]
@@ -220,7 +206,7 @@ view model =
             , Element.paddingXY 8 16
             ]
             [ simpleGraph
-                { windowSize = model.windowSize
+                { windowSize = config.windowSize
                 , singleLine = False
                 , isMultiChoice = False
                 , customMaxCount = Nothing
@@ -240,37 +226,37 @@ view model =
                     ]
                 }
             , Ui.section
-                model.windowSize
+                config.windowSize
                 "About you"
-                [ multiChoiceGraph model.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions.doYouUseElm
-                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions.age
-                , singleChoiceSegmentGraph model.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions.experienceLevel
-                , multiChoiceWithOtherSegment model.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions.otherLanguages
-                , multiChoiceWithOtherSegment model.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions.newsAndDiscussions
-                , freeTextSegment modeWithoutPerCapita model.segment model.windowSize data.elmInitialInterest Questions.initialInterestTitle
-                , singleChoiceSegmentGraph model.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions.countryLivingIn
+                [ multiChoiceGraph config.windowSize False False modeWithoutPerCapita data.doYouUseElm Questions2022.doYouUseElm
+                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions2022.age
+                , singleChoiceSegmentGraph config.windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions2022.experienceLevel
+                , multiChoiceWithOtherSegment config.windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions2022.otherLanguages
+                , multiChoiceWithOtherSegment config.windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions2022.newsAndDiscussions
+                , freeTextSegment modeWithoutPerCapita model.segment config.windowSize data.elmInitialInterest Questions2022.initialInterestTitle
+                , singleChoiceSegmentGraph config.windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions2022.countryLivingIn
                 ]
             , Ui.section
-                model.windowSize
+                config.windowSize
                 "Questions for people who use(d) Elm"
-                [ multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.elmResources Questions.elmResources
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions.doYouUseElmAtWork
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.applicationDomains Questions.applicationDomains
-                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions.howLargeIsTheCompany
-                , multiChoiceWithOther model.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions.whatLanguageDoYouUseForBackend
-                , singleChoiceGraph model.windowSize False False modeWithoutPerCapita data.howLong Questions.howLong
-                , multiChoiceWithOther model.windowSize False False modeWithoutPerCapita data.elmVersion Questions.elmVersion
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions.doYouUseElmFormat
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.stylingTools Questions.stylingTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.buildTools Questions.buildTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.frameworks Questions.frameworks
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.editors Questions.editors
-                , singleChoiceGraph model.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions.doYouUseElmReview
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions.whichElmReviewRulesDoYouUse
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testTools Questions.testTools
-                , multiChoiceWithOther model.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions.testsWrittenFor
-                , freeText modeWithoutPerCapita model.windowSize data.biggestPainPoint Questions.biggestPainPointTitle
-                , freeText modeWithoutPerCapita model.windowSize data.whatDoYouLikeMost Questions.whatDoYouLikeMostTitle
+                [ multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.elmResources Questions2022.elmResources
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmAtWork Questions2022.doYouUseElmAtWork
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.applicationDomains Questions2022.applicationDomains
+                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLargeIsTheCompany Questions2022.howLargeIsTheCompany
+                , multiChoiceWithOther config.windowSize True True modeWithoutPerCapita data.whatLanguageDoYouUseForBackend Questions2022.whatLanguageDoYouUseForBackend
+                , singleChoiceGraph config.windowSize False False modeWithoutPerCapita data.howLong Questions2022.howLong
+                , multiChoiceWithOther config.windowSize False False modeWithoutPerCapita data.elmVersion Questions2022.elmVersion
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmFormat Questions2022.doYouUseElmFormat
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.stylingTools Questions2022.stylingTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.buildTools Questions2022.buildTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.frameworks Questions2022.frameworks
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.editors Questions2022.editors
+                , singleChoiceGraph config.windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2022.doYouUseElmReview
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.whichElmReviewRulesDoYouUse Questions2022.whichElmReviewRulesDoYouUse
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testTools Questions2022.testTools
+                , multiChoiceWithOther config.windowSize False True modeWithoutPerCapita data.testsWrittenFor Questions2022.testsWrittenFor
+                , freeText modeWithoutPerCapita config.windowSize data.biggestPainPoint Questions2022.biggestPainPointTitle
+                , freeText modeWithoutPerCapita config.windowSize data.whatDoYouLikeMost Questions2022.whatDoYouLikeMostTitle
                 ]
             ]
         , Element.el
@@ -279,7 +265,7 @@ view model =
             ]
             (Element.column
                 [ Element.Font.color Ui.white
-                , Ui.ifMobile model.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
+                , Ui.ifMobile config.windowSize (Element.paddingXY 22 24) (Element.paddingXY 34 36)
                 , Element.centerX
                 , Element.width (Element.maximum 800 Element.fill)
                 , Element.spacing 24
@@ -463,7 +449,8 @@ type Side
 filterButton : Bool -> Side -> msg -> String -> Element msg
 filterButton isSelected side onPress label =
     Element.Input.button
-        [ (case side of
+        [ Element.htmlAttribute (Dom.idToAttribute (Dom.id label))
+        , (case side of
             Left ->
                 { topLeft = 4, bottomLeft = 4, topRight = 0, bottomRight = 0 }
 
@@ -525,17 +512,6 @@ commentView comment =
     MarkdownThemed.view comment
 
 
-
---Html.div
---    [ Html.Attributes.style "white-space" "pre-wrap"
---    , Html.Attributes.style "line-height" "22px"
---    , Html.Attributes.style "font-size" "18px"
---    ]
---    [ Html.text comment ]
---    |> Element.html
---    |> Element.el [ Element.paddingEach { left = 0, right = 0, top = 8, bottom = 0 } ]
-
-
 freeTextSegment : Mode -> Segment -> Size -> DataEntryWithOtherSegments () -> String -> Element Msg
 freeTextSegment mode segment windowSize segmentData title =
     multiChoiceSegmentHelper windowSize False True mode segment segmentData title
@@ -583,31 +559,6 @@ freeText mode windowSize dataEntryWithOther title =
     multiChoiceHelper windowSize False True mode dataEntryWithOther title
 
 
-
---Element.column
---    [ Element.width Element.fill ]
---    [ Element.paragraph [] [ Element.text title ]
---    , Element.table
---        [ Element.width Element.fill, Element.paddingEach { left = 0, top = 0, bottom = 0, right = 48 } ]
---        { data = data
---        , columns =
---            [ { header = Element.none
---              , width = Element.shrink
---              , view =
---                    \{ choice } ->
---                        Element.paragraph
---                            [ Element.Font.alignRight, Element.Font.size 16, Element.padding 4 ]
---                            [ choice |> ellipsis ]
---              }
---            , { header = Element.none
---              , width = Element.fill
---              , view = \{ count } -> bar count total
---              }
---            ]
---        }
---    ]
-
-
 getValue : Mode -> Int -> Int -> Bool -> Float
 getValue mode count total includePerCapita =
     case mode of
@@ -634,6 +585,7 @@ barAndName mode name value maxCount =
         ]
 
 
+barRightPadding : number
 barRightPadding =
     40
 
@@ -1159,6 +1111,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
         }
 
 
+nonemptySortBy : (a -> comparable) -> Nonempty a -> Nonempty a
 nonemptySortBy sortFunc nonempty =
     Nonempty.toList nonempty
         |> List.sortBy sortFunc

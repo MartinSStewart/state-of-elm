@@ -11,6 +11,8 @@ when inside the directory containing this file.
 
 -}
 
+import NoMissingTypeAnnotation
+import NoMissingTypeConstructor
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -32,5 +34,7 @@ config =
     , NoUnused.Exports.rule
     , NoUnused.Modules.rule
     , NoUnused.Parameters.rule
+    , NoMissingTypeConstructor.rule
+    , NoMissingTypeAnnotation.rule
     ]
-        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Evergreen" ])
+        |> List.map (Review.Rule.ignoreErrorsForDirectories [ "src/Evergreen", "snapshot-runner", "packages" ])

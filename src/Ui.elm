@@ -6,18 +6,25 @@ module Ui exposing
     , blue0
     , blue1
     , button
+    , container
+    , customButton
     , disclaimer
     , emailAddressInput
+    , emailAddressInputId
     , githubLogo
     , headerContainer
     , ifMobile
     , multiChoiceQuestion
     , multiChoiceQuestionWithOther
     , multiChoiceWithOtherInit
+    , multilineAttributes
     , multipleChoiceIndicator
     , section
+    , select
     , singleChoiceQuestion
     , sourceCodeLink
+    , submitSurveyButtonId
+    , subtitle
     , textInput
     , title
     , titleFontSize
@@ -25,6 +32,7 @@ module Ui exposing
     )
 
 import AssocSet as Set exposing (Set)
+import Effect.Browser.Dom as Dom exposing (HtmlId)
 import Element exposing (Element)
 import Element.Background
 import Element.Border
@@ -35,8 +43,10 @@ import Element.Region
 import Html
 import Html.Attributes
 import Html.Events
+import List.Extra as List
 import List.Nonempty
-import Questions exposing (Question)
+import Question exposing (Question)
+import Route exposing (SurveyYear)
 import Simple.Animation
 import Simple.Animation.Animated
 import Simple.Animation.Property
@@ -81,13 +91,18 @@ emailAddressInput windowSize emailAddress updateModel =
             "What is your email address?"
             (Just "This is optional. We will only use it to notify you when the survey results are released and when future surveys happen.")
         , Element.Input.email
-            multilineAttributes
+            (Element.htmlAttribute (Dom.idToAttribute emailAddressInputId) :: multilineAttributes)
             { onChange = updateModel
             , text = emailAddress
             , label = Element.Input.labelHidden "What is your email address?"
             , placeholder = Nothing
             }
         ]
+
+
+emailAddressInputId : HtmlId
+emailAddressInputId =
+    Dom.id "emailAddressInput"
 
 
 singleChoiceQuestion :
@@ -125,13 +140,20 @@ radioButton groupName text isChecked =
         , Html.Attributes.style "line-height" "24px"
         ]
         [ Html.input
-            [ Html.Attributes.type_ "radio"
-            , Html.Attributes.checked isChecked
-            , Html.Attributes.name groupName
-            , Html.Events.onClick ()
-            , Html.Attributes.style "transform" "translateY(-2px)"
-            , Html.Attributes.style "margin" "0 8px 0 0"
-            ]
+            ([ Html.Attributes.type_ "radio"
+             , Html.Attributes.name groupName
+             , Html.Events.onClick ()
+             , Html.Attributes.style "transform" "translateY(-2px)"
+             , Html.Attributes.style "margin" "0 8px 0 0"
+             , Html.Attributes.id ("radio_" ++ groupName ++ "_" ++ text)
+             ]
+                ++ (if isChecked then
+                        [ Html.Attributes.checked isChecked ]
+
+                    else
+                        []
+                   )
+            )
             []
         , Html.text text
         ]
@@ -147,12 +169,19 @@ checkButton text isChecked =
         , Html.Attributes.style "line-height" "24px"
         ]
         [ Html.input
-            [ Html.Attributes.type_ "checkbox"
-            , Html.Attributes.checked isChecked
-            , Html.Events.onClick ()
-            , Html.Attributes.style "transform" "translateY(-2px)"
-            , Html.Attributes.style "margin" "0 8px 0 0"
-            ]
+            ([ Html.Attributes.type_ "checkbox"
+             , Html.Events.onClick ()
+             , Html.Attributes.style "transform" "translateY(-2px)"
+             , Html.Attributes.style "margin" "0 8px 0 0"
+             , Html.Attributes.id ("checkbox_" ++ text)
+             ]
+                ++ (if isChecked then
+                        [ Html.Attributes.checked isChecked ]
+
+                    else
+                        []
+                   )
+            )
             []
         , Html.text text
         ]
@@ -220,22 +249,37 @@ acceptTosQuestion windowSize acceptedTos toggledIAccept pressedSubmit pressSubmi
                     |> Element.map (\() -> not acceptedTos |> toggledIAccept)
               )
             , ( "submit"
-              , button pressedSubmit "Submit survey"
+              , button submitSurveyButtonId pressedSubmit "Submit survey"
               )
             ]
         )
 
 
-button : msg -> String -> Element msg
-button onPress text =
+submitSurveyButtonId : HtmlId
+submitSurveyButtonId =
+    Dom.id "submitSurveyId"
+
+
+button : HtmlId -> msg -> String -> Element msg
+button htmlId onPress text =
     Element.Input.button
         [ Element.Background.color white
         , Element.Font.color black
         , Element.Font.bold
         , Element.padding 16
+        , Element.htmlAttribute (Dom.idToAttribute htmlId)
         ]
         { onPress = Just onPress
         , label = Element.text text
+        }
+
+
+customButton : List (Element.Attribute msg) -> HtmlId -> msg -> Element msg -> Element msg
+customButton attributes htmlId onPress label =
+    Element.Input.button
+        (Element.htmlAttribute (Dom.idToAttribute htmlId) :: attributes)
+        { onPress = Just onPress
+        , label = label
         }
 
 
@@ -246,6 +290,12 @@ disclaimer =
         [ Element.text "This is a community run survey not affiliated with Evan Czaplicki or Elm" ]
 
 
+animatedUi :
+    (List (Element.Attribute msg) -> children -> Element msg)
+    -> Simple.Animation.Animation
+    -> List (Element.Attribute msg)
+    -> children
+    -> Element msg
 animatedUi =
     Simple.Animation.Animated.ui
         { behindContent = Element.behindContent
@@ -259,6 +309,7 @@ titleFontSize =
     Element.Font.size 22
 
 
+subtitleFontSize : Element.Attr decorative msg
 subtitleFontSize =
     Element.Font.size 18
 
@@ -278,8 +329,8 @@ multiChoiceWithOtherInit =
     }
 
 
-headerContainer : Size -> List (Element msg) -> Element msg
-headerContainer windowSize contents =
+headerContainer : Size -> SurveyYear -> List (Element msg) -> Element msg
+headerContainer windowSize surveyYear contents =
     Element.el
         [ Element.Background.color blue0
         , Element.width Element.fill
@@ -296,7 +347,7 @@ headerContainer windowSize contents =
                 , Element.Font.bold
                 , Element.Font.center
                 ]
-                [ Element.text "State of Elm 2022" ]
+                [ Element.text ("State of Elm " ++ Route.yearToString surveyYear) ]
                 :: contents
                 ++ [ disclaimer ]
             )
@@ -306,15 +357,20 @@ headerContainer windowSize contents =
 titleAndSubtitle : String -> Maybe String -> Element msg
 titleAndSubtitle title_ maybeSubtitle =
     Element.column
-        [ Element.spacing 8 ]
+        [ Element.spacing 12 ]
         [ title title_
         , case maybeSubtitle of
-            Just subtitle ->
-                Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text subtitle ]
+            Just text ->
+                subtitle text
 
             Nothing ->
                 Element.none
         ]
+
+
+subtitle : String -> Element msg
+subtitle text =
+    Element.paragraph [ subtitleFontSize, Element.Region.heading 4 ] [ Element.text text ]
 
 
 title : String -> Element msg
@@ -332,7 +388,7 @@ title title_ =
         [ Html.a
             [ Html.Attributes.href ("#" ++ fragment)
             , Html.Attributes.style "text-decoration" "none"
-            , Html.Attributes.style "color" "black"
+            , Html.Attributes.style "color" "inherit"
             ]
             [ Html.text title_ ]
         ]
@@ -411,6 +467,52 @@ githubLogo =
         ]
         |> Element.html
         |> Element.el []
+
+
+select : Size -> (a -> msg) -> Maybe a -> Question a -> Element msg
+select windowSize onSelect selection question =
+    container
+        windowSize
+        [ titleAndSubtitle question.title Nothing
+        , Html.select
+            [ Html.Attributes.style "font-size" "16px"
+            , Html.Attributes.style "font-family" "inherit"
+            , Html.Attributes.style "font-weight" "inherit"
+            , Html.Attributes.style "color" "inherit"
+
+            --, Html.Attributes.style "-webkit-appearance" "none"
+            --, Html.Attributes.style "appearance" "none"
+            , Html.Events.onInput
+                (\text ->
+                    String.toInt text
+                        |> Maybe.withDefault 0
+                        |> (\a -> List.getAt a (List.Nonempty.toList question.choices))
+                        |> Maybe.withDefault (List.Nonempty.head question.choices)
+                        |> onSelect
+                )
+            ]
+            ([ Html.option
+                [ Html.Attributes.selected (Nothing == selection)
+                , Html.Attributes.disabled True
+                , Html.Attributes.hidden True
+                ]
+                [ Html.text "Select a country" ]
+             ]
+                ++ List.indexedMap
+                    (\index option ->
+                        Html.option
+                            [ Html.Attributes.value (String.fromInt index)
+                            , Html.Attributes.selected (Just option == selection)
+
+                            --, Html.Attributes.style "font-family" "Arial"
+                            ]
+                            [ Html.text (question.choiceToString option) ]
+                    )
+                    (List.Nonempty.toList question.choices)
+            )
+            |> Element.html
+            |> Element.el []
+        ]
 
 
 ifMobile : Size -> a -> a -> a

@@ -4,27 +4,66 @@ import AdminPage exposing (AdminLoginData)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser
+import Duration
+import Effect.Browser.Navigation
+import Effect.File exposing (File)
+import Effect.Http as Http
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Time
 import EmailAddress exposing (EmailAddress)
 import Env
-import Form exposing (Form, FormMapping)
+import Form2022 exposing (Form2022)
+import Form2023 exposing (Form2023, FormMapping)
+import Id exposing (Id)
+import Postmark exposing (PostmarkSendResponse)
+import Quantity
+import Route exposing (Route, SurveyYear, UnsubscribeId)
 import SendGrid
-import SurveyResults
+import SurveyResults2022
+import SurveyResults2023
 import Ui exposing (Size)
+import Url exposing (Url)
 
 
 type FrontendModel
     = Loading LoadingData
-    | FormLoaded FormLoaded_
-    | FormCompleted Effect.Time.Posix
+    | Loaded LoadedData
+
+
+type alias LoadedData =
+    { page : Page
+    , windowSize : Size
+    , time : Effect.Time.Posix
+    , navKey : Effect.Browser.Navigation.Key
+    , route : Route
+    , surveyResults2022 : SurveyResults2022.Data
+    }
+
+
+type Page
+    = FormLoaded Form2023Loaded_
+    | FormCompleted
     | AdminLogin { password : String, loginFailed : Bool }
-    | Admin AdminPage.Model
-    | SurveyResultsLoaded SurveyResults.Model
+    | AdminPage AdminPage.Model
+    | SurveyResults2023Page SurveyResults2023.Model
+    | SurveyResults2022Page SurveyResults2022.Model
+    | UnsubscribePage
+    | ErrorPage
 
 
 type alias LoadingData =
-    { windowSize : Maybe Size, time : Maybe Effect.Time.Posix }
+    { windowSize : Maybe Size
+    , time : Maybe Effect.Time.Posix
+    , navKey : Effect.Browser.Navigation.Key
+    , route : Route
+    , responseData : Maybe ( ResponseData, SurveyResults2022.Data )
+    }
+
+
+type ResponseData
+    = LoadForm2023 LoadFormStatus2023
+    | LoadAdmin (Maybe AdminLoginData)
+    | UnsubscribeResponse
 
 
 type SurveyStatus
@@ -32,39 +71,63 @@ type SurveyStatus
     | SurveyFinished
 
 
-surveyStatus : SurveyStatus
-surveyStatus =
-    if Env.presentSurveyResults then
+surveyStatus : Effect.Time.Posix -> SurveyStatus
+surveyStatus currentTime =
+    if Duration.from Env.presentResultsTime currentTime |> Quantity.lessThanZero then
+        SurveyOpen
+
+    else if Env.canShowLatestResults then
         SurveyFinished
 
     else
         SurveyOpen
 
 
-type alias FormLoaded_ =
-    { form : Form
+type alias Form2023Loaded_ =
+    { form : Form2023
     , acceptedTos : Bool
     , submitting : Bool
     , pressedSubmitCount : Int
     , debounceCounter : Int
-    , windowSize : Size
-    , time : Effect.Time.Posix
+    , elmJsonTextInput : String
+    , elmJsonError : Maybe String
     }
 
 
 type alias BackendModel =
-    { forms : Dict SessionId { form : Form, submitTime : Maybe Effect.Time.Posix }
-    , formMapping : FormMapping
-    , adminLogin : Set SessionId
+    { adminLogin : Set SessionId
+    , survey2022 : BackendSurvey2022
+    , survey2023 : BackendSurvey2023
+    , subscribedEmails :
+        Dict
+            (Id UnsubscribeId)
+            { emailAddress : EmailAddress
+            , announcementEmail : Dict SurveyYear (Result Http.Error PostmarkSendResponse)
+            }
+    , secretCounter : Int
+    }
+
+
+type alias BackendSurvey2022 =
+    { forms : Dict SessionId { form : Form2022, submitTime : Maybe Effect.Time.Posix }
+    , formMapping : Form2022.FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
-    , cachedSurveyResults : Maybe SurveyResults.Data
+    , cachedSurveyResults : Maybe SurveyResults2022.Data
+    }
+
+
+type alias BackendSurvey2023 =
+    { forms : Dict SessionId { form : Form2023, submitTime : Maybe Effect.Time.Posix }
+    , formMapping : FormMapping
+    , sendEmailsStatus : AdminPage.SendEmailsStatus
+    , cachedSurveyResults : Maybe SurveyResults2023.Data
     }
 
 
 type FrontendMsg
     = UrlClicked Browser.UrlRequest
-    | UrlChanged
-    | FormChanged Form
+    | UrlChanged Url
+    | FormChanged Form2023
     | PressedAcceptTosAnswer Bool
     | PressedSubmitSurvey
     | Debounce Int
@@ -73,37 +136,41 @@ type FrontendMsg
     | GotWindowSize Size
     | GotTime Effect.Time.Posix
     | AdminPageMsg AdminPage.Msg
-    | SurveyResultsMsg SurveyResults.Msg
+    | SurveyResults2022Msg SurveyResults2022.Msg
+    | SurveyResults2023Msg SurveyResults2023.Msg
+    | PressedSelectElmJsonFiles
+    | SelectedElmJsonFiles File (List File)
+    | GotElmJsonFilesContent (List String)
+    | TypedElmJsonFile String
+    | PressedRemoveElmJson Int
 
 
 type ToBackend
-    = AutoSaveForm Form
-    | SubmitForm Form
+    = AutoSaveForm Form2023
+    | SubmitForm Form2023
     | AdminLoginRequest String
     | AdminToBackend AdminPage.ToBackend
-    | PreviewRequest String
+    | RequestFormData2023
+    | RequestAdminFormData
+    | UnsubscribeRequest (Id UnsubscribeId)
 
 
 type BackendMsg
-    = UserConnected SessionId ClientId
-    | GotTimeWithLoadFormData SessionId ClientId Effect.Time.Posix
-    | GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
+    = GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
     | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
 
 
-type LoadFormStatus
+type LoadFormStatus2023
     = NoFormFound
-    | FormAutoSaved Form
+    | FormAutoSaved Form2023
     | FormSubmitted
-    | SurveyResults SurveyResults.Data
+    | SurveyResults2023 SurveyResults2023.Data
     | AwaitingResultsData
 
 
 type ToFrontend
-    = LoadForm LoadFormStatus
-    | LoadAdmin AdminLoginData
-    | AdminLoginResponse (Result () AdminLoginData)
+    = AdminLoginResponse (Result () AdminLoginData)
     | SubmitConfirmed
-    | LogOutResponse LoadFormStatus
+    | LogOutResponse LoadFormStatus2023
     | AdminToFrontend AdminPage.ToFrontend
-    | PreviewResponse SurveyResults.Data
+    | ResponseData ResponseData SurveyResults2022.Data

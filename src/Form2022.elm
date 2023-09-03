@@ -1,5 +1,5 @@
-module Form exposing
-    ( Form
+module Form2022 exposing
+    ( Form2022
     , FormMapping
     , SpecificQuestion(..)
     , doesNotUseElm
@@ -15,7 +15,7 @@ import AnswerMap exposing (AnswerMap)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import Questions
+import Questions2022
     exposing
         ( Age(..)
         , ApplicationDomains(..)
@@ -43,7 +43,7 @@ import Serialize exposing (Codec)
 import Ui exposing (MultiChoiceWithOther)
 
 
-type alias Form =
+type alias Form2022 =
     { doYouUseElm : Set DoYouUseElm
     , age : Maybe Age
     , functionalProgrammingExperience : Maybe ExperienceLevel
@@ -73,13 +73,13 @@ type alias Form =
     }
 
 
-doesNotUseElm : Form -> Bool
+doesNotUseElm : Form2022 -> Bool
 doesNotUseElm form =
     Set.member NoButImCuriousAboutIt form.doYouUseElm
         || Set.member NoAndIDontPlanTo form.doYouUseElm
 
 
-notInterestedInElm : Form -> Bool
+notInterestedInElm : Form2022 -> Bool
 notInterestedInElm form =
     Set.member NoAndIDontPlanTo form.doYouUseElm
 
@@ -131,7 +131,7 @@ type alias FormMapping =
     }
 
 
-emptyForm : Form
+emptyForm : Form2022
 emptyForm =
     { doYouUseElm = Set.empty
     , age = Nothing
@@ -221,9 +221,9 @@ formMappingCodec =
         |> Serialize.finishRecord
 
 
-formCodec : Codec e Form
+formCodec : Codec e Form2022
 formCodec =
-    Serialize.record Form
+    Serialize.record Form2022
         |> Serialize.field .doYouUseElm (assocSetCodec doYouUseElmCodec)
         |> Serialize.field .age (Serialize.maybe ageCodec)
         |> Serialize.field .functionalProgrammingExperience (Serialize.maybe experienceLevelCodec)

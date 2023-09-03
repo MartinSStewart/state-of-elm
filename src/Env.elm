@@ -17,16 +17,6 @@ adminPasswordHash =
     Sha256.sha256 adminPassword
 
 
-presentSurveyResults_ : String
-presentSurveyResults_ =
-    "true"
-
-
-presentSurveyResults : Bool
-presentSurveyResults =
-    String.toLower presentSurveyResults_ == "true"
-
-
 isProduction_ : String
 isProduction_ =
     "false"
@@ -37,9 +27,24 @@ isProduction =
     String.toLower isProduction_ == "true"
 
 
+canShowLatestResults_ : String
+canShowLatestResults_ =
+    "true"
+
+
+canShowLatestResults : Bool
+canShowLatestResults =
+    String.toLower canShowLatestResults_ == "true"
+
+
 surveyCloseTime : Effect.Time.Posix
 surveyCloseTime =
-    Effect.Time.millisToPosix 1650286800000
+    Effect.Time.millisToPosix 1793334751000
+
+
+presentResultsTime : Effect.Time.Posix
+presentResultsTime =
+    Duration.addTo surveyCloseTime (Duration.days 30)
 
 
 surveyIsOpen : Effect.Time.Posix -> Bool
@@ -60,3 +65,13 @@ sendGridKey_ =
 sendGridKey : SendGrid.ApiKey
 sendGridKey =
     SendGrid.apiKey sendGridKey_
+
+
+domain : String
+domain =
+    "http://localhost:8000"
+
+
+secretKey : String
+secretKey =
+    ""
