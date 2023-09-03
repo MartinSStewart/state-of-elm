@@ -736,6 +736,8 @@ adminView model =
                             |> String.join ", "
                             |> (++) "Failed to send 1 or more emails: "
                             |> Element.text
+                            |> List.singleton
+                            |> Element.paragraph []
 
               else
                 Element.none
