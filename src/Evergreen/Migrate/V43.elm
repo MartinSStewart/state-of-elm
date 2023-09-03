@@ -101,7 +101,7 @@ migrate_Types_BackendModel old =
     { adminLogin = old.adminLogin
     , survey2022 = forms
     , survey2023 = initSurvey2023
-    , subscribedEmails = Debug.todo ""
+    , subscribedEmails = AssocList.empty
     , secretCounter = 123123
     }
 
