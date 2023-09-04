@@ -402,6 +402,10 @@ allPleaseSelectYourGender =
         ]
 
 
+dummyField =
+    0
+
+
 pleaseSelectYourGender : Question PleaseSelectYourGender
 pleaseSelectYourGender =
     { title = "Please select the gender you most closely identify with"
