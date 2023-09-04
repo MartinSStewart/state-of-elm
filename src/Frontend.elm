@@ -195,12 +195,8 @@ updateLoaded msg model =
                     , Effect.Browser.Navigation.load url
                     )
 
-        UrlChanged url ->
-            let
-                route =
-                    Route.decode url
-            in
-            ( model, Effect.Browser.Navigation.replaceUrl model.navKey (Route.encode route) )
+        UrlChanged _ ->
+            ( model, Command.none )
 
         FormChanged form ->
             updateFormLoaded
