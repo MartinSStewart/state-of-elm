@@ -958,7 +958,7 @@ formView windowSize model =
                 [ Ui.multiChoiceQuestionWithOther
                     windowSize
                     Questions2023.applicationDomains
-                    (Just "We're not counting \"web development\" as a domain here. Instead think of what would you would use web development for.")
+                    (Just "We're not counting \"web development\" as a domain here. Instead think of what you would use web development for.")
                     form.applicationDomains
                     (\a -> FormChanged { form | applicationDomains = a })
                 , Ui.singleChoiceQuestion
