@@ -6,6 +6,7 @@ module AnswerMap exposing
     , allGroups
     , codec
     , comment
+    , getAllGroups
     , hotkey
     , hotkeyToIndex
     , hotkeyToString
@@ -22,7 +23,7 @@ module AnswerMap exposing
 
 import AssocSet as Set exposing (Set)
 import List.Extra as List
-import List.Nonempty
+import List.Nonempty exposing (Nonempty)
 import Question exposing (Question)
 import Serialize exposing (Codec)
 
@@ -37,6 +38,16 @@ type AnswerMap a
 
 type OtherAnswer
     = OtherAnswer String
+
+
+getAllGroups : Question a -> AnswerMap a -> Nonempty String
+getAllGroups question (AnswerMap answerMap) =
+    case List.Nonempty.fromList (List.map .groupName answerMap.otherMapping) of
+        Just nonempty ->
+            List.Nonempty.map question.choiceToString question.choices |> List.Nonempty.append nonempty
+
+        Nothing ->
+            List.Nonempty.map question.choiceToString question.choices
 
 
 codec : Codec e (AnswerMap a)

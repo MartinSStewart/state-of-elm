@@ -143,6 +143,7 @@ type FrontendMsg
     | GotElmJsonFilesContent (List String)
     | TypedElmJsonFile String
     | PressedRemoveElmJson Int
+    | PressedGetAiCompletion
 
 
 type ToBackend
@@ -153,11 +154,13 @@ type ToBackend
     | RequestFormData2023
     | RequestAdminFormData
     | UnsubscribeRequest (Id UnsubscribeId)
+    | AiCompletionsRequest
 
 
 type BackendMsg
     = GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
     | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
+    | GotAiCompletion (Result Http.Error String)
 
 
 type LoadFormStatus2023

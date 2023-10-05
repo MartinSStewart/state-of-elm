@@ -6,9 +6,10 @@ import AssocList as Dict
 import AssocSet as Set
 import DataEntry
 import Effect.Command as Command exposing (BackendOnly, Command)
+import Effect.Http exposing (Error(..), Response(..))
 import Effect.Lamdera exposing (ClientId, SessionId)
 import Effect.Subscription as Subscription
-import Effect.Task as Task
+import Effect.Task as Task exposing (Task)
 import Effect.Time
 import Email.Html as Html
 import Email.Html.Attributes as Attributes
@@ -18,6 +19,8 @@ import Form2022 exposing (Form2022)
 import Form2023 exposing (Form2023)
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
 import Id exposing (Id)
+import Json.Decode
+import Json.Encode
 import Lamdera
 import List.Extra as List
 import List.Nonempty exposing (Nonempty(..))
@@ -171,16 +174,6 @@ getAdminData survey =
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
 update msg model =
     case msg of
-        --UserConnected sessionId clientId ->
-        --    ( model
-        --    , if isAdmin sessionId model then
-        --        LoadAdmin (getAdminData (getCurrentSurvey model)) |> Effect.Lamdera.sendToFrontend clientId
-        --
-        --      else
-        --        Effect.Time.now |> Task.perform (GotTimeWithLoadFormData sessionId clientId)
-        --    )
-        --GotTimeWithLoadFormData sessionId clientId time ->
-        --    loadFormData sessionId time model |> Tuple.mapSecond (LoadForm >> Effect.Lamdera.sendToFrontend clientId)
         GotTimeWithUpdate sessionId clientId toBackend time ->
             updateFromFrontendWithTime time sessionId clientId toBackend model
 
@@ -188,6 +181,81 @@ update msg model =
             ( setCurrentSurvey (\survey -> { survey | sendEmailsStatus = AdminPage.SendResult list }) model
             , AdminPage.SendEmailsResponse list |> AdminToFrontend |> Effect.Lamdera.sendToFrontend clientId
             )
+
+        GotAiCompletion result ->
+            let
+                _ =
+                    Debug.log "" result
+            in
+            ( model, Command.none )
+
+
+getAiCompletion : Nonempty String -> String -> Task BackendOnly Error String
+getAiCompletion categories answer =
+    Effect.Http.task
+        { method = "POST"
+        , headers = []
+        , url = "/chat/completions"
+        , body =
+            Json.Encode.object
+                [ ( "temperature", Json.Encode.float 0.1 )
+                , ( "model", Json.Encode.string "gpt-4" )
+                , ( "messages"
+                  , Json.Encode.list
+                        (\a ->
+                            Json.Encode.object
+                                [ ( "role", Json.Encode.string a.role )
+                                , ( "content", Json.Encode.string a.content )
+                                ]
+                        )
+                        [ { role = "system"
+                          , content =
+                                [ "You are a free-text question categoriser. The user will provide you with a list of free-form answers given in a quiz, and you will try to categorise them into one or more of the following categories:"
+                                ]
+                                    ++ List.indexedMap
+                                        (\index category -> String.fromInt index ++ " - " ++ category)
+                                        (List.Nonempty.toList categories)
+                                    |> String.join "\n"
+                          }
+                        , { role = "user"
+                          , content = answer
+                          }
+                        ]
+                  )
+                ]
+                |> Effect.Http.jsonBody
+        , resolver =
+            Effect.Http.stringResolver
+                (\response ->
+                    case response of
+                        BadUrl_ url ->
+                            BadUrl url |> Err
+
+                        Timeout_ ->
+                            Err Timeout
+
+                        NetworkError_ ->
+                            NetworkError |> Err
+
+                        BadStatus_ metadata body ->
+                            BadBody body |> Err
+
+                        GoodStatus_ metadata body ->
+                            case Json.Decode.decodeString decodeResponse body of
+                                Ok ok ->
+                                    Ok ok
+
+                                Err err ->
+                                    Json.Decode.errorToString err |> BadBody |> Err
+                )
+        , timeout = Nothing
+        }
+
+
+decodeResponse =
+    Json.Decode.field
+        "choices"
+        (Json.Decode.index 0 (Json.Decode.at [ "message", "content" ] Json.Decode.string))
 
 
 loadFormData : SessionId -> Effect.Time.Posix -> BackendModel -> ( BackendSurvey2023, LoadFormStatus2023 )
@@ -827,6 +895,33 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                 , survey2022 = survey2022
               }
             , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse surveyResults2022)
+            )
+
+        AiCompletionsRequest ->
+            let
+                answers : List String
+                answers =
+                    Dict.toList model.survey2023.forms
+                        |> List.filterMap
+                            (\( _, { form } ) ->
+                                if form.otherLanguages.otherChecked then
+                                    Just form.otherLanguages.otherText
+
+                                else
+                                    Nothing
+                            )
+
+                categories : Nonempty String
+                categories =
+                    AnswerMap.getAllGroups Questions2023.otherLanguages model.survey2023.formMapping.otherLanguages
+            in
+            ( model
+            , case answers of
+                head :: _ ->
+                    getAiCompletion categories head |> Task.attempt GotAiCompletion
+
+                [] ->
+                    Command.none
             )
 
 
