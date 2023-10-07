@@ -710,7 +710,15 @@ adminView : Model -> Element Msg
 adminView model =
     Element.column
         [ Element.spacing 32, Element.padding 16 ]
-        [ Element.el [ Element.Font.size 36 ] (Element.text "Admin view")
+        [ Element.row
+            [ Element.Font.size 36 ]
+            [ Element.text "Admin view "
+            , if Env.isProduction then
+                Element.el [ Element.Font.color (Element.rgb 0.8 0 0) ] (Element.text "(PRODUCTION)")
+
+              else
+                Element.text "(development)"
+            ]
         , Element.row [ Element.spacing 16 ]
             [ button False PressedLogOut "Log out"
             , button model.showEncodedState PressedToggleShowEncodedState "Show encoded state"

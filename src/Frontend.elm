@@ -550,7 +550,15 @@ loadForm route formStatus =
 
 view : FrontendModel -> Browser.Document FrontendMsg
 view model =
-    { title = "State of Elm " ++ Route.yearToString Route.currentSurvey
+    { title =
+        "State of Elm "
+            ++ (if Env.isProduction then
+                    ""
+
+                else
+                    "(dev) "
+               )
+            ++ Route.yearToString Route.currentSurvey
     , body =
         [ Element.layout
             [ Element.Region.mainContent ]
