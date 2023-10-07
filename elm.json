@@ -25,6 +25,7 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.5.2",
             "erlandsona/assoc-set": "1.1.0",
+            "hecrj/html-parser": "2.4.0",
             "ianmackenzie/elm-units": "2.9.0",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",

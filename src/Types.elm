@@ -15,6 +15,7 @@ import Env
 import Form2022 exposing (Form2022)
 import Form2023 exposing (Form2023, FormMapping)
 import Id exposing (Id)
+import List.Nonempty exposing (Nonempty)
 import Postmark exposing (PostmarkSendResponse)
 import Quantity
 import Route exposing (Route, SurveyYear, UnsubscribeId)
@@ -159,7 +160,11 @@ type ToBackend
 type BackendMsg
     = GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
     | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
-    | GotAiCompletion (Result Http.Error String)
+    | GotAiCompletion (Result Http.Error (Nonempty String))
+
+
+type alias AiCategorizations =
+    { otherMapping : List { groupName : String, otherAnswers : Set String } }
 
 
 type LoadFormStatus2023

@@ -24,6 +24,7 @@ import Json.Encode
 import Lamdera
 import List.Extra as List
 import List.Nonempty exposing (Nonempty(..))
+import Parser exposing ((|.), (|=), Parser)
 import Postmark
 import Question exposing (Question)
 import Questions2022
@@ -195,7 +196,7 @@ update msg model =
             ( model, Command.none )
 
 
-getAiCompletion : Nonempty String -> String -> Task BackendOnly Error String
+getAiCompletion : Nonempty String -> String -> Task BackendOnly Error (Nonempty String)
 getAiCompletion categories answer =
     Effect.Http.task
         { method = "POST"
@@ -248,13 +249,61 @@ getAiCompletion categories answer =
                         GoodStatus_ metadata body ->
                             case Json.Decode.decodeString decodeResponse body of
                                 Ok ok ->
-                                    Ok ok
+                                    case Parser.run responseParser ok of
+                                        Ok selection ->
+                                            let
+                                                selectionTexts : List String
+                                                selectionTexts =
+                                                    List.filterMap
+                                                        (\index ->
+                                                            List.getAt index (List.Nonempty.toList categories)
+                                                        )
+                                                        (List.Nonempty.toList selection)
+                                            in
+                                            case
+                                                ( List.length selectionTexts == List.Nonempty.length selection
+                                                , List.Nonempty.fromList selectionTexts
+                                                )
+                                            of
+                                                ( True, Just a ) ->
+                                                    Ok a
+
+                                                _ ->
+                                                    "Invalid indexes: "
+                                                        ++ String.join
+                                                            " "
+                                                            (List.map String.fromInt (List.Nonempty.toList selection))
+                                                        |> BadBody
+                                                        |> Err
+
+                                        Err _ ->
+                                            "Invalid response: " ++ ok |> BadBody |> Err
 
                                 Err err ->
                                     Json.Decode.errorToString err |> BadBody |> Err
                 )
         , timeout = Nothing
         }
+
+
+responseParser : Parser (Nonempty Int)
+responseParser =
+    Parser.succeed (\first rest -> Nonempty first rest)
+        |. Parser.chompWhile (\char -> Char.isDigit char |> not)
+        |= Parser.int
+        |. Parser.chompIf (\char -> Char.isDigit char |> not)
+        |. Parser.chompWhile (\char -> Char.isDigit char |> not)
+        |= Parser.loop
+            []
+            (\list ->
+                Parser.oneOf
+                    [ Parser.succeed (\a -> a :: list |> Parser.Loop)
+                        |= Parser.int
+                        |. Parser.chompIf (\char -> Char.isDigit char |> not)
+                        |. Parser.chompWhile (\char -> Char.isDigit char |> not)
+                    , Parser.end |> Parser.map (\() -> Parser.Done (List.reverse list))
+                    ]
+            )
 
 
 decodeResponse : Json.Decode.Decoder String
