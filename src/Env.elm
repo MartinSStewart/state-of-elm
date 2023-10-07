@@ -75,3 +75,8 @@ domain =
 secretKey : String
 secretKey =
     ""
+
+
+openAiApiKey : String
+openAiApiKey =
+    ""

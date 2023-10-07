@@ -322,9 +322,6 @@ updateLoaded msg model =
                     )
                 )
 
-        PressedGetAiCompletion ->
-            ( model, Effect.Lamdera.sendToBackend AiCompletionsRequest )
-
 
 getJsonError : Json.Decode.Error -> String
 getJsonError error =

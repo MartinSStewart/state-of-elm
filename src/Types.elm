@@ -1,6 +1,6 @@
 module Types exposing (..)
 
-import AdminPage exposing (AdminLoginData)
+import AdminPage exposing (AdminLoginData, AiCategorizationStatus)
 import AssocList exposing (Dict)
 import AssocSet exposing (Set)
 import Browser
@@ -121,6 +121,7 @@ type alias BackendSurvey2023 =
     , formMapping : FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
     , cachedSurveyResults : Maybe SurveyResults2023.Data
+    , aiCategorization : AiCategorizationStatus
     }
 
 
@@ -143,7 +144,6 @@ type FrontendMsg
     | GotElmJsonFilesContent (List String)
     | TypedElmJsonFile String
     | PressedRemoveElmJson Int
-    | PressedGetAiCompletion
 
 
 type ToBackend
@@ -154,7 +154,6 @@ type ToBackend
     | RequestFormData2023
     | RequestAdminFormData
     | UnsubscribeRequest (Id UnsubscribeId)
-    | AiCompletionsRequest
 
 
 type BackendMsg

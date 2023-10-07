@@ -1,5 +1,6 @@
 module AdminPage exposing
     ( AdminLoginData
+    , AiCategorizationStatus(..)
     , FormMappingEdit(..)
     , Model
     , Msg(..)
@@ -15,6 +16,8 @@ module AdminPage exposing
 
 import AnswerMap exposing (AnswerMap, Hotkey, OtherAnswer)
 import DataEntry
+import Dict exposing (Dict)
+import Effect.Browser.Dom as Dom exposing (HtmlId)
 import Effect.Command as Command exposing (Command, FrontendOnly)
 import Effect.Lamdera as Lamdera
 import Effect.Time
@@ -45,6 +48,7 @@ type Msg
     | PressedToggleShowEncodedState
     | NoOp
     | PressedSendEmails
+    | PressedAiCategorization SpecificQuestion
 
 
 type ToBackend
@@ -52,6 +56,7 @@ type ToBackend
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
     | SendEmailsRequest
+    | AiCategorizationRequest
 
 
 type ToFrontend
@@ -63,6 +68,7 @@ type alias AdminLoginData =
     { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : SendEmailsStatus
+    , aiCategorization : AiCategorizationStatus
     }
 
 
@@ -80,6 +86,7 @@ type alias Model =
     , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
     , sendEmailsStatus : SendEmailsStatus
+    , aiCategorization : AiCategorizationStatus
     }
 
 
@@ -96,6 +103,7 @@ init loginData =
     , selectedMapping = OtherLanguagesQuestion
     , showEncodedState = False
     , sendEmailsStatus = loginData.sendEmailsStatus
+    , aiCategorization = loginData.aiCategorization
     }
 
 
@@ -666,6 +674,17 @@ update msg model =
                 SendResult _ ->
                     ( model, Command.none )
 
+        PressedAiCategorization specificQuestion ->
+            ( { model | aiCategorization = AiCategorizationInProgress }
+            , Lamdera.sendToBackend AiCategorizationRequest
+            )
+
+
+type AiCategorizationStatus
+    = AiCategorizationNotStarted
+    | AiCategorizationInProgress
+    | AiCategorizationSuccess (Dict String Int)
+
 
 button : Bool -> msg -> String -> Element msg
 button isSelected onPress text =
@@ -1201,6 +1220,11 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
         ]
 
 
+aiCategorizationButtonId : HtmlId
+aiCategorizationButtonId =
+    Dom.id "adminPage_aiCategorizationButton"
+
+
 freeTextMappingView :
     SpecificQuestion
     -> String
@@ -1224,6 +1248,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             [ Element.alignTop, Element.spacing 16 ]
             [ Element.text (questionName model.selectedMapping)
             , Element.text ("Number of responses: " ++ String.fromInt (List.length filtered))
+            , Ui.button aiCategorizationButtonId (PressedAiCategorization specificQuestion) "Categorize with AI"
             , Element.column
                 [ Element.spacing 8 ]
                 (List.map

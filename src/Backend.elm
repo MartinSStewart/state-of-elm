@@ -1,6 +1,6 @@
 module Backend exposing (..)
 
-import AdminPage exposing (AdminLoginData)
+import AdminPage exposing (AdminLoginData, AiCategorizationStatus(..))
 import AnswerMap exposing (AnswerMap)
 import AssocList as Dict
 import AssocSet as Set
@@ -150,6 +150,7 @@ initSurvey2023 =
     , formMapping = answerMap
     , sendEmailsStatus = AdminPage.EmailsNotSent
     , cachedSurveyResults = Nothing
+    , aiCategorization = AiCategorizationNotStarted
     }
 
 
@@ -168,7 +169,11 @@ setCurrentSurvey updateFunc model =
 
 getAdminData : BackendSurvey2023 -> AdminLoginData
 getAdminData survey =
-    { forms = Dict.values survey.forms, formMapping = survey.formMapping, sendEmailsStatus = survey.sendEmailsStatus }
+    { forms = Dict.values survey.forms
+    , formMapping = survey.formMapping
+    , sendEmailsStatus = survey.sendEmailsStatus
+    , aiCategorization = survey.aiCategorization
+    }
 
 
 update : BackendMsg -> BackendModel -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
@@ -194,7 +199,7 @@ getAiCompletion : Nonempty String -> String -> Task BackendOnly Error String
 getAiCompletion categories answer =
     Effect.Http.task
         { method = "POST"
-        , headers = []
+        , headers = [ Effect.Http.header "Authorization" ("Bearer " ++ Env.openAiApiKey) ]
         , url = "/chat/completions"
         , body =
             Json.Encode.object
@@ -737,8 +742,72 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             else
                 ( model, Err () |> AdminLoginResponse |> Effect.Lamdera.sendToFrontend clientId )
 
-        AdminToBackend (AdminPage.ReplaceFormsRequest ( forms, formMapping )) ->
-            ( if not Env.isProduction && isAdmin sessionId model then
+        AdminToBackend adminToBackend ->
+            if isAdmin sessionId model then
+                adminPageToBackend time sessionId clientId adminToBackend model
+
+            else
+                ( model, Command.none )
+
+        RequestFormData2023 ->
+            let
+                ( survey2023, surveyStatus ) =
+                    loadFormData sessionId time model
+
+                ( survey2022, surveyResults2022 ) =
+                    formData2022 model.survey2022
+            in
+            ( setCurrentSurvey (\_ -> survey2023) { model | survey2022 = survey2022 }
+            , ResponseData (LoadForm2023 surveyStatus) surveyResults2022
+                |> Effect.Lamdera.sendToFrontend clientId
+            )
+
+        RequestAdminFormData ->
+            let
+                ( survey2022, surveyResults2022 ) =
+                    formData2022 model.survey2022
+
+                model2 =
+                    { model | survey2022 = survey2022 }
+
+                adminData =
+                    (if isAdmin sessionId model2 then
+                        getAdminData model2.survey2023 |> Just
+
+                     else
+                        Nothing
+                    )
+                        |> LoadAdmin
+            in
+            ( model2
+            , ResponseData adminData surveyResults2022
+                |> Effect.Lamdera.sendToFrontend clientId
+            )
+
+        UnsubscribeRequest unsubscribeId ->
+            let
+                ( survey2022, surveyResults2022 ) =
+                    formData2022 model.survey2022
+            in
+            ( { model
+                | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails
+                , survey2022 = survey2022
+              }
+            , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse surveyResults2022)
+            )
+
+
+adminPageToBackend :
+    Time.Posix
+    -> SessionId
+    -> ClientId
+    -> AdminPage.ToBackend
+    -> BackendModel
+    -> ( BackendModel, Command BackendOnly ToFrontend BackendMsg )
+adminPageToBackend time sessionId clientId msg model =
+    case msg of
+        AdminPage.ReplaceFormsRequest ( forms, formMapping ) ->
+            ( if not Env.isProduction then
                 setCurrentSurvey
                     (\survey ->
                         { survey
@@ -761,42 +830,34 @@ updateFromFrontendWithTime time sessionId clientId msg model =
             , Command.none
             )
 
-        AdminToBackend AdminPage.LogOutRequest ->
-            if isAdmin sessionId model then
-                let
-                    ( survey, surveyStatus ) =
-                        loadFormData sessionId time model
-                in
-                ( setCurrentSurvey (\_ -> survey) { model | adminLogin = Set.remove sessionId model.adminLogin }
-                , Effect.Lamdera.sendToFrontend clientId (LogOutResponse surveyStatus)
+        AdminPage.LogOutRequest ->
+            let
+                ( survey, surveyStatus ) =
+                    loadFormData sessionId time model
+            in
+            ( setCurrentSurvey (\_ -> survey) { model | adminLogin = Set.remove sessionId model.adminLogin }
+            , Effect.Lamdera.sendToFrontend clientId (LogOutResponse surveyStatus)
+            )
+
+        AdminPage.EditFormMappingRequest edit ->
+            ( setCurrentSurvey
+                (\survey ->
+                    { survey
+                        | formMapping = AdminPage.networkUpdate edit survey.formMapping
+                        , cachedSurveyResults = Nothing
+                    }
                 )
-
-            else
-                ( model, Command.none )
-
-        AdminToBackend (AdminPage.EditFormMappingRequest edit) ->
-            if isAdmin sessionId model then
-                ( setCurrentSurvey
-                    (\survey ->
-                        { survey
-                            | formMapping = AdminPage.networkUpdate edit survey.formMapping
-                            , cachedSurveyResults = Nothing
-                        }
+                model
+            , Set.toList model.adminLogin
+                |> List.map
+                    (\sessionId_ ->
+                        AdminToFrontend (AdminPage.EditFormMappingResponse edit)
+                            |> Effect.Lamdera.sendToFrontends sessionId_
                     )
-                    model
-                , Set.toList model.adminLogin
-                    |> List.map
-                        (\sessionId_ ->
-                            AdminToFrontend (AdminPage.EditFormMappingResponse edit)
-                                |> Effect.Lamdera.sendToFrontends sessionId_
-                        )
-                    |> Command.batch
-                )
+                |> Command.batch
+            )
 
-            else
-                ( model, Command.none )
-
-        AdminToBackend AdminPage.SendEmailsRequest ->
+        AdminPage.SendEmailsRequest ->
             let
                 survey =
                     getCurrentSurvey model
@@ -851,54 +912,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                 _ ->
                     ( model, Command.none )
 
-        RequestFormData2023 ->
-            let
-                ( survey2023, surveyStatus ) =
-                    loadFormData sessionId time model
-
-                ( survey2022, surveyResults2022 ) =
-                    formData2022 model.survey2022
-            in
-            ( setCurrentSurvey (\_ -> survey2023) { model | survey2022 = survey2022 }
-            , ResponseData (LoadForm2023 surveyStatus) surveyResults2022
-                |> Effect.Lamdera.sendToFrontend clientId
-            )
-
-        RequestAdminFormData ->
-            let
-                ( survey2022, surveyResults2022 ) =
-                    formData2022 model.survey2022
-
-                model2 =
-                    { model | survey2022 = survey2022 }
-
-                adminData =
-                    (if isAdmin sessionId model2 then
-                        getAdminData model2.survey2023 |> Just
-
-                     else
-                        Nothing
-                    )
-                        |> LoadAdmin
-            in
-            ( model2
-            , ResponseData adminData surveyResults2022
-                |> Effect.Lamdera.sendToFrontend clientId
-            )
-
-        UnsubscribeRequest unsubscribeId ->
-            let
-                ( survey2022, surveyResults2022 ) =
-                    formData2022 model.survey2022
-            in
-            ( { model
-                | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails
-                , survey2022 = survey2022
-              }
-            , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse surveyResults2022)
-            )
-
-        AiCompletionsRequest ->
+        AdminPage.AiCategorizationRequest ->
             let
                 answers : List String
                 answers =
