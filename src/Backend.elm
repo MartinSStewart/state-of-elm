@@ -252,6 +252,7 @@ getAiCompletion categories answer =
         }
 
 
+decodeResponse : Json.Decode.Decoder String
 decodeResponse =
     Json.Decode.field
         "choices"

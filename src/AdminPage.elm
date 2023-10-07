@@ -1204,13 +1204,18 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
     let
         answers : List String
         answers =
-            submittedForms model.forms |> List.map getAnswer
+            submittedForms model.forms
+                |> List.map getAnswer
+
+        filtered =
+            List.filterMap Form2023.getOtherAnswer_ answers
     in
     Element.row
         [ Element.spacing 24, Element.width Element.fill ]
         [ Element.column
             [ Element.alignTop, Element.spacing 16 ]
             [ Element.text (questionName model.selectedMapping)
+            , Element.text ("Number of responses: " ++ String.fromInt (List.length filtered))
             , Element.column
                 [ Element.spacing 8 ]
                 (List.map
@@ -1253,8 +1258,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16 ]
-            [ List.filterMap Form2023.getOtherAnswer_ answers
-                |> List.sortBy (String.trim >> String.toLower)
+            [ List.sortBy (String.trim >> String.toLower) filtered
                 |> List.map
                     (\other ->
                         let
