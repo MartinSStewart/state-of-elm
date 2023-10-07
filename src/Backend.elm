@@ -200,7 +200,7 @@ getAiCompletion categories answer =
     Effect.Http.task
         { method = "POST"
         , headers = [ Effect.Http.header "Authorization" ("Bearer " ++ Env.openAiApiKey) ]
-        , url = "/chat/completions"
+        , url = "https://api.openai.com/v1/chat/completions"
         , body =
             Json.Encode.object
                 [ ( "temperature", Json.Encode.float 0.1 )
