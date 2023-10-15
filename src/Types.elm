@@ -13,7 +13,7 @@ import Effect.Time
 import EmailAddress exposing (EmailAddress)
 import Env
 import Form2022 exposing (Form2022)
-import Form2023 exposing (Form2023, FormMapping)
+import Form2023 exposing (Form2023, FormMapping, SpecificQuestion)
 import Id exposing (Id)
 import List.Nonempty exposing (Nonempty)
 import Postmark exposing (PostmarkSendResponse)
@@ -122,7 +122,7 @@ type alias BackendSurvey2023 =
     , formMapping : FormMapping
     , sendEmailsStatus : AdminPage.SendEmailsStatus
     , cachedSurveyResults : Maybe SurveyResults2023.Data
-    , aiCategorization : AiCategorizationStatus
+    , aiCategorization : AssocList.Dict SpecificQuestion AiCategorizationStatus
     }
 
 
@@ -160,7 +160,7 @@ type ToBackend
 type BackendMsg
     = GotTimeWithUpdate SessionId ClientId ToBackend Effect.Time.Posix
     | EmailsSent ClientId (List { emailAddress : EmailAddress, result : Result SendGrid.Error () })
-    | GotAiCompletion (Result Http.Error (Nonempty String))
+    | GotAiCompletion SpecificQuestion (List { answer : String, categorizedAs : Result Http.Error (Nonempty String) })
 
 
 type alias AiCategorizations =

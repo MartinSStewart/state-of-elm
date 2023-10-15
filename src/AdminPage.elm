@@ -15,6 +15,7 @@ module AdminPage exposing
     )
 
 import AnswerMap exposing (AnswerMap, Hotkey, OtherAnswer)
+import AssocList
 import DataEntry
 import Dict exposing (Dict)
 import Effect.Browser.Dom as Dom exposing (HtmlId)
@@ -36,6 +37,7 @@ import PackageName exposing (PackageName)
 import Questions2023 as Questions exposing (Question)
 import SendGrid
 import Serialize
+import Set exposing (Set)
 import SurveyResults2023 exposing (Mode(..))
 import Ui exposing (MultiChoiceWithOther)
 
@@ -56,7 +58,7 @@ type ToBackend
     | EditFormMappingRequest FormMappingEdit
     | LogOutRequest
     | SendEmailsRequest
-    | AiCategorizationRequest
+    | AiCategorizationRequest SpecificQuestion
 
 
 type ToFrontend
@@ -68,7 +70,7 @@ type alias AdminLoginData =
     { forms : List { form : Form2023, submitTime : Maybe Effect.Time.Posix }
     , formMapping : FormMapping
     , sendEmailsStatus : SendEmailsStatus
-    , aiCategorization : AiCategorizationStatus
+    , aiCategorization : AssocList.Dict SpecificQuestion AiCategorizationStatus
     }
 
 
@@ -86,7 +88,7 @@ type alias Model =
     , selectedMapping : SpecificQuestion
     , showEncodedState : Bool
     , sendEmailsStatus : SendEmailsStatus
-    , aiCategorization : AiCategorizationStatus
+    , aiCategorization : AssocList.Dict SpecificQuestion AiCategorizationStatus
     }
 
 
@@ -675,15 +677,17 @@ update msg model =
                     ( model, Command.none )
 
         PressedAiCategorization specificQuestion ->
-            ( { model | aiCategorization = AiCategorizationInProgress }
-            , Lamdera.sendToBackend AiCategorizationRequest
+            ( { model
+                | aiCategorization =
+                    AssocList.insert specificQuestion AiCategorizationInProgress model.aiCategorization
+              }
+            , Lamdera.sendToBackend (AiCategorizationRequest specificQuestion)
             )
 
 
 type AiCategorizationStatus
-    = AiCategorizationNotStarted
-    | AiCategorizationInProgress
-    | AiCategorizationSuccess (Dict String Int)
+    = AiCategorizationInProgress
+    | AiCategorizationReady (Dict String (Set String))
 
 
 button : Bool -> msg -> String -> Element msg
@@ -934,6 +938,7 @@ answerMapView model =
                 Questions.initialInterestTitle
                 .elmInitialInterest
                 formMapping.elmInitialInterest
+                (AssocList.get ElmInitialInterestQuestion model.aiCategorization)
                 model
 
         BiggestPainPointQuestion ->
@@ -942,6 +947,7 @@ answerMapView model =
                 Questions.biggestPainPointTitle
                 .biggestPainPoint
                 formMapping.biggestPainPoint
+                (AssocList.get BiggestPainPointQuestion model.aiCategorization)
                 model
 
         WhatDoYouLikeMostQuestion ->
@@ -950,6 +956,7 @@ answerMapView model =
                 Questions.whatDoYouLikeMostTitle
                 .whatDoYouLikeMost
                 formMapping.whatDoYouLikeMost
+                (AssocList.get WhatDoYouLikeMostQuestion model.aiCategorization)
                 model
 
         DoYouUseElmQuestion ->
@@ -1048,6 +1055,7 @@ answerMapView model =
                 Questions.whatPreventsYouFromUsingElmAtWorkTitle
                 .whatPreventsYouFromUsingElmAtWork
                 formMapping.whatPreventsYouFromUsingElmAtWork
+                (AssocList.get WhatPreventsYouFromUsingElmAtWork model.aiCategorization)
                 model
 
         HowDidItGoUsingElmAtWork ->
@@ -1056,6 +1064,7 @@ answerMapView model =
                 Questions.howDidItGoUsingElmAtWorkTitle
                 .howDidItGoUsingElmAtWork
                 formMapping.howDidItGoUsingElmAtWork
+                (AssocList.get HowDidItGoUsingElmAtWork model.aiCategorization)
                 model
 
         SurveyImprovementsQuestion ->
@@ -1225,14 +1234,19 @@ aiCategorizationButtonId =
     Dom.id "adminPage_aiCategorizationButton"
 
 
+categorizeWithAiButton specificQuestion =
+    Ui.button aiCategorizationButtonId (PressedAiCategorization specificQuestion) "Categorize with AI"
+
+
 freeTextMappingView :
     SpecificQuestion
     -> String
     -> (Form2023 -> String)
     -> FreeTextAnswerMap
+    -> Maybe AiCategorizationStatus
     -> Model
     -> Element Msg
-freeTextMappingView specificQuestion title getAnswer answerMap model =
+freeTextMappingView specificQuestion title getAnswer answerMap aiCategorizations model =
     let
         answers : List String
         answers =
@@ -1241,6 +1255,32 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
 
         filtered =
             List.filterMap Form2023.getOtherAnswer_ answers
+
+        aiCategories : Dict String (Set String)
+        aiCategories =
+            case aiCategorizations of
+                Just (AiCategorizationReady dict) ->
+                    Dict.map
+                        (\_ groups ->
+                            List.filterMap
+                                (\group ->
+                                    if Set.member group.groupName groups then
+                                        AnswerMap.hotkeyToString group.hotkey |> Just
+
+                                    else
+                                        Nothing
+                                )
+                                allGroups
+                                |> Set.fromList
+                        )
+                        dict
+
+                _ ->
+                    Dict.empty
+
+        allGroups : List { hotkey : Hotkey, editable : Bool, groupName : String }
+        allGroups =
+            FreeTextAnswerMap.allGroups answerMap
     in
     Element.row
         [ Element.spacing 24, Element.width Element.fill ]
@@ -1248,7 +1288,15 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             [ Element.alignTop, Element.spacing 16 ]
             [ Element.text (questionName model.selectedMapping)
             , Element.text ("Number of responses: " ++ String.fromInt (List.length filtered))
-            , Ui.button aiCategorizationButtonId (PressedAiCategorization specificQuestion) "Categorize with AI"
+            , case aiCategorizations of
+                Just AiCategorizationInProgress ->
+                    Element.text "Categorization in progress..."
+
+                Just (AiCategorizationReady _) ->
+                    categorizeWithAiButton specificQuestion
+
+                Nothing ->
+                    categorizeWithAiButton specificQuestion
             , Element.column
                 [ Element.spacing 8 ]
                 (List.map
@@ -1275,7 +1323,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                                 Element.none
                             ]
                     )
-                    (FreeTextAnswerMap.allGroups answerMap)
+                    allGroups
                     ++ [ Element.row []
                             [ Element.el [ Element.Font.italic ] (Element.text "( ) ")
                             , Element.Input.text
@@ -1291,7 +1339,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
             ]
         , Element.column
             [ Element.width Element.fill, Element.spacing 16 ]
-            [ List.sortBy (String.trim >> String.toLower) filtered
+            [ List.sortBy AnswerMap.normalizeOtherAnswer filtered
                 |> List.map
                     (\other ->
                         let
@@ -1310,7 +1358,17 @@ freeTextMappingView specificQuestion title getAnswer answerMap model =
                                 , onChange =
                                     TypedOtherAnswerGroups specificQuestion otherAnswer
                                         >> FormMappingEditMsg
-                                , placeholder = Nothing
+                                , placeholder =
+                                    case Dict.get (AnswerMap.normalizeOtherAnswer other) aiCategories of
+                                        Just categories ->
+                                            Set.toList categories
+                                                |> String.concat
+                                                |> Element.text
+                                                |> Element.Input.placeholder []
+                                                |> Just
+
+                                        Nothing ->
+                                            Nothing
                                 , label = Element.Input.labelHidden "New group"
                                 }
                             , Element.paragraph [ Element.spacing 2 ] [ Element.text other ]

@@ -2,9 +2,11 @@ module Backend exposing (..)
 
 import AdminPage exposing (AdminLoginData, AiCategorizationStatus(..))
 import AnswerMap exposing (AnswerMap)
-import AssocList as Dict
-import AssocSet as Set
+import AssocList
+import AssocSet
 import DataEntry
+import Dict
+import Duration
 import Effect.Command as Command exposing (BackendOnly, Command)
 import Effect.Http exposing (Error(..), Response(..))
 import Effect.Lamdera exposing (ClientId, SessionId)
@@ -31,6 +33,7 @@ import Questions2022
 import Questions2023
 import Route exposing (Route(..), UnsubscribeId)
 import SendGrid
+import Set
 import Sha256
 import String.Nonempty exposing (NonemptyString(..))
 import SurveyResults2022
@@ -64,10 +67,10 @@ subscriptions _ =
 
 init : ( BackendModel, Command restriction toMsg BackendMsg )
 init =
-    ( { adminLogin = Set.empty
+    ( { adminLogin = AssocSet.empty
       , survey2022 = initSurvey2022
       , survey2023 = initSurvey2023
-      , subscribedEmails = Dict.empty
+      , subscribedEmails = AssocList.empty
       , secretCounter = 0
       }
     , Command.none
@@ -106,7 +109,7 @@ initSurvey2022 =
             , whatDoYouLikeMost = FreeTextAnswerMap.init
             }
     in
-    { forms = Dict.empty
+    { forms = AssocList.empty
     , formMapping = answerMap
     , sendEmailsStatus = AdminPage.EmailsNotSent
     , cachedSurveyResults = Nothing
@@ -147,11 +150,11 @@ initSurvey2023 =
             , whatPackagesDoYouUse = ""
             }
     in
-    { forms = Dict.empty
+    { forms = AssocList.empty
     , formMapping = answerMap
     , sendEmailsStatus = AdminPage.EmailsNotSent
     , cachedSurveyResults = Nothing
-    , aiCategorization = AiCategorizationNotStarted
+    , aiCategorization = AssocList.empty
     }
 
 
@@ -170,7 +173,7 @@ setCurrentSurvey updateFunc model =
 
 getAdminData : BackendSurvey2023 -> AdminLoginData
 getAdminData survey =
-    { forms = Dict.values survey.forms
+    { forms = AssocList.values survey.forms
     , formMapping = survey.formMapping
     , sendEmailsStatus = survey.sendEmailsStatus
     , aiCategorization = survey.aiCategorization
@@ -188,12 +191,46 @@ update msg model =
             , AdminPage.SendEmailsResponse list |> AdminToFrontend |> Effect.Lamdera.sendToFrontend clientId
             )
 
-        GotAiCompletion result ->
+        GotAiCompletion question result ->
             let
                 _ =
                     Debug.log "" result
+
+                survey : BackendSurvey2023
+                survey =
+                    getCurrentSurvey model
             in
-            ( model, Command.none )
+            ( { model
+                | survey2023 =
+                    { survey
+                        | aiCategorization =
+                            AssocList.insert
+                                question
+                                (List.filterMap
+                                    (\{ answer, categorizedAs } ->
+                                        case categorizedAs of
+                                            Ok ok ->
+                                                ( answer
+                                                , List.Nonempty.toList ok |> Set.fromList
+                                                )
+                                                    |> Just
+
+                                            Err error ->
+                                                let
+                                                    _ =
+                                                        Debug.log "GotAiCompletion error" ( answer, error )
+                                                in
+                                                Nothing
+                                    )
+                                    result
+                                    |> Dict.fromList
+                                    |> AiCategorizationReady
+                                )
+                                survey.aiCategorization
+                    }
+              }
+            , Command.none
+            )
 
 
 getAiCompletion : Nonempty String -> String -> Task BackendOnly Error (Nonempty String)
@@ -282,7 +319,7 @@ getAiCompletion categories answer =
                                 Err err ->
                                     Json.Decode.errorToString err |> BadBody |> Err
                 )
-        , timeout = Nothing
+        , timeout = Just (Duration.seconds 30)
         }
 
 
@@ -319,7 +356,7 @@ loadFormData sessionId time model =
         SurveyOpen ->
             ( getCurrentSurvey model
             , if Env.surveyIsOpen time then
-                case Dict.get sessionId (getCurrentSurvey model).forms of
+                case AssocList.get sessionId (getCurrentSurvey model).forms of
                     Just value ->
                         case value.submitTime of
                             Just _ ->
@@ -349,7 +386,7 @@ formData2022 model =
             let
                 submittedForms : List Form2022
                 submittedForms =
-                    Dict.values model.forms
+                    AssocList.values model.forms
                         |> List.filterMap
                             (\{ form, submitTime } ->
                                 case submitTime of
@@ -449,7 +486,7 @@ formData2022 model =
                 formData_ =
                     { totalParticipants = List.length submittedForms
                     , doYouUseElm =
-                        List.concatMap (.doYouUseElm >> Set.toList) submittedForms
+                        List.concatMap (.doYouUseElm >> AssocSet.toList) submittedForms
                             |> DataEntry.fromForms model.formMapping.doYouUseElm Questions2022.doYouUseElm.choices
                     , age = segment .age .age Questions2022.age
                     , functionalProgrammingExperience =
@@ -515,6 +552,20 @@ formData2022 model =
             ( { model | cachedSurveyResults = Just formData_ }, formData_ )
 
 
+submittedForms2023 : BackendSurvey2023 -> List Form2023
+submittedForms2023 model =
+    AssocList.values model.forms
+        |> List.filterMap
+            (\{ form, submitTime } ->
+                case submitTime of
+                    Just _ ->
+                        Just form
+
+                    Nothing ->
+                        Nothing
+            )
+
+
 formData2023 : BackendSurvey2023 -> ( BackendSurvey2023, SurveyResults2023.Data )
 formData2023 model =
     case model.cachedSurveyResults of
@@ -523,22 +574,9 @@ formData2023 model =
 
         Nothing ->
             let
-                submittedForms : List Form2023
-                submittedForms =
-                    Dict.values model.forms
-                        |> List.filterMap
-                            (\{ form, submitTime } ->
-                                case submitTime of
-                                    Just _ ->
-                                        Just form
-
-                                    Nothing ->
-                                        Nothing
-                            )
-
                 formsWithoutNoInterestedInElm : List Form2023
                 formsWithoutNoInterestedInElm =
-                    List.filter (Form2023.notInterestedInElm >> not) submittedForms
+                    List.filter (Form2023.notInterestedInElm >> not) (submittedForms2023 model)
 
                 segmentWithOther :
                     (Form2023 -> MultiChoiceWithOther a)
@@ -624,9 +662,9 @@ formData2023 model =
 
                 formData_ : SurveyResults2023.Data
                 formData_ =
-                    { totalParticipants = List.length submittedForms
+                    { totalParticipants = List.length (submittedForms2023 model)
                     , doYouUseElm =
-                        List.concatMap (.doYouUseElm >> Set.toList) submittedForms
+                        List.concatMap (.doYouUseElm >> AssocSet.toList) (submittedForms2023 model)
                             |> DataEntry.fromForms model.formMapping.doYouUseElm Questions2023.doYouUseElm.choices
                     , age = segment .age .age Questions2023.age
                     , functionalProgrammingExperience =
@@ -687,7 +725,7 @@ formData2023 model =
                             |> List.concat
                             |> List.gatherEquals
                             |> List.map (\( first, rest ) -> ( first, List.length rest + 1 ))
-                            |> Dict.fromList
+                            |> AssocList.fromList
                     }
             in
             ( { model | cachedSurveyResults = Just formData_ }, formData_ )
@@ -709,7 +747,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                             (\survey ->
                                 { survey
                                     | forms =
-                                        Dict.update
+                                        AssocList.update
                                             sessionId
                                             (\maybeValue ->
                                                 case maybeValue of
@@ -745,7 +783,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                             (\survey ->
                                 { survey
                                     | forms =
-                                        Dict.update
+                                        AssocList.update
                                             sessionId
                                             (\maybeValue ->
                                                 case maybeValue of
@@ -781,7 +819,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
 
         AdminLoginRequest password ->
             if Env.adminPasswordHash == Sha256.sha256 password then
-                ( { model | adminLogin = Set.insert sessionId model.adminLogin }
+                ( { model | adminLogin = AssocSet.insert sessionId model.adminLogin }
                 , getAdminData (getCurrentSurvey model)
                     |> Ok
                     |> AdminLoginResponse
@@ -839,7 +877,7 @@ updateFromFrontendWithTime time sessionId clientId msg model =
                     formData2022 model.survey2022
             in
             ( { model
-                | subscribedEmails = Dict.remove unsubscribeId model.subscribedEmails
+                | subscribedEmails = AssocList.remove unsubscribeId model.subscribedEmails
                 , survey2022 = survey2022
               }
             , Effect.Lamdera.sendToFrontend clientId (ResponseData UnsubscribeResponse surveyResults2022)
@@ -868,7 +906,7 @@ adminPageToBackend time sessionId clientId msg model =
                                         )
                                     )
                                     forms
-                                    |> Dict.fromList
+                                    |> AssocList.fromList
                             , formMapping = formMapping
                         }
                     )
@@ -884,7 +922,7 @@ adminPageToBackend time sessionId clientId msg model =
                 ( survey, surveyStatus ) =
                     loadFormData sessionId time model
             in
-            ( setCurrentSurvey (\_ -> survey) { model | adminLogin = Set.remove sessionId model.adminLogin }
+            ( setCurrentSurvey (\_ -> survey) { model | adminLogin = AssocSet.remove sessionId model.adminLogin }
             , Effect.Lamdera.sendToFrontend clientId (LogOutResponse surveyStatus)
             )
 
@@ -897,7 +935,7 @@ adminPageToBackend time sessionId clientId msg model =
                     }
                 )
                 model
-            , Set.toList model.adminLogin
+            , AssocSet.toList model.adminLogin
                 |> List.map
                     (\sessionId_ ->
                         AdminToFrontend (AdminPage.EditFormMappingResponse edit)
@@ -924,7 +962,7 @@ adminPageToBackend time sessionId clientId msg model =
                                         Nothing ->
                                             Nothing
                                 )
-                                (Dict.values survey.forms)
+                                (AssocList.values survey.forms)
                     in
                     ( setCurrentSurvey (\_ -> { survey | sendEmailsStatus = AdminPage.Sending }) model
                     , List.map
@@ -961,32 +999,141 @@ adminPageToBackend time sessionId clientId msg model =
                 _ ->
                     ( model, Command.none )
 
-        AdminPage.AiCategorizationRequest ->
+        AdminPage.AiCategorizationRequest question ->
             let
-                answers : List String
-                answers =
-                    Dict.toList model.survey2023.forms
-                        |> List.filterMap
-                            (\( _, { form } ) ->
-                                if form.otherLanguages.otherChecked then
-                                    Just form.otherLanguages.otherText
+                answersAndCategories : Maybe ( List String, FreeTextAnswerMap )
+                answersAndCategories =
+                    case question of
+                        Form2023.DoYouUseElmQuestion ->
+                            Nothing
 
-                                else
-                                    Nothing
+                        Form2023.AgeQuestion ->
+                            Nothing
+
+                        Form2023.PleaseSelectYourGenderQuestion ->
+                            Nothing
+
+                        Form2023.FunctionalProgrammingExperienceQuestion ->
+                            Nothing
+
+                        Form2023.OtherLanguagesQuestion ->
+                            Nothing
+
+                        Form2023.NewsAndDiscussionsQuestion ->
+                            Nothing
+
+                        Form2023.ElmResourcesQuestion ->
+                            Nothing
+
+                        Form2023.CountryLivingInQuestion ->
+                            Nothing
+
+                        Form2023.ApplicationDomainsQuestion ->
+                            Nothing
+
+                        Form2023.DoYouUseElmAtWorkQuestion ->
+                            Nothing
+
+                        Form2023.WhatPreventsYouFromUsingElmAtWork ->
+                            Just
+                                ( submittedForms2023 model.survey2023
+                                    |> List.filterMap
+                                        (\form ->
+                                            let
+                                                answer =
+                                                    AnswerMap.normalizeOtherAnswer form.whatPreventsYouFromUsingElmAtWork
+                                            in
+                                            if answer == "" then
+                                                Nothing
+
+                                            else
+                                                Just answer
+                                        )
+                                , model.survey2023.formMapping.whatPreventsYouFromUsingElmAtWork
+                                )
+
+                        Form2023.HowDidItGoUsingElmAtWork ->
+                            Nothing
+
+                        Form2023.HowLargeIsTheCompanyQuestion ->
+                            Nothing
+
+                        Form2023.WhatLanguageDoYouUseForBackendQuestion ->
+                            Nothing
+
+                        Form2023.HowLongQuestion ->
+                            Nothing
+
+                        Form2023.ElmVersionQuestion ->
+                            Nothing
+
+                        Form2023.DoYouUseElmFormatQuestion ->
+                            Nothing
+
+                        Form2023.StylingToolsQuestion ->
+                            Nothing
+
+                        Form2023.BuildToolsQuestion ->
+                            Nothing
+
+                        Form2023.FrameworksQuestion ->
+                            Nothing
+
+                        Form2023.EditorsQuestion ->
+                            Nothing
+
+                        Form2023.DoYouUseElmReviewQuestion ->
+                            Nothing
+
+                        Form2023.TestToolsQuestion ->
+                            Nothing
+
+                        Form2023.ElmInitialInterestQuestion ->
+                            Nothing
+
+                        Form2023.BiggestPainPointQuestion ->
+                            Nothing
+
+                        Form2023.WhatDoYouLikeMostQuestion ->
+                            Nothing
+
+                        Form2023.SurveyImprovementsQuestion ->
+                            Nothing
+
+                        Form2023.WhatPackagesDoYouUseQuestion ->
+                            Nothing
+            in
+            case answersAndCategories of
+                Just ( answers, categories ) ->
+                    case FreeTextAnswerMap.getCategories categories |> List.Nonempty.fromList |> Debug.log "a" of
+                        Just nonempty ->
+                            let
+                                survey =
+                                    getCurrentSurvey model
+                            in
+                            ( { model
+                                | survey2023 =
+                                    { survey
+                                        | aiCategorization =
+                                            AssocList.insert question AiCategorizationInProgress survey.aiCategorization
+                                    }
+                              }
+                            , List.map
+                                (\answer ->
+                                    getAiCompletion nonempty answer
+                                        |> Task.map (\categorizedAs -> { answer = answer, categorizedAs = Ok categorizedAs } |> Debug.log "result")
+                                        |> Task.onError (\error -> { answer = answer, categorizedAs = Err error } |> Debug.log "result" |> Task.succeed)
+                                )
+                                answers
+                                |> Task.sequence
+                                |> Task.perform (GotAiCompletion question)
                             )
 
-                categories : Nonempty String
-                categories =
-                    AnswerMap.getAllGroups Questions2023.otherLanguages model.survey2023.formMapping.otherLanguages
-            in
-            ( model
-            , case answers of
-                head :: _ ->
-                    getAiCompletion categories head |> Task.attempt GotAiCompletion
+                        Nothing ->
+                            ( model, Command.none )
 
-                [] ->
-                    Command.none
-            )
+                Nothing ->
+                    ( model, Command.none )
 
 
 updateEmailSubscription : Time.Posix -> EmailAddress -> BackendModel -> BackendModel
@@ -997,13 +1144,13 @@ updateEmailSubscription time emailAddress model =
     in
     { model2
         | subscribedEmails =
-            if Dict.toList model2.subscribedEmails |> List.any (\( _, a ) -> emailAddress == a.emailAddress) then
+            if AssocList.toList model2.subscribedEmails |> List.any (\( _, a ) -> emailAddress == a.emailAddress) then
                 model2.subscribedEmails
 
             else
-                Dict.insert id
+                AssocList.insert id
                     { emailAddress = emailAddress
-                    , announcementEmail = Dict.empty
+                    , announcementEmail = AssocList.empty
                     }
                     model2.subscribedEmails
     }
@@ -1011,7 +1158,7 @@ updateEmailSubscription time emailAddress model =
 
 isAdmin : SessionId -> BackendModel -> Bool
 isAdmin sessionId model =
-    Set.member sessionId model.adminLogin
+    AssocSet.member sessionId model.adminLogin
 
 
 announce2023SurveyEmail : Id UnsubscribeId -> Postmark.PostmarkEmailBody

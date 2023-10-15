@@ -4,6 +4,7 @@ module FreeTextAnswerMap exposing
     , allGroups
     , codec
     , comment
+    , getCategories
     , init
     , otherAnswerMapsTo
     , removeGroup
@@ -59,6 +60,11 @@ assocSetCodec a =
 init : FreeTextAnswerMap
 init =
     FreeTextAnswerMap { otherMapping = [], comment = "" }
+
+
+getCategories : FreeTextAnswerMap -> List String
+getCategories (FreeTextAnswerMap a) =
+    List.map .groupName a.otherMapping
 
 
 allGroups : FreeTextAnswerMap -> List { hotkey : Hotkey, editable : Bool, groupName : String }

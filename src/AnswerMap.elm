@@ -12,6 +12,7 @@ module AnswerMap exposing
     , hotkeyToString
     , indexToHotkey
     , init
+    , normalizeOtherAnswer
     , otherAnswer
     , otherAnswerMapsTo
     , otherAnswerToString
