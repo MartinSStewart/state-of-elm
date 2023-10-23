@@ -230,7 +230,7 @@ view config previousYear model =
                 , mode = Total
                 , title = "Number of participants"
                 , filterUi = Element.none
-                , comment = "The turnout unfortunately decreased by " ++ String.fromInt (previousYear.totalParticipants - data.totalParticipants) ++ " compared to last year. Since the survey was open for an additional 10 days and the reach should have been wider this year (I had a mailing list and the survey was posted on more platforms) this seems like a good indication that the community has gotten smaller."
+                , comment = "The turnout unfortunately decreased by " ++ String.fromInt (previousYear.totalParticipants - data.totalParticipants) ++ " compared to last year. Since the survey was open for an additional 10 days and the reach should have been wider this year (I had a mailing list and the survey was posted on more platforms) this seems to indicate lower engagement in the community."
                 , data =
                     [ { choice = "2023", value = toFloat data.totalParticipants }
                     , { choice = "2022", value = toFloat previousYear.totalParticipants }
