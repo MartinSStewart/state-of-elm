@@ -539,6 +539,7 @@ loadForm route formStatus =
                         { data = data
                         , mode = SurveyResults2023.Percentage
                         , segment = SurveyResults2023.AllUsers
+                        , packageMode = SurveyResults2023.GroupByMajorVersion
                         }
 
                 AwaitingResultsData ->

@@ -8,6 +8,7 @@ module AdminPage exposing
     , ToBackend(..)
     , ToFrontend(..)
     , adminView
+    , groupPackagesBy
     , init
     , networkUpdate
     , update
@@ -38,7 +39,7 @@ import Questions2023 as Questions exposing (Question)
 import SendGrid
 import Serialize
 import Set exposing (Set)
-import SurveyResults2023 exposing (Mode(..))
+import SurveyResults2023
 import Ui exposing (MultiChoiceWithOther)
 
 
@@ -51,6 +52,7 @@ type Msg
     | NoOp
     | PressedSendEmails
     | PressedAiCategorization SpecificQuestion
+    | SurveyMsg SurveyResults2023.Msg
 
 
 type ToBackend
@@ -89,6 +91,9 @@ type alias Model =
     , showEncodedState : Bool
     , sendEmailsStatus : SendEmailsStatus
     , aiCategorization : AssocList.Dict SpecificQuestion AiCategorizationStatus
+    , resultMode : SurveyResults2023.Mode
+    , resultSegment : SurveyResults2023.Segment
+    , resultPackageMode : SurveyResults2023.PackageMode
     }
 
 
@@ -106,6 +111,9 @@ init loginData =
     , showEncodedState = False
     , sendEmailsStatus = loginData.sendEmailsStatus
     , aiCategorization = loginData.aiCategorization
+    , resultMode = SurveyResults2023.Percentage
+    , resultSegment = SurveyResults2023.AllUsers
+    , resultPackageMode = SurveyResults2023.GroupByPackageName
     }
 
 
@@ -684,6 +692,17 @@ update msg model =
             , Lamdera.sendToBackend (AiCategorizationRequest specificQuestion)
             )
 
+        SurveyMsg surveyMsg ->
+            case surveyMsg of
+                SurveyResults2023.PressedModeButton mode ->
+                    ( { model | resultMode = mode }, Command.none )
+
+                SurveyResults2023.PressedSegmentButton segment ->
+                    ( { model | resultSegment = segment }, Command.none )
+
+                SurveyResults2023.PressedPackageModeButton packageMode ->
+                    ( { model | resultPackageMode = packageMode }, Command.none )
+
 
 type AiCategorizationStatus
     = AiCategorizationInProgress
@@ -1074,21 +1093,8 @@ answerMapView model =
 
         WhatPackagesDoYouUseQuestion ->
             let
-                equalBy : PackageName -> ( String, String )
-                equalBy package =
-                    ( package.author, package.name )
-
-                answers : List { choice : String, value : Float }
-                answers =
+                forms =
                     submittedForms model.forms
-                        |> List.concatMap (\form -> List.concat form.elmJson |> List.uniqueBy equalBy)
-                        |> List.gatherEqualsBy equalBy
-                        |> List.map
-                            (\( first, rest ) ->
-                                { choice = first.author ++ "/" ++ first.name
-                                , value = List.length rest + 1 |> toFloat
-                                }
-                            )
             in
             Element.row
                 [ Element.spacing 8, Element.width Element.fill ]
@@ -1100,18 +1106,35 @@ answerMapView model =
                     , label = Element.Input.labelAbove [] (Element.text "Comment")
                     , spellcheck = True
                     }
-                , SurveyResults2023.simpleGraph
-                    { windowSize = { width = 1920, height = 1080 }
-                    , singleLine = False
-                    , isMultiChoice = False
-                    , customMaxCount = Nothing
-                    , mode = Total
-                    , title = "Number of people using a package for at least one of their apps"
-                    , filterUi = Element.none
-                    , comment = ""
-                    , data = answers
+                , SurveyResults2023.packageQuestionView
+                    { width = 1920, height = 1080 }
+                    model.resultPackageMode
+                    { packageUsageGroupedByAuthor = groupPackagesBy .author forms
+                    , packageUsageGroupedByName = groupPackagesBy (\a -> ( a.author, a.name )) forms
+                    , packageUsageGroupedByMajorVersion =
+                        groupPackagesBy (\a -> ( a.author, a.name, a.majorVersion )) forms
                     }
+                    |> Element.map SurveyMsg
                 ]
+
+
+groupPackagesBy :
+    (PackageName -> comparable)
+    -> List { b | elmJson : List (List PackageName) }
+    -> Dict.Dict comparable number
+groupPackagesBy groupBy forms =
+    List.foldl
+        (\form state ->
+            List.concat form.elmJson
+                |> List.map groupBy
+                |> Set.fromList
+                |> Set.toList
+                |> List.foldl
+                    (\key state2 -> Dict.update key (\a -> a |> Maybe.withDefault 0 |> (+) 1 |> Just) state2)
+                    state
+        )
+        Dict.empty
+        forms
 
 
 questionName : SpecificQuestion -> String
@@ -1222,7 +1245,7 @@ commentEditor specificQuestion singleLine question getAnswer comment model =
             { width = 1920, height = 1080 }
             singleLine
             True
-            Percentage
+            model.resultMode
             (DataEntry.fromForms comment question.choices answers)
             question
             |> Element.map (\_ -> NoOp)
@@ -1393,7 +1416,7 @@ freeTextMappingView specificQuestion title getAnswer answerMap aiCategorizations
                 }
             ]
         , SurveyResults2023.freeText
-            Percentage
+            model.resultMode
             { width = 1920, height = 1080 }
             (DataEntry.fromFreeText answerMap answers)
             title
@@ -1508,10 +1531,10 @@ answerMappingView specificQuestion singleLine question getAnswer answerMap model
             { width = 1920, height = 1080 }
             singleLine
             True
-            Percentage
+            model.resultMode
             (DataEntry.fromMultiChoiceWithOther question answerMap answers)
             question
-            |> Element.map (\_ -> NoOp)
+            |> Element.map SurveyMsg
         ]
 
 

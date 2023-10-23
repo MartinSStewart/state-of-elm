@@ -5,9 +5,11 @@ module SurveyResults2023 exposing
     , Mode(..)
     , Model
     , Msg(..)
+    , PackageMode(..)
     , Segment(..)
     , freeText
     , multiChoiceWithOther
+    , packageQuestionView
     , simpleGraph
     , singleChoiceGraph
     , update
@@ -18,6 +20,7 @@ import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
 import Countries exposing (Country)
 import DataEntry exposing (DataEntry, DataEntryWithOther(..))
+import Dict as RegularDict
 import Effect.Browser.Dom as Dom
 import Element exposing (Element)
 import Element.Background
@@ -26,6 +29,7 @@ import Element.Font
 import Element.Input
 import Html exposing (Html)
 import Html.Attributes
+import List.Extra
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
 import PackageName exposing (PackageName)
@@ -41,12 +45,14 @@ type alias Model =
     { data : Data
     , mode : Mode
     , segment : Segment
+    , packageMode : PackageMode
     }
 
 
 type Msg
     = PressedModeButton Mode
     | PressedSegmentButton Segment
+    | PressedPackageModeButton PackageMode
 
 
 type Segment
@@ -92,7 +98,9 @@ type alias Data =
     , testTools : DataEntryWithOther Questions2023.TestTools
     , biggestPainPoint : DataEntryWithOther ()
     , whatDoYouLikeMost : DataEntryWithOther ()
-    , elmJson : Dict PackageName Int
+    , packageUsageGroupedByAuthor : RegularDict.Dict String Int
+    , packageUsageGroupedByName : RegularDict.Dict ( String, String ) Int
+    , packageUsageGroupedByMajorVersion : RegularDict.Dict ( String, String, Int ) Int
     }
 
 
@@ -157,6 +165,9 @@ update msg model =
         PressedSegmentButton segment ->
             { model | segment = segment }
 
+        PressedPackageModeButton packageMode ->
+            { model | packageMode = packageMode }
+
 
 view : { a | windowSize : Size } -> SurveyResults2022.Data -> Model -> Element Msg
 view config previousYear model =
@@ -188,12 +199,13 @@ view config previousYear model =
                 [ Element.text "The survey results are in!" ]
             , Element.paragraph
                 []
-                [ Element.text "Thank you to everyone who participated! "
+                [ Element.text "Thank you to everyone who participated! You can view the previous year's results "
                 , Element.link
                     [ Element.Font.underline ]
                     { url = Route.encode (Route.SurveyRoute Year2022)
-                    , label = Element.text "Previous year's results."
+                    , label = Element.text "here"
                     }
+                , Element.text "."
                 ]
             ]
         , Element.column
@@ -210,7 +222,7 @@ view config previousYear model =
                 , mode = Total
                 , title = "Number of participants"
                 , filterUi = Element.none
-                , comment = ""
+                , comment = "The turnout unfortunately decreased by " ++ String.fromInt (previousYear.totalParticipants - data.totalParticipants) ++ " compared to last year. Since the survey was open for an additional 10 days and the reach should have been wider this year (I had a mailing list and the survey was posted on more platforms) this seems like a good indication that the community has gotten smaller."
                 , data =
                     [ { choice = "2023", value = toFloat data.totalParticipants }
                     , { choice = "2022", value = toFloat previousYear.totalParticipants }
@@ -218,6 +230,7 @@ view config previousYear model =
                     , { choice = "2017", value = 1170 }
                     , { choice = "2016", value = 644 }
                     ]
+                , expand = True
                 }
             , Ui.section
                 windowSize
@@ -247,6 +260,7 @@ view config previousYear model =
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions2023.editors
                 , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2023.doYouUseElmReview
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions2023.testTools
+                , packageQuestionView windowSize model.packageMode data
                 , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions2023.biggestPainPointTitle
                 , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions2023.whatDoYouLikeMostTitle
                 ]
@@ -270,6 +284,111 @@ view config previousYear model =
                 ]
             )
         ]
+
+
+packageQuestionView :
+    Size
+    -> PackageMode
+    ->
+        { a
+            | packageUsageGroupedByAuthor : RegularDict.Dict String Int
+            , packageUsageGroupedByName : RegularDict.Dict ( String, String ) Int
+            , packageUsageGroupedByMajorVersion : RegularDict.Dict ( String, String, Int ) Int
+        }
+    -> Element Msg
+packageQuestionView windowSize packageMode answers =
+    simpleGraph
+        { windowSize = windowSize
+        , singleLine = False
+        , isMultiChoice = False
+        , customMaxCount = Nothing
+        , mode = Total
+        , title = "Package usage statistics"
+        , filterUi =
+            Element.column
+                [ Element.spacingXY 16 8, Element.width Element.fill ]
+                [ Element.row
+                    [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 8 } ]
+                    [ filterButton (packageMode == GroupByAuthor) Left (PressedPackageModeButton GroupByAuthor) "Group by author"
+                    , filterButton (packageMode == GroupByPackageName) Middle (PressedPackageModeButton GroupByPackageName) "By name"
+                    , filterButton (packageMode == GroupByMajorVersion) Right (PressedPackageModeButton GroupByMajorVersion) "By version"
+                    ]
+                , Element.column
+                    [ Element.width Element.fill
+                    , Element.Font.size 16
+                    , Element.spacing 20
+                    , Element.Font.color Ui.blue0
+                    ]
+                    (Element.paragraph
+                        []
+                        [ Element.text "Participants were asked to upload the elm.json file for apps (not packages) they have been working on this year. From those elm.json files, the direct dependencies were collected." ]
+                        :: (case packageMode of
+                                GroupByAuthor ->
+                                    [ Element.paragraph
+                                        []
+                                        [ Element.text "For \"group by author\", if someone uses both "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA")
+                                        , Element.text " and "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageB")
+                                        , Element.text " that is only counted once for "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1")
+                                        ]
+                                    ]
+
+                                GroupByPackageName ->
+                                    [ Element.paragraph
+                                        []
+                                        [ Element.text "For the \"By name\" grouping, if someone uses both "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA/1.0.0")
+                                        , Element.text " and "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA/2.0.0")
+                                        , Element.text " that is only counted once for "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA")
+                                        ]
+                                    ]
+
+                                GroupByMajorVersion ->
+                                    [ Element.paragraph
+                                        []
+                                        [ Element.text "For the \"By version\" grouping, if one person uses "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA/1.0.0")
+                                        , Element.text " and "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA/1.0.1")
+                                        , Element.text " that is only counted once for "
+                                        , Element.el [ Element.Font.bold ] (Element.text "Name1/packageA/1.x.x")
+                                        ]
+                                    ]
+                           )
+                    )
+                ]
+        , comment = "Since each person can only get counted at most once for a category (regardless of how many elm.json files they uploaded) and since all Elm apps require elm/core, we can see that 233 people answered this question. Maybe this is an indicator of how many people are currently working on something in Elm, or maybe it just means people didn't have the energy to answer this one."
+        , data =
+            (case packageMode of
+                GroupByAuthor ->
+                    RegularDict.toList answers.packageUsageGroupedByAuthor
+                        |> List.map (\( author, value ) -> { choice = author, value = toFloat value })
+
+                GroupByPackageName ->
+                    RegularDict.toList answers.packageUsageGroupedByName
+                        |> List.map
+                            (\( ( author, name ), value ) ->
+                                { choice = author ++ "/" ++ name
+                                , value = toFloat value
+                                }
+                            )
+
+                GroupByMajorVersion ->
+                    RegularDict.toList answers.packageUsageGroupedByMajorVersion
+                        |> List.map
+                            (\( ( author, name, majorVersion ), value ) ->
+                                { choice = author ++ "/" ++ name ++ "/" ++ String.fromInt majorVersion ++ ".x.x"
+                                , value = toFloat value
+                                }
+                            )
+            )
+                |> List.sortBy (\a -> -a.value)
+        , expand = False
+        }
 
 
 multiChoiceWithOtherSegment : Size -> Bool -> Bool -> Mode -> Segment -> DataEntryWithOtherSegments a -> Question a -> Element Msg
@@ -341,6 +460,7 @@ multiChoiceSegmentHelper windowSize singleLine sortValues mode segment segmentDa
                    )
                 |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
                 |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
+        , expand = True
         }
 
 
@@ -387,6 +507,7 @@ multiChoiceHelper windowSize singleLine sortValues mode dataEntryWithOther title
                                 a
                    )
                 |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
+        , expand = True
         }
 
 
@@ -627,6 +748,12 @@ type Mode
     | Total
 
 
+type PackageMode
+    = GroupByAuthor
+    | GroupByPackageName
+    | GroupByMajorVersion
+
+
 simpleGraph :
     { windowSize : Size
     , singleLine : Bool
@@ -637,9 +764,10 @@ simpleGraph :
     , filterUi : Element msg
     , comment : String
     , data : List { choice : String, value : Float }
+    , expand : Bool
     }
     -> Element msg
-simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title, filterUi, comment, data } =
+simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title, filterUi, comment, data, expand } =
     let
         maxCount : Float
         maxCount =
@@ -834,6 +962,7 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
                     else
                         identity
                    )
+        , expand = True
         }
 
 
@@ -1063,6 +1192,7 @@ multiChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choice
                         , value = getValue mode count total False
                         }
                     )
+        , expand = True
         }
 
 
@@ -1100,6 +1230,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
                         , value = getValue mode count total False
                         }
                     )
+        , expand = True
         }
 
 

@@ -26,6 +26,7 @@ import Json.Encode
 import Lamdera
 import List.Extra as List
 import List.Nonempty exposing (Nonempty(..))
+import PackageName exposing (PackageName)
 import Parser exposing ((|.), (|=), Parser)
 import Postmark
 import Question exposing (Question)
@@ -719,13 +720,13 @@ formData2023 model =
                     , whatDoYouLikeMost =
                         List.map .whatDoYouLikeMost formsWithoutNoInterestedInElm
                             |> DataEntry.fromFreeText model.formMapping.whatDoYouLikeMost
-                    , elmJson =
-                        List.map .elmJson formsWithoutNoInterestedInElm
-                            |> List.concat
-                            |> List.concat
-                            |> List.gatherEquals
-                            |> List.map (\( first, rest ) -> ( first, List.length rest + 1 ))
-                            |> AssocList.fromList
+                    , packageUsageGroupedByAuthor = AdminPage.groupPackagesBy .author formsWithoutNoInterestedInElm
+                    , packageUsageGroupedByName =
+                        AdminPage.groupPackagesBy (\a -> ( a.author, a.name )) formsWithoutNoInterestedInElm
+                    , packageUsageGroupedByMajorVersion =
+                        AdminPage.groupPackagesBy
+                            (\a -> ( a.author, a.name, a.majorVersion ))
+                            formsWithoutNoInterestedInElm
                     }
             in
             ( { model | cachedSurveyResults = Just formData_ }, formData_ )
