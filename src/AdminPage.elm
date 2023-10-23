@@ -32,7 +32,6 @@ import EmailAddress exposing (EmailAddress)
 import Env
 import Form2023 exposing (Form2023, FormMapping, SpecificQuestion(..))
 import FreeTextAnswerMap exposing (FreeTextAnswerMap)
-import List.Extra as List
 import NetworkModel exposing (NetworkModel)
 import PackageName exposing (PackageName)
 import Questions2023 as Questions exposing (Question)
@@ -703,6 +702,12 @@ update msg model =
                 SurveyResults2023.PressedPackageModeButton packageMode ->
                     ( { model | resultPackageMode = packageMode }, Command.none )
 
+                SurveyResults2023.PressedExpandPackageUsage ->
+                    ( model, Command.none )
+
+                SurveyResults2023.PressedExpandCountryLivingIn ->
+                    ( model, Command.none )
+
 
 type AiCategorizationStatus
     = AiCategorizationInProgress
@@ -1109,6 +1114,7 @@ answerMapView model =
                 , SurveyResults2023.packageQuestionView
                     { width = 1920, height = 1080 }
                     model.resultPackageMode
+                    True
                     { packageUsageGroupedByAuthor = groupPackagesBy .author forms
                     , packageUsageGroupedByName = groupPackagesBy (\a -> ( a.author, a.name )) forms
                     , packageUsageGroupedByMajorVersion =

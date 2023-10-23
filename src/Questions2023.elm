@@ -743,6 +743,12 @@ countryChoiceToString { name, flag } =
         "Korea, Republic of" ->
             "South Korea"
 
+        "Bolivia (Plurinational State of)" ->
+            "Bolivia"
+
+        "North Macedonia" ->
+            "Macedonia"
+
         _ ->
             name
     )

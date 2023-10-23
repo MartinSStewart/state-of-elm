@@ -29,10 +29,8 @@ import Element.Font
 import Element.Input
 import Html exposing (Html)
 import Html.Attributes
-import List.Extra
 import List.Nonempty as Nonempty exposing (Nonempty)
 import MarkdownThemed
-import PackageName exposing (PackageName)
 import Question exposing (Question)
 import Questions2023
 import Route exposing (SurveyYear(..))
@@ -46,6 +44,8 @@ type alias Model =
     , mode : Mode
     , segment : Segment
     , packageMode : PackageMode
+    , expandCountries : Bool
+    , expandPackageUsage : Bool
     }
 
 
@@ -53,6 +53,8 @@ type Msg
     = PressedModeButton Mode
     | PressedSegmentButton Segment
     | PressedPackageModeButton PackageMode
+    | PressedExpandPackageUsage
+    | PressedExpandCountryLivingIn
 
 
 type Segment
@@ -168,6 +170,12 @@ update msg model =
         PressedPackageModeButton packageMode ->
             { model | packageMode = packageMode }
 
+        PressedExpandPackageUsage ->
+            { model | expandPackageUsage = not model.expandPackageUsage }
+
+        PressedExpandCountryLivingIn ->
+            { model | expandCountries = not model.expandCountries }
+
 
 view : { a | windowSize : Size } -> SurveyResults2022.Data -> Model -> Element Msg
 view config previousYear model =
@@ -230,18 +238,32 @@ view config previousYear model =
                     , { choice = "2017", value = 1170 }
                     , { choice = "2016", value = 644 }
                     ]
-                , expand = True
+                , expand = CannotExpandOrMinimize
                 }
             , Ui.section
                 windowSize
                 "About you"
                 [ multiChoiceGraph windowSize False False modeWithoutPerCapita data.doYouUseElm Questions2023.doYouUseElm
-                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.age Questions2023.age
-                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience Questions2023.experienceLevel
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.age CannotExpandOrMinimize Questions2023.age
+                , singleChoiceSegmentGraph windowSize False False Nothing modeWithoutPerCapita model.segment data.functionalProgrammingExperience CannotExpandOrMinimize Questions2023.experienceLevel
                 , multiChoiceWithOtherSegment windowSize True True modeWithoutPerCapita model.segment data.otherLanguages Questions2023.otherLanguages
                 , multiChoiceWithOtherSegment windowSize False True modeWithoutPerCapita model.segment data.newsAndDiscussions Questions2023.newsAndDiscussions
                 , freeTextSegment modeWithoutPerCapita model.segment windowSize data.elmInitialInterest Questions2023.initialInterestTitle
-                , singleChoiceSegmentGraph windowSize True True (Just countryPopulation) model.mode model.segment data.countryLivingIn Questions2023.countryLivingIn
+                , singleChoiceSegmentGraph
+                    windowSize
+                    True
+                    True
+                    (Just countryPopulation)
+                    model.mode
+                    model.segment
+                    data.countryLivingIn
+                    (if model.expandCountries then
+                        IsExpanded PressedExpandCountryLivingIn
+
+                     else
+                        IsMinimized PressedExpandCountryLivingIn
+                    )
+                    Questions2023.countryLivingIn
                 ]
             , Ui.section
                 windowSize
@@ -260,7 +282,7 @@ view config previousYear model =
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.editors Questions2023.editors
                 , singleChoiceGraph windowSize False True modeWithoutPerCapita data.doYouUseElmReview Questions2023.doYouUseElmReview
                 , multiChoiceWithOther windowSize False True modeWithoutPerCapita data.testTools Questions2023.testTools
-                , packageQuestionView windowSize model.packageMode data
+                , packageQuestionView windowSize model.packageMode model.expandPackageUsage data
                 , freeText modeWithoutPerCapita windowSize data.biggestPainPoint Questions2023.biggestPainPointTitle
                 , freeText modeWithoutPerCapita windowSize data.whatDoYouLikeMost Questions2023.whatDoYouLikeMostTitle
                 ]
@@ -278,7 +300,7 @@ view config previousYear model =
                 ]
                 [ Element.paragraph [ Element.Font.bold ] [ Element.text "That's all folks!" ]
                 , Element.paragraph [] [ Element.text "Thanks again for participating!" ]
-                , Element.paragraph [] [ Element.text "The plan is to start running State of Elm annually again. I'll make an announcement post on Elm Discourse and Elm Slack when the time comes for the next one." ]
+                , Element.paragraph [] [ Element.text "Sorry for the late survey announcement and delayed survey results. I didn't expect so much work being needed to run this year's survey but hopefully everything is settled now and things will go smoothly for 2024." ]
                 , Ui.sourceCodeLink
                 , Ui.disclaimer
                 ]
@@ -289,6 +311,7 @@ view config previousYear model =
 packageQuestionView :
     Size
     -> PackageMode
+    -> Bool
     ->
         { a
             | packageUsageGroupedByAuthor : RegularDict.Dict String Int
@@ -296,7 +319,7 @@ packageQuestionView :
             , packageUsageGroupedByMajorVersion : RegularDict.Dict ( String, String, Int ) Int
         }
     -> Element Msg
-packageQuestionView windowSize packageMode answers =
+packageQuestionView windowSize packageMode isExpanded answers =
     simpleGraph
         { windowSize = windowSize
         , singleLine = False
@@ -387,7 +410,12 @@ packageQuestionView windowSize packageMode answers =
                             )
             )
                 |> List.sortBy (\a -> -a.value)
-        , expand = False
+        , expand =
+            if isExpanded then
+                IsExpanded PressedExpandPackageUsage
+
+            else
+                IsMinimized PressedExpandPackageUsage
         }
 
 
@@ -460,7 +488,7 @@ multiChoiceSegmentHelper windowSize singleLine sortValues mode segment segmentDa
                    )
                 |> List.filter (\{ choice } -> Set.member choice emptyChoices |> not)
                 |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
-        , expand = True
+        , expand = CannotExpandOrMinimize
         }
 
 
@@ -507,7 +535,7 @@ multiChoiceHelper windowSize singleLine sortValues mode dataEntryWithOther title
                                 a
                    )
                 |> List.map (\{ choice, count } -> { choice = choice, value = getValue mode count total False })
-        , expand = True
+        , expand = CannotExpandOrMinimize
         }
 
 
@@ -754,6 +782,12 @@ type PackageMode
     | GroupByMajorVersion
 
 
+type ExpandStatus msg
+    = CannotExpandOrMinimize
+    | IsExpanded msg
+    | IsMinimized msg
+
+
 simpleGraph :
     { windowSize : Size
     , singleLine : Bool
@@ -764,7 +798,7 @@ simpleGraph :
     , filterUi : Element msg
     , comment : String
     , data : List { choice : String, value : Float }
-    , expand : Bool
+    , expand : ExpandStatus msg
     }
     -> Element msg
 simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title, filterUi, comment, data, expand } =
@@ -792,8 +826,14 @@ simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title
             Element.none
         , if singleLine then
             Element.table
-                [ Element.width Element.fill ]
-                { data = data
+                ([ Element.width Element.fill ] ++ expandButton expand)
+                { data =
+                    case expand of
+                        IsMinimized _ ->
+                            List.take 30 data
+
+                        _ ->
+                            data
                 , columns =
                     [ { header = Element.none
                       , width = Element.shrink
@@ -823,17 +863,84 @@ simpleGraph { windowSize, singleLine, isMultiChoice, customMaxCount, mode, title
           else
             List.map
                 (\{ choice, value } -> barAndName mode choice value maxCount)
-                data
-                |> Element.column
-                    [ Element.width Element.fill
-                    , Element.spacing 8
-                    ]
+                (case expand of
+                    IsMinimized _ ->
+                        List.take 20 data
+
+                    _ ->
+                        data
+                )
+                |> Element.column ([ Element.width Element.fill, Element.spacing 8 ] ++ expandButton expand)
         , commentView comment
         ]
 
 
-singleChoiceSegmentGraph : Size -> Bool -> Bool -> Maybe (a -> Int) -> Mode -> Segment -> DataEntrySegments a -> Question a -> Element Msg
-singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode segment segmentData { title, choices, choiceToString } =
+expandButton expand =
+    case expand of
+        CannotExpandOrMinimize ->
+            []
+
+        IsMinimized msg ->
+            [ Element.column
+                [ Element.width Element.fill
+                , Element.alignBottom
+                , Element.htmlAttribute (Html.Attributes.style "z-index" "100")
+                ]
+                [ Element.el
+                    [ Element.width Element.fill
+                    , Element.height (Element.px 100)
+                    , Element.Background.gradient
+                        { angle = 0
+                        , steps = [ Element.rgba 1 1 1 1, Element.rgba 1 1 1 0 ]
+                        }
+                    ]
+                    Element.none
+                , Element.Input.button
+                    [ Element.Background.color (Element.rgb 1 1 1)
+                    , Element.width Element.fill
+                    ]
+                    { onPress = Just msg
+                    , label =
+                        Element.paragraph
+                            [ Element.Font.center
+                            , Element.Font.bold
+                            ]
+                            [ Element.text "Show all categories" ]
+                    }
+                ]
+                |> Element.inFront
+            ]
+
+        IsExpanded msg ->
+            [ Element.paddingEach { left = 0, right = 0, top = 0, bottom = 16 }
+            , Element.Input.button
+                [ Element.centerX
+                , Element.moveUp 16
+                , Element.paddingEach { left = 16, right = 16, top = 8, bottom = 8 }
+                , Element.alignBottom
+                ]
+                { onPress = Just msg
+                , label =
+                    Element.paragraph
+                        [ Element.Font.center, Element.Font.bold ]
+                        [ Element.text "Minimize categories" ]
+                }
+                |> Element.below
+            ]
+
+
+singleChoiceSegmentGraph :
+    Size
+    -> Bool
+    -> Bool
+    -> Maybe (a -> Int)
+    -> Mode
+    -> Segment
+    -> DataEntrySegments a
+    -> ExpandStatus Msg
+    -> Question a
+    -> Element Msg
+singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode segment segmentData expand { title, choices, choiceToString } =
     let
         dataEntry =
             case segment of
@@ -962,7 +1069,7 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
                     else
                         identity
                    )
-        , expand = True
+        , expand = expand |> Debug.log "expand"
         }
 
 
@@ -971,6 +1078,48 @@ singleChoiceSegmentGraph windowSize singleLine sortValues includePerCapita mode 
 countryPopulation : Country -> Int
 countryPopulation country =
     case country.code of
+        "KR" ->
+            51439038
+
+        "TW" ->
+            23399654
+
+        "LK" ->
+            22037000
+
+        "PA" ->
+            4337406
+
+        "MK" ->
+            1832696
+
+        "NP" ->
+            29164578
+
+        "LV" ->
+            1882000
+
+        "KZ" ->
+            19944726
+
+        "ET" ->
+            107334000
+
+        "BG" ->
+            6447710
+
+        "BO" ->
+            12006031
+
+        "AQ" ->
+            4400
+
+        "HR" ->
+            3855641
+
+        "LU" ->
+            660809
+
         "US" ->
             332653266
 
@@ -1192,7 +1341,7 @@ multiChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choice
                         , value = getValue mode count total False
                         }
                     )
-        , expand = True
+        , expand = CannotExpandOrMinimize
         }
 
 
@@ -1230,7 +1379,7 @@ singleChoiceGraph windowSize singleLine sortValues mode dataEntry { title, choic
                         , value = getValue mode count total False
                         }
                     )
-        , expand = True
+        , expand = CannotExpandOrMinimize
         }
 
 
